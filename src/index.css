@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background: #e9ece2;
+  color: #1f2a24;
+}
+
+/* slim scrollbar for the control panel */
+.scrl::-webkit-scrollbar {
+  width: 8px;
+}
+.scrl::-webkit-scrollbar-thumb {
+  background: #cfc9ba;
+  border-radius: 4px;
+}

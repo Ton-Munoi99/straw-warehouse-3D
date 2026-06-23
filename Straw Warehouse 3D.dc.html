@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;background:#e9ece2;}
+  .scrl::-webkit-scrollbar{width:8px;}
+  .scrl::-webkit-scrollbar-thumb{background:#cfc9ba;border-radius:4px;}
+  .zone-label{position:absolute;transform:translate(-50%,-100%);pointer-events:auto;cursor:pointer;will-change:transform,left,top;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</helmet>
+
+<div style="position:fixed;inset:0;display:flex;flex-direction:column;background:#e9ece2;color:#1f2a24;">
+
+  <header style="display:flex;align-items:center;gap:20px;padding:14px 22px;background:#ffffff;border-bottom:1px solid #e4e0d4;z-index:5;flex:none;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:38px;height:38px;border-radius:10px;background:#2f6b3f;display:flex;align-items:center;justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l9-6 9 6v12"/><path d="M3 9h18"/><path d="M8 21v-6h8v6"/></svg>
+      </div>
+      <div>
+        <div style="font-weight:800;font-size:16px;letter-spacing:-0.01em;">Rice Straw Storage Warehouse</div>
+        <div style="font-size:12px;color:#7c8a80;font-weight:500;">Open-sided collection hub · Rural rice-field site, Thailand</div>
+      </div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:10px;">
+      <div style="padding:7px 14px;border:1px solid #e4e0d4;border-radius:9px;background:#fafaf6;">
+        <div style="font-size:10px;color:#9aa499;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Footprint</div>
+        <div style="font-size:14px;font-weight:700;">20 × 10 m</div>
+      </div>
+      <div style="padding:7px 14px;border:1px solid #e4e0d4;border-radius:9px;background:#fafaf6;">
+        <div style="font-size:10px;color:#9aa499;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Clear height</div>
+        <div style="font-size:14px;font-weight:700;">5.0 m eave</div>
+      </div>
+      <div style="padding:7px 14px;border:1px solid #e4e0d4;border-radius:9px;background:#fafaf6;">
+        <div style="font-size:10px;color:#9aa499;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Roof</div>
+        <div style="font-size:14px;font-weight:700;">Gable metal sheet</div>
+      </div>
+      <div style="padding:7px 14px;border:1px solid #e4e0d4;border-radius:9px;background:#eef5ee;">
+        <div style="font-size:10px;color:#7ba07f;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Straw capacity</div>
+        <div style="font-size:14px;font-weight:700;color:#2f6b3f;">~1,500 bales · ~30 t</div>
+      </div>
+    </div>
+  </header>
+
+  <div style="flex:1;display:flex;min-height:0;">
+
+    <!-- 3D STAGE -->
+    <div style="position:relative;flex:1;min-width:0;overflow:hidden;background:linear-gradient(#cfe6f1,#dfeede);">
+      <div ref="{{ mountRef }}" style="position:absolute;inset:0;"></div>
+      <div ref="{{ labelsRef }}" style="position:absolute;inset:0;pointer-events:none;z-index:2;"></div>
+
+      <div ref="{{ loadRef }}" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#dfeede;z-index:4;color:#5a6b5f;font-weight:600;font-size:14px;">
+        Loading 3D model…
+      </div>
+
+      <div style="position:absolute;left:18px;bottom:16px;display:flex;align-items:center;gap:8px;padding:8px 13px;background:rgba(255,255,255,0.86);backdrop-filter:blur(6px);border:1px solid #e4e0d4;border-radius:10px;font-size:12px;color:#5a6b5f;font-weight:500;z-index:3;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2f6b3f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.2-8.5"/><path d="M21 3v6h-6"/></svg>
+        Drag to orbit · Scroll to zoom · Click a tag for details
+      </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <aside class="scrl" style="width:336px;flex:none;background:#ffffff;border-left:1px solid #e4e0d4;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:18px;">
+
+      <section>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9aa499;margin-bottom:10px;">Camera Views</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <sc-for list="{{ viewBtns }}" as="b" hint-placeholder-count="4">
+            <button onClick="{{ b.onSelect }}" style="{{ b.style }}">
+              <span>{{ b.label }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <button onClick="{{ toggleRotate }}" style="{{ rotateStyle }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.2-8.5"/><path d="M21 3v6h-6"/></svg>
+          <span>{{ rotateLabel }}</span>
+        </button>
+      </section>
+
+      <section>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9aa499;margin-bottom:10px;">Controls</div>
+        <div style="display:flex;gap:8px;">
+          <button onClick="{{ zoomOut }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;border-radius:10px;border:1px solid #e1ddd0;background:#fff;color:#33403a;font:600 13px/1 'Plus Jakarta Sans';cursor:pointer;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M8 11h6"/><path d="m21 21-4.3-4.3"/></svg>
+            Zoom out
+          </button>
+          <button onClick="{{ zoomIn }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;border-radius:10px;border:1px solid #e1ddd0;background:#fff;color:#33403a;font:600 13px/1 'Plus Jakarta Sans';cursor:pointer;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M11 8v6"/><path d="M8 11h6"/><path d="m21 21-4.3-4.3"/></svg>
+            Zoom in
+          </button>
+        </div>
+        <button onClick="{{ toggleLabels }}" style="{{ labelsStyle }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v5l9 9 8-8-9-9H3z"/><circle cx="7.5" cy="7.5" r="1.4"/></svg>
+          <span>{{ labelsLabel }}</span>
+        </button>
+      </section>
+
+      <section>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9aa499;margin-bottom:10px;">Doors &amp; Walls</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button onClick="{{ toggleDoors }}" style="{{ doorsStyle }}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M12 3v18"/></svg>
+            <span>{{ doorsLabel }}</span>
+          </button>
+          <button onClick="{{ toggleWalls }}" style="{{ wallsStyle }}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18"/><rect x="5" y="8" width="14" height="11" rx="1"/><path d="M5 12h14M5 15.5h14"/></svg>
+            <span>{{ wallsLabel }}</span>
+          </button>
+        </div>
+        <div style="font-size:11px;color:#9aa499;margin-top:7px;line-height:1.45;">Close the sides &amp; doors for rain &amp; security; open them for natural cross-ventilation.</div>
+      </section>
+
+      <section>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9aa499;margin-bottom:10px;">Scene</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button onClick="{{ toggleWeather }}" style="{{ weatherStyle }}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 18a5 5 0 0 0-9.6-2.1A3.5 3.5 0 1 0 7 22h10a3 3 0 0 0 0-6Z"/><path d="M8 4v2M4 8H2M6 5 4.5 3.5M16 4v2M20 8h2M18 5l1.5-1.5"/></svg>
+            <span>{{ weatherLabel }}</span>
+          </button>
+          <button onClick="{{ toggleActivity }}" style="{{ activityStyle }}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.3a1 1 0 0 0-.3-.7l-2.7-2.7a1 1 0 0 0-.7-.3H14v7h2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+            <span>{{ activityLabel }}</span>
+          </button>
+          <button onClick="{{ toggleDims }}" style="{{ dimsStyle }}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M3 5v4M21 5v4M7 7v-4M12 7V3M17 7V3"/></svg>
+            <span>{{ dimsLabel }}</span>
+          </button>
+        </div>
+      </section>
+
+      <section>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9aa499;margin-bottom:10px;">Key Zones</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <sc-for list="{{ zoneItems }}" as="z" hint-placeholder-count="7">
+            <button onClick="{{ z.onSelect }}" style="{{ z.style }}">
+              <span style="{{ z.dotStyle }}"></span>
+              <span style="font-weight:600;font-size:13px;">{{ z.label }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="border:1px solid #e8e4d8;border-radius:14px;overflow:hidden;">
+        <div style="{{ cardHeadStyle }}">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;opacity:0.85;">{{ cardKicker }}</div>
+          <div style="font-size:16px;font-weight:800;letter-spacing:-0.01em;margin-top:2px;">{{ cardTitle }}</div>
+        </div>
+        <div style="padding:14px;font-size:13px;line-height:1.55;color:#54625a;">
+          {{ cardDesc }}
+        </div>
+      </section>
+
+      <section>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#9aa499;margin-bottom:10px;">Project Benefits</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <div style="display:flex;gap:10px;align-items:flex-start;"><span style="flex:none;width:18px;height:18px;border-radius:6px;background:#e7f1e8;display:flex;align-items:center;justify-content:center;margin-top:1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2f6b3f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span style="font-size:13px;color:#3a473f;line-height:1.4;">Keeps straw dry through the monsoon season</span></div>
+          <div style="display:flex;gap:10px;align-items:flex-start;"><span style="flex:none;width:18px;height:18px;border-radius:6px;background:#e7f1e8;display:flex;align-items:center;justify-content:center;margin-top:1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2f6b3f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span style="font-size:13px;color:#3a473f;line-height:1.4;">Reduces post-harvest storage loss</span></div>
+          <div style="display:flex;gap:10px;align-items:flex-start;"><span style="flex:none;width:18px;height:18px;border-radius:6px;background:#e7f1e8;display:flex;align-items:center;justify-content:center;margin-top:1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2f6b3f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span style="font-size:13px;color:#3a473f;line-height:1.4;">Supports fast truck loading &amp; dispatch</span></div>
+          <div style="display:flex;gap:10px;align-items:flex-start;"><span style="flex:none;width:18px;height:18px;border-radius:6px;background:#e7f1e8;display:flex;align-items:center;justify-content:center;margin-top:1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2f6b3f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span style="font-size:13px;color:#3a473f;line-height:1.4;">Improves collection-hub logistics efficiency</span></div>
+          <div style="display:flex;gap:10px;align-items:flex-start;"><span style="flex:none;width:18px;height:18px;border-radius:6px;background:#e7f1e8;display:flex;align-items:center;justify-content:center;margin-top:1px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2f6b3f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span style="font-size:13px;color:#3a473f;line-height:1.4;">Low-cost, durable build for rice-field areas</span></div>
+        </div>
+      </section>
+
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  mountRef = React.createRef();
+  labelsRef = React.createRef();
+  loadRef = React.createRef();
+  state = { view: 'iso', rotate: false, labels: true, selected: null, doorsOpen: true, wallsOpen: true, weather: 'sunny', activity: true, dims: false };
+
+  zones = [
+    { key:'storage', label:'Straw Bale Storage Zone', color:'#c8902f', pos:[-5,2.7,0],
+      desc:'Compressed rectangular bales are stacked in neat rows on the raised concrete slab, kept clear of ground moisture and organised for first-in / first-out collection.' },
+    { key:'loading', label:'Truck Loading / Unloading', color:'#2f6b3f', pos:[14,1.7,0],
+      desc:'A wide front apron lets trucks and tractors park to load and unload bales, with a gentle ramp up to the slab for trolleys and forklifts.' },
+    { key:'lane', label:'Internal Access Lane', color:'#3f7fae', pos:[5,1.2,0],
+      desc:'A clear internal aisle runs through the warehouse so forklifts and small tractors can move bales in and out without disturbing the stacks.' },
+    { key:'vent', label:'Ventilation (Open Sides)', color:'#5aa17a', pos:[-4,4.7,5.6],
+      desc:'Fully open sides allow cross-breeze through the bale stacks, drawing out humidity to prevent mould, heating and spoilage of the straw.' },
+    { key:'drain', label:'Drainage System', color:'#7a6cc4', pos:[9,0.6,6.4],
+      desc:'Perimeter channels collect roof runoff and direct rainwater away from the slab toward the nearby irrigation canal.' },
+    { key:'roof', label:'Roof & Rain Protection', color:'#c25b46', pos:[0,8.1,0],
+      desc:'A high gable roof in metal sheeting with wide overhangs and gutters sheds heavy monsoon rain and shades the straw from direct sun.' },
+    { key:'road', label:'Dirt Access Road', color:'#9a7b4f', pos:[24,0.5,9],
+      desc:'A compacted dirt road links the warehouse directly to the surrounding rice fields and the main route used by collection trucks.' },
+  ];
+
+  views = {
+    front:    { pos:[0,9,32],  look:[0,3,0] },
+    side:     { pos:[34,9,0],  look:[0,3,0] },
+    top:      { pos:[18,30,18], look:[0,0,0] },
+    interior: { pos:[9,3,1],    look:[-9,2.2,0] },
+    iso:      { pos:[26,15,24], look:[0,2,0] },
+  };
+
+  componentDidMount(){ this.waitThree(); }
+  componentWillUnmount(){ if(this.raf) cancelAnimationFrame(this.raf); window.removeEventListener('resize', this.onResize); }
+
+  waitThree = () => {
+    if (window.THREE && THREE.OrbitControls) this.init();
+    else setTimeout(this.waitThree, 60);
+  };
+
+  onResize = () => {
+    if(!this.renderer) return;
+    const m = this.mountRef.current;
+    const w = m.clientWidth, h = m.clientHeight;
+    this.camera.aspect = w/h; this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w,h);
+  };
+
+  init(){
+    const mount = this.mountRef.current;
+    const W = mount.clientWidth, H = mount.clientHeight;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#d2e8f2');
+    scene.fog = new THREE.Fog('#d2e8f2', 80, 200);
+
+    const camera = new THREE.PerspectiveCamera(45, W/H, 0.1, 1000);
+    camera.position.set(26,15,24);
+
+    const renderer = new THREE.WebGLRenderer({ antialias:true });
+    renderer.setSize(W,H);
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    mount.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.08;
+    controls.target.set(0,2,0);
+    controls.maxPolarAngle = Math.PI*0.495;
+    controls.minDistance = 8; controls.maxDistance = 95;
+    controls.autoRotateSpeed = 0.9;
+
+    this.scene=scene; this.camera=camera; this.renderer=renderer; this.controls=controls;
+
+    // ---- lights ----
+    const hemi = new THREE.HemisphereLight('#cfe8ff','#6f7048',0.6);
+    scene.add(hemi);
+    const amb = new THREE.AmbientLight('#ffffff',0.22);
+    scene.add(amb);
+    const sun = new THREE.DirectionalLight('#fff1d6',1.2);
+    sun.position.set(36,46,20);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048,2048);
+    const d=50;
+    sun.shadow.camera.left=-d; sun.shadow.camera.right=d; sun.shadow.camera.top=d; sun.shadow.camera.bottom=-d;
+    sun.shadow.camera.near=1; sun.shadow.camera.far=170; sun.shadow.bias=-0.0004;
+    scene.add(sun);
+    this.sun=sun; this.hemi=hemi; this.amb=amb;
+
+    // ---- helpers ----
+    const mat=(c,o={})=>new THREE.MeshStandardMaterial({color:new THREE.Color(c),roughness:o.r??0.85,metalness:o.m??0});
+    const box=(w,h,dd,m,o={})=>{const me=new THREE.Mesh(new THREE.BoxGeometry(w,h,dd),m);me.castShadow=o.cast!==false;me.receiveShadow=o.recv!==false;return me;};
+    const at=(me,x,y,z)=>{me.position.set(x,y,z);scene.add(me);return me;};
+    const steel = mat('#828a93',{m:0.65,r:0.42});
+    const steelDark = mat('#5f666e',{m:0.6,r:0.5});
+
+    // ---- ground & site ----
+    const grass = new THREE.Mesh(new THREE.PlaneGeometry(300,300), mat('#7ca64d',{r:0.97}));
+    grass.rotation.x=-Math.PI/2; grass.receiveShadow=true; scene.add(grass);
+
+    // dirt pad under & around warehouse
+    at(box(30,0.12,17,mat('#c3a87f',{r:0.98})),0,0.06,0);
+
+    // raised concrete slab
+    const slab = at(box(21.4,0.6,11,mat('#cfc9ba',{r:0.92})),0,0.3,0);
+
+    // ramp at front (loading)
+    const ramp = box(4.4,0.35,5,mat('#c4beac',{r:0.95}));
+    ramp.position.set(12.6,0.3,0); ramp.rotation.z = Math.atan2(0.55,4.4); scene.add(ramp);
+
+    // drainage channels around slab
+    const dch = mat('#5d6258',{r:0.9});
+    [[0,6.3,22,0.5],[0,-6.3,22,0.5],[11.2,0,0.5,12.6],[-11.2,0,0.5,12.6]].forEach(([x,z,w,dd])=>{
+      const c=box(w,0.12,dd,dch,{cast:false}); at(c,x,0.07,z);
+    });
+
+    // dirt access road (front -> out, then turning)
+    at(box(9,0.06,52,mat('#b89b6f',{r:0.98}),{cast:false}),20,0.09,12).rotation.y=0;
+    at(box(9,0.06,40,mat('#b89b6f',{r:0.98}),{cast:false}),17,0.09,9.5).rotation.y=Math.PI/2;
+
+    // irrigation canal on far side (+Z)
+    at(box(90,0.5,3.2,mat('#bda57b',{r:0.97}),{cast:false}),0,0.1,16.5); // bank
+    at(box(90,0.4,2,mat('#5fa0c4',{m:0.25,r:0.18}),{cast:false}),0,0.0,16.5); // water
+
+    // rice paddies on -Z side
+    const paddyMat = mat('#6fa83c',{r:0.95});
+    const bundMat = mat('#a98f64',{r:0.97});
+    for(let px=-2;px<=1;px++){
+      for(let pz=0;pz<=2;pz++){
+        const cx=-30+px*16, cz=-16-pz*15;
+        at(box(15,0.18,14,paddyMat,{cast:false}),cx,0.09,cz);
+        at(box(15.4,0.26,0.4,bundMat,{cast:false}),cx,0.13,cz-7);
+        at(box(0.4,0.26,14,bundMat,{cast:false}),cx-7.5,0.13,cz);
+      }
+    }
+    // a couple of paddies on +X far
+    for(let pz=-1;pz<=1;pz++){
+      at(box(16,0.18,13,paddyMat,{cast:false}),46,0.09,-6+pz*14);
+    }
+
+    // ---- warehouse structure ----
+    const floorTop=0.6, eave=5.0, ridge=7.6;
+    const xs=[-10,-6,-2,2,6,10], zs=[-5,5];
+    // columns + base plates
+    xs.forEach(x=>zs.forEach(z=>{
+      at(box(0.32,eave-floorTop,0.32,steel),x,floorTop+(eave-floorTop)/2,z);
+      at(box(0.6,0.1,0.6,steelDark),x,floorTop+0.05,z);
+    }));
+    // eave beams along X
+    zs.forEach(z=> at(box(21.5,0.3,0.3,steel),0,eave,z));
+    // tie beams along Z at each frame
+    xs.forEach(x=> at(box(0.26,0.26,10,steel),x,eave,0));
+
+    // trusses at each frame line
+    const ang = Math.atan2(ridge-eave,5);
+    const chordLen = Math.hypot(5,ridge-eave);
+    xs.forEach(x=>{
+      // bottom chord
+      at(box(0.2,0.2,10,steelDark),x,eave,0);
+      // king post
+      at(box(0.16,ridge-eave,0.16,steelDark),x,eave+(ridge-eave)/2,0);
+      // top chords (two)
+      [-1,1].forEach(s=>{
+        const tc=box(0.2,0.18,chordLen,steel);
+        tc.position.set(x,(eave+ridge)/2, s*2.5);
+        tc.rotation.x = s*ang;
+        scene.add(tc);
+      });
+      // short web verticals
+      [-2.5,2.5].forEach(z=>{
+        const yTop = eave + (1-Math.abs(z)/5)*(ridge-eave);
+        at(box(0.13,yTop-eave,0.13,steelDark),x,(eave+yTop)/2,z);
+      });
+    });
+
+    // purlins along X on both slopes + ridge
+    const roofMetal = mat('#c6cace',{m:0.45,r:0.5});
+    [0.28,0.55,0.82].forEach(t=>{
+      [-1,1].forEach(s=>{
+        const z=s*(1-t)*5, y=eave+t*(ridge-eave);
+        at(box(21.6,0.1,0.1,steelDark),0,y,z);
+      });
+    });
+    // ridge purlin
+    at(box(21.6,0.12,0.12,steelDark),0,ridge,0);
+
+    // roof panels (metal sheet) — two clean slopes meeting at the ridge
+    const ohZ = 1.2;                    // eave overhang (z)
+    const ohX = 1.5;                    // gable overhang (x)
+    const runZ = 5 + ohZ;              // horizontal run ridge->eave end
+    const slopeLen = Math.hypot(runZ, runZ*(ridge-eave)/5); // full panel length on the incline
+    const roofLenX = 20 + ohX*2;       // panel length along building
+    const yMidPanel = (ridge + (eave - ohZ*(ridge-eave)/5)) / 2; // mid height of panel
+    [-1,1].forEach(s=>{
+      const r = box(roofLenX, 0.16, slopeLen, roofMetal);
+      r.position.set(0, yMidPanel, s*(runZ/2));
+      r.rotation.x = s*ang;             // +z slope tilts down toward +z, -z toward -z
+      scene.add(r);
+      // thin ribs for a metal-sheet read
+      for(let i=-9;i<=9;i++){
+        const rib = box(0.05,0.04,slopeLen,mat('#aeb3b8',{m:0.5,r:0.5}));
+        rib.position.set(i*1.15, yMidPanel+0.10, s*(runZ/2));
+        rib.rotation.x = s*ang; rib.castShadow=false; scene.add(rib);
+      }
+    });
+    // ridge cap
+    at(box(roofLenX+0.1,0.26,0.55,mat('#9aa0a6',{m:0.55,r:0.4})),0,ridge+0.16,0);
+    // closed gable-end triangles (front & back) so the roof reads as a proper gable
+    const gableMat = new THREE.MeshStandardMaterial({color:new THREE.Color('#dcd7c9'),roughness:0.85,side:THREE.DoubleSide});
+    [-1,1].forEach(sx=>{
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute([
+        0,eave,-5,  0,eave,5,  0,ridge,0
+      ],3));
+      g.computeVertexNormals();
+      const tri = new THREE.Mesh(g, gableMat);
+      tri.position.x = sx*10; tri.castShadow=true; tri.receiveShadow=true;
+      scene.add(tri);
+    });
+    // gutters along eaves
+    [-1,1].forEach(s=> at(box(20.6,0.18,0.22,mat('#9aa0a6',{m:0.4,r:0.5})),0,eave-0.18,s*(5+ohZ-0.1)));
+    // downpipes at corners
+    [[-10.1,5.9],[10.1,5.9],[-10.1,-5.9],[10.1,-5.9]].forEach(([x,z])=> at(box(0.16,eave,0.16,mat('#9aa0a6',{m:0.4})),x,eave/2,z));
+
+    // ---- openable front doors & roll-up side walls ----
+    const panelMat = mat('#c4ccd2',{m:0.35,r:0.55});
+    const frameMat = mat('#7f8790',{m:0.5,r:0.5});
+    const ribMat   = mat('#aeb6bd',{m:0.4,r:0.55});
+    const doorH = 4.0, doorY0 = floorTop;          // doors span 0.6 .. 4.6
+    // front gable end (loading side, x = +10): two swing leaves hinged at z = ±5
+    this.frontDoors = [];
+    [5,-5].forEach(hz=>{
+      const s = Math.sign(hz);
+      const cz = -s*2.4, openA = -s*1.85, cy = doorY0+doorH/2;
+      const pivot = new THREE.Group(); pivot.position.set(10,0,hz);
+      const leaf = box(0.12, doorH, 4.7, panelMat); leaf.position.set(0,cy,cz); pivot.add(leaf);
+      [doorY0+0.16, doorY0+doorH-0.16].forEach(ry=>{ const rl=box(0.16,0.2,4.8,frameMat); rl.position.set(0,ry,cz); pivot.add(rl); });
+      [-1.6,-0.55,0.55,1.6].forEach(o=>{ const rib=box(0.15,doorH-0.5,0.07,ribMat); rib.position.set(0,cy,cz+o); pivot.add(rib); });
+      const win=box(0.14,0.45,3.4,mat('#9fc4dd',{m:0.2,r:0.2})); win.position.set(0,doorY0+doorH-0.65,cz); pivot.add(win);
+      pivot.traverse(o=>{o.castShadow=true;o.receiveShadow=true;});
+      scene.add(pivot);
+      this.frontDoors.push({ group:pivot, open:openA });
+    });
+    // roll-up panels on the two long sides (z = ±5), one per structural bay
+    this.sideWalls = [];
+    const wallH = 4.1, bays=[-8,-4,0,4,8];
+    [-1,1].forEach(sz=>{
+      bays.forEach(bx=>{
+        const grp = new THREE.Group(); grp.position.set(bx, doorY0+wallH, sz*5);
+        const panel = box(3.7, wallH, 0.08, panelMat); panel.position.set(0,-wallH/2,0); grp.add(panel);
+        for(let i=-1;i<=1;i++){ const rib=box(3.7,0.1,0.05,ribMat); rib.position.set(0,-wallH/2+i*1.1,0.04); grp.add(rib); }
+        grp.traverse(o=>{o.castShadow=true;o.receiveShadow=true;});
+        scene.add(grp);
+        const drum=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,3.75,12), frameMat);
+        drum.rotation.z=Math.PI/2; drum.position.set(bx, doorY0+wallH+0.12, sz*5); drum.castShadow=true; scene.add(drum);
+        this.sideWalls.push(grp);
+      });
+    });
+
+    // ---- straw bales ----
+    const baleMats=['#cda23f','#c79a36','#d3ab48','#c4972f','#d8b257'].map(c=>mat(c,{r:0.96}));
+    const bm=()=>baleMats[(Math.random()*baleMats.length)|0];
+    const bale=(x,y,z,rot=0)=>{const b=box(1.9,0.85,0.95,bm());b.position.set(x,y,z);if(rot)b.rotation.y=rot;scene.add(b);};
+    const slabY=floorTop;
+    // main storage block (x -9.2 .. -1.6, z -3.6 .. 3.6, 4 layers)
+    for(let L=0;L<4;L++){
+      const yy = slabY + 0.43 + L*0.86;
+      const off = (L%2)?0.45:0;
+      for(let cx=0;cx<4;cx++){
+        for(let rz=0;rz<7;rz++){
+          const x=-9.0+cx*2.05+off;
+          const z=-3.4+rz*1.02;
+          if(x>-1.3) continue;
+          bale(x,yy,z);
+        }
+      }
+    }
+    // a lower secondary stack near middle-front (2 high)
+    for(let L=0;L<2;L++){
+      for(let rz=0;rz<5;rz++){
+        bale(1.2, slabY+0.43+L*0.86, -2.2+rz*1.02);
+      }
+    }
+    // a few bales staged on the loading apron
+    bale(11.2,0.5,-2.0); bale(11.2,0.5,-1.0); bale(11.2,1.36,-1.5);
+
+    // ---- vehicles ----
+    // truck at front apron, facing warehouse (-X)
+    const truck=new THREE.Group();
+    const cab=box(2.4,2.0,2.4,mat('#2f5f8c',{m:0.3,r:0.5})); cab.position.set(-2.2,1.5,0);
+    const bed=box(5.2,0.5,2.6,mat('#6a6f73',{m:0.3,r:0.6})); bed.position.set(1.0,0.95,0);
+    const cabWin=box(0.1,0.9,2.0,mat('#9fc4dd',{m:0.2,r:0.2})); cabWin.position.set(-3.4,1.7,0);
+    truck.add(cab,bed,cabWin);
+    // bales on bed
+    [-0.4,1.5].forEach(bx=>[-0.7,0.7].forEach(bz=>{const b=box(1.7,0.8,0.9,bm());b.position.set(bx,1.6,bz);truck.add(b);}));
+    // wheels
+    const wheelMat=mat('#23262a',{r:0.7});
+    [[-2.2,1],[-2.2,-1],[1.2,1],[1.2,-1],[2.6,1],[2.6,-1]].forEach(([wx,wz])=>{
+      const w=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.55,0.45,16),wheelMat);
+      w.rotation.x=Math.PI/2; w.position.set(wx,0.55,wz*1.25); w.castShadow=true; truck.add(w);
+    });
+    truck.position.set(16.5,0,-1.5); truck.traverse(o=>{o.castShadow=true;o.receiveShadow=true;}); scene.add(truck);
+
+    // forklift inside lane
+    const fork=new THREE.Group();
+    const fbody=box(1.4,1.2,1.2,mat('#d9821f',{m:0.3,r:0.5})); fbody.position.set(0,0.95,0);
+    const mast=box(0.18,2.2,1.0,steelDark); mast.position.set(0.8,1.4,0);
+    const forks=box(1.0,0.12,0.9,steelDark); forks.position.set(1.3,0.55,0);
+    const lifted=box(1.7,0.8,0.9,bm()); lifted.position.set(1.5,1.05,0);
+    [[-0.4,0.55],[-0.4,-0.55],[0.7,0.55],[0.7,-0.55]].forEach(([wx,wz])=>{
+      const w=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.35,14),wheelMat);
+      w.rotation.x=Math.PI/2; w.position.set(wx,0.4,wz); fork.add(w);
+    });
+    fork.add(fbody,mast,forks,lifted);
+    fork.position.set(4.5,floorTop,-1.5); fork.rotation.y=Math.PI;
+    fork.traverse(o=>{o.castShadow=true;o.receiveShadow=true;}); scene.add(fork);
+    this.forklift = fork; this.truck = truck;
+
+    // ---- trees / bushes ----
+    const trunkMat=mat('#6b4f2a',{r:0.95});
+    const tree=(x,z,s=1)=>{
+      const g=new THREE.Group();
+      const tk=new THREE.Mesh(new THREE.CylinderGeometry(0.25*s,0.35*s,2.6*s,8),trunkMat);
+      tk.position.y=1.3*s; tk.castShadow=true; g.add(tk);
+      const foliageMats=[mat('#4f7d39',{r:0.95}),mat('#5e8f43',{r:0.95}),mat('#447033',{r:0.95})];
+      [[0,3.0,0,1.5],[0.9,3.6,0.4,1.0],[-0.7,3.4,-0.5,1.1],[0.2,4.2,-0.3,0.9]].forEach(([fx,fy,fz,fr],i)=>{
+        const f=new THREE.Mesh(new THREE.IcosahedronGeometry(fr*s,0),foliageMats[i%3]);
+        f.position.set(fx*s,fy*s,fz*s); f.castShadow=true; g.add(f);
+      });
+      g.position.set(x,0,z); scene.add(g);
+    };
+    [[ -22,10,1.2],[-26,4,1],[22,-12,1.1],[30,9,1.3],[-18,-2,0.9],[34,-3,1],[ -30,13,1.1],[40,12,1.2],[24,18,1]].forEach(([x,z,s])=>tree(x,z,s));
+
+    // ---- labels ----
+    this.createLabels();
+
+    // ---- rain system (hidden until weather = rainy) ----
+    const RN=1800;
+    const rainGeo=new THREE.BufferGeometry();
+    const rPos=new Float32Array(RN*3);
+    for(let i=0;i<RN;i++){ rPos[i*3]=(Math.random()-0.5)*72; rPos[i*3+1]=Math.random()*34; rPos[i*3+2]=(Math.random()-0.5)*72; }
+    rainGeo.setAttribute('position', new THREE.BufferAttribute(rPos,3));
+    const rain=new THREE.Points(rainGeo, new THREE.PointsMaterial({color:'#9fb4c4',size:0.17,transparent:true,opacity:0.55,depthWrite:false}));
+    rain.visible=false; scene.add(rain);
+    this.rain=rain; this.rainPos=rPos;
+    this.sky={ sunny:new THREE.Color('#d2e8f2'), rainy:new THREE.Color('#97a4ad') };
+
+    // ---- dimension lines + labels (hidden until toggled) ----
+    const dimPts=[];
+    const addDim=(a,b)=>dimPts.push(a[0],a[1],a[2],b[0],b[1],b[2]);
+    addDim([-10,0.15,8],[10,0.15,8]); addDim([-10,0.15,7.5],[-10,0.15,8.5]); addDim([10,0.15,7.5],[10,0.15,8.5]);
+    addDim([13.5,0.15,-5],[13.5,0.15,5]); addDim([13,0.15,-5],[14,0.15,-5]); addDim([13,0.15,5],[14,0.15,5]);
+    addDim([-12.5,0,8],[-12.5,5,8]); addDim([-13,5,8],[-12,5,8]); addDim([-13,0,8],[-12,0,8]);
+    addDim([-15,0,0],[-15,7.6,0]); addDim([-15.5,7.6,0],[-14.5,7.6,0]);
+    const dimGeo=new THREE.BufferGeometry(); dimGeo.setAttribute('position', new THREE.Float32BufferAttribute(dimPts,3));
+    const dimLines=new THREE.LineSegments(dimGeo, new THREE.LineBasicMaterial({color:'#33403a'}));
+    dimLines.visible=false; scene.add(dimLines); this.dimLines=dimLines;
+    const dimData=[{t:'20 m',p:[0,0.6,8]},{t:'10 m',p:[13.5,0.6,0]},{t:'5.0 m · eave',p:[-12.5,2.6,8]},{t:'7.6 m · ridge',p:[-15,3.9,0]}];
+    this.dimEls=[];
+    const dhost=this.labelsRef.current;
+    dimData.forEach(dm=>{
+      const el=document.createElement('div'); el.className='zone-label'; el.style.display='none';
+      el.innerHTML='<div style="padding:4px 9px;background:#33403a;color:#fff;border-radius:6px;font-weight:700;font-size:11px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.2);">'+dm.t+'</div>';
+      dhost.appendChild(el);
+      this.dimEls.push({el, v:new THREE.Vector3(dm.p[0],dm.p[1],dm.p[2])});
+    });
+
+    this.target = { pos: camera.position.clone(), look: controls.target.clone() };
+    this.tweening = false;
+    this.doorCur = 1; this.doorTarget = 1;   // 0 = closed, 1 = open
+    this.wallCur = 1; this.wallTarget = 1;
+    window.addEventListener('resize', this.onResize);
+    this.onResize();
+
+    if(this.loadRef.current) this.loadRef.current.style.display='none';
+
+    const tmp = new THREE.Vector3();
+    const loop=()=>{
+      this.raf=requestAnimationFrame(loop);
+      if(this.tweening){
+        camera.position.lerp(this.target.pos,0.07);
+        controls.target.lerp(this.target.look,0.07);
+        if(camera.position.distanceTo(this.target.pos)<0.4) this.tweening=false;
+      }
+      this.doorCur += (this.doorTarget - this.doorCur)*0.12;
+      this.wallCur += (this.wallTarget - this.wallCur)*0.12;
+      if(this.frontDoors) this.frontDoors.forEach(d=> d.group.rotation.y = d.open*this.doorCur);
+      if(this.sideWalls)  this.sideWalls.forEach(g=> g.scale.y = 1 - 0.94*this.wallCur);
+      // rain
+      if(this.rain && this.rain.visible){
+        const p=this.rainPos;
+        for(let i=1;i<p.length;i+=3){ p[i]-=0.6; if(p[i]<0) p[i]=34; }
+        this.rain.geometry.attributes.position.needsUpdate=true;
+      }
+      // site activity: forklift shuttles along the internal lane
+      if(this.state.activity && this.forklift){
+        this.fT=(this.fT||0)+0.006;
+        const ph=(Math.sin(this.fT)+1)/2;
+        this.forklift.position.x = -3 + ph*10.5;
+        this.forklift.rotation.y = Math.cos(this.fT)>=0 ? 0 : Math.PI;
+      }
+      controls.update();
+      this.updateLabels(tmp);
+      renderer.render(scene,camera);
+    };
+    loop();
+  }
+
+  createLabels(){
+    const host=this.labelsRef.current;
+    if(!host) return;
+    host.innerHTML='';
+    this.labelEls=[];
+    this.zones.forEach(z=>{
+      const el=document.createElement('div');
+      el.className='zone-label';
+      el.innerHTML='<div style="display:flex;align-items:center;gap:7px;padding:6px 11px;background:rgba(255,255,255,0.94);border:1px solid '+z.color+';border-radius:20px;box-shadow:0 4px 14px rgba(20,40,25,0.16);white-space:nowrap;font-weight:700;font-size:12px;color:#26342c;"><span style="width:9px;height:9px;border-radius:50%;background:'+z.color+';flex:none;"></span>'+z.label+'</div><div style="width:1px;height:14px;background:'+z.color+';margin:0 auto;opacity:0.7;"></div>';
+      el.onclick=()=>this.selectZone(z.key);
+      host.appendChild(el);
+      this.labelEls.push({el, v:new THREE.Vector3(z.pos[0],z.pos[1],z.pos[2])});
+    });
+  }
+
+  updateLabels(tmp){
+    if(!this.labelEls) return;
+    const show=this.state.labels;
+    const m=this.mountRef.current; const w=m.clientWidth, h=m.clientHeight;
+    this.labelEls.forEach(({el,v})=>{
+      if(!show){ el.style.display='none'; return; }
+      tmp.copy(v).project(this.camera);
+      if(tmp.z>1){ el.style.display='none'; return; }
+      el.style.display='block';
+      el.style.left=((tmp.x*0.5+0.5)*w)+'px';
+      el.style.top=((-tmp.y*0.5+0.5)*h)+'px';
+    });
+    if(this.dimEls){
+      const dshow=this.state.dims;
+      this.dimEls.forEach(({el,v})=>{
+        if(!dshow){ el.style.display='none'; return; }
+        tmp.copy(v).project(this.camera);
+        if(tmp.z>1){ el.style.display='none'; return; }
+        el.style.display='block';
+        el.style.left=((tmp.x*0.5+0.5)*w)+'px';
+        el.style.top=((-tmp.y*0.5+0.5)*h)+'px';
+      });
+    }
+  }
+
+  setView=(name)=>{
+    const v=this.views[name]; if(!v||!this.controls) return;
+    this.target.pos.set(v.pos[0],v.pos[1],v.pos[2]);
+    this.target.look.set(v.look[0],v.look[1],v.look[2]);
+    this.tweening=true;
+    this.controls.autoRotate=false;
+    this.setState({view:name, rotate:false});
+  };
+  zoomIn=()=>this.dolly(0.8);
+  zoomOut=()=>this.dolly(1.25);
+  dolly(f){
+    if(!this.controls) return;
+    const t=this.controls.target;
+    const off=this.camera.position.clone().sub(t);
+    let d=Math.max(8,Math.min(90,off.length()*f));
+    off.setLength(d);
+    this.camera.position.copy(t.clone().add(off));
+    this.tweening=false;
+  }
+  toggleRotate=()=>{
+    if(!this.controls) return;
+    const r=!this.state.rotate;
+    this.controls.autoRotate=r; this.tweening=false;
+    this.setState({rotate:r, view:'iso'});
+  };
+  toggleLabels=()=>this.setState({labels:!this.state.labels});
+  toggleDoors=()=>{ const v=!this.state.doorsOpen; this.doorTarget=v?1:0; this.setState({doorsOpen:v}); };
+  toggleWalls=()=>{ const v=!this.state.wallsOpen; this.wallTarget=v?1:0; this.setState({wallsOpen:v}); };
+  applyWeather(rainy){
+    if(!this.scene) return;
+    this.scene.background.copy(rainy?this.sky.rainy:this.sky.sunny);
+    this.scene.fog.color.copy(rainy?this.sky.rainy:this.sky.sunny);
+    this.scene.fog.near = rainy?42:80; this.scene.fog.far = rainy?150:200;
+    this.sun.intensity = rainy?0.35:1.2; this.sun.color.set(rainy?'#c2cad1':'#fff1d6');
+    this.hemi.intensity = rainy?0.42:0.6; this.hemi.color.set(rainy?'#aab6bf':'#cfe8ff');
+    this.amb.intensity = rainy?0.32:0.22;
+    if(this.rain) this.rain.visible = rainy;
+  }
+  toggleWeather=()=>{ const rainy=this.state.weather!=='rainy'; this.applyWeather(rainy); this.setState({weather:rainy?'rainy':'sunny'}); };
+  toggleActivity=()=>this.setState({activity:!this.state.activity});
+  toggleDims=()=>{ const v=!this.state.dims; if(this.dimLines) this.dimLines.visible=v; this.setState({dims:v}); };
+  selectZone=(key)=>this.setState(s=>({selected: s.selected===key?null:key}));
+
+  renderVals(){
+    const viewLabels={front:'Front',side:'Side',top:'Top',interior:'Interior'};
+    const baseView=(active)=>'display:flex;align-items:center;justify-content:center;padding:11px 8px;border-radius:10px;cursor:pointer;font:600 13px/1 \'Plus Jakarta Sans\';border:1px solid '+(active?'#2f6b3f':'#e1ddd0')+';background:'+(active?'#2f6b3f':'#fff')+';color:'+(active?'#fff':'#33403a')+';';
+    const viewBtns=Object.keys(viewLabels).map(k=>({
+      label:viewLabels[k], onSelect:()=>this.setView(k),
+      style:baseView(this.state.view===k && !this.state.rotate)
+    }));
+
+    const rotateOn=this.state.rotate;
+    const rotateStyle='margin-top:8px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;border-radius:10px;cursor:pointer;font:700 13px/1 \'Plus Jakarta Sans\';border:1px solid '+(rotateOn?'#c8902f':'#e1ddd0')+';background:'+(rotateOn?'#c8902f':'#fff')+';color:'+(rotateOn?'#fff':'#33403a')+';';
+
+    const labelsOn=this.state.labels;
+    const labelsStyle='margin-top:8px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;border-radius:10px;cursor:pointer;font:700 13px/1 \'Plus Jakarta Sans\';border:1px solid '+(labelsOn?'#2f6b3f':'#e1ddd0')+';background:'+(labelsOn?'#eef5ee':'#fff')+';color:'+(labelsOn?'#2f6b3f':'#33403a')+';';
+
+    const closeBtn=(on,c)=>'display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 8px;border-radius:10px;cursor:pointer;font:600 12.5px/1 \'Plus Jakarta Sans\';border:1px solid '+(on?c:'#e1ddd0')+';background:'+(on?c:'#fff')+';color:'+(on?'#fff':'#33403a')+';';
+    const doorsOn=this.state.doorsOpen, wallsOn=this.state.wallsOpen;
+    const rainy=this.state.weather==='rainy', activityOn=this.state.activity, dimsOn=this.state.dims;
+
+    const zoneItems=this.zones.map(z=>{
+      const active=this.state.selected===z.key;
+      return {
+        label:z.label, onSelect:()=>this.selectZone(z.key),
+        style:'display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;border-radius:10px;cursor:pointer;border:1px solid '+(active?z.color:'#ece8dc')+';background:'+(active?'#faf7ef':'#fff')+';',
+        dotStyle:'flex:none;width:11px;height:11px;border-radius:50%;background:'+z.color+';'
+      };
+    });
+
+    const sel=this.zones.find(z=>z.key===this.state.selected);
+    const cardKicker = sel ? 'Selected zone' : 'Overview';
+    const cardTitle = sel ? sel.label : 'Open-sided straw store';
+    const cardDesc = sel ? sel.desc : 'A practical, low-cost warehouse that collects and protects baled rice straw beside the field. Open sides keep it dry, a raised slab beats flooding, and wide access keeps trucks moving. Tap a zone above or a tag in the scene.';
+    const cardHeadStyle='padding:13px 14px;color:#fff;background:'+(sel?sel.color:'#2f6b3f')+';';
+
+    return {
+      mountRef:this.mountRef, labelsRef:this.labelsRef, loadRef:this.loadRef,
+      viewBtns, zoneItems,
+      toggleRotate:this.toggleRotate, rotateStyle, rotateLabel: rotateOn?'Stop rotation':'Rotate 360°',
+      toggleLabels:this.toggleLabels, labelsStyle, labelsLabel: labelsOn?'Hide labels':'Show labels',
+      toggleDoors:this.toggleDoors, doorsStyle:closeBtn(doorsOn,'#2f6b3f'), doorsLabel: doorsOn?'Doors: Open':'Doors: Closed',
+      toggleWalls:this.toggleWalls, wallsStyle:closeBtn(wallsOn,'#3f7fae'), wallsLabel: wallsOn?'Sides: Open':'Sides: Closed',
+      toggleWeather:this.toggleWeather, weatherStyle:closeBtn(rainy,'#5a6b7a'), weatherLabel: rainy?'Weather: Rainy':'Weather: Sunny',
+      toggleActivity:this.toggleActivity, activityStyle:closeBtn(activityOn,'#c8902f'), activityLabel: activityOn?'Activity: On':'Activity: Off',
+      toggleDims:this.toggleDims, dimsStyle:closeBtn(dimsOn,'#33403a'), dimsLabel: dimsOn?'Dimensions: On':'Dimensions: Off',
+      zoomIn:this.zoomIn, zoomOut:this.zoomOut,
+      cardKicker, cardTitle, cardDesc, cardHeadStyle
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:#e9ece2;color:#1f2a24;}
+  .num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;}
+  @media print{
+    body{background:#fff;}
+    .no-print{display:none !important;}
+    .sheet{box-shadow:none !important;margin:0 !important;width:100% !important;max-width:none !important;}
+    .wrap{padding:0 !important;}
+  }
+</style>
+</helmet>
+
+<div class="wrap" style="min-height:100vh;padding:34px 20px;">
+
+  <button onClick="{{ doPrint }}" class="no-print" style="position:fixed;top:22px;right:26px;z-index:20;display:flex;align-items:center;gap:8px;padding:11px 18px;border-radius:11px;border:none;background:#2f6b3f;color:#fff;font:700 13px/1 'Plus Jakarta Sans';cursor:pointer;box-shadow:0 6px 18px rgba(20,40,25,0.22);">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Print / Save PDF
+  </button>
+
+  <div class="sheet" style="max-width:940px;margin:0 auto;background:#fff;box-shadow:0 10px 40px rgba(20,40,25,0.12);border-radius:6px;overflow:hidden;">
+
+    <!-- header band -->
+    <div style="background:#2f6b3f;color:#fff;padding:26px 36px;display:flex;align-items:center;gap:18px;">
+      <div style="width:46px;height:46px;border-radius:11px;background:rgba(255,255,255,0.16);display:flex;align-items:center;justify-content:center;flex:none;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l9-6 9 6v12"/><path d="M3 9h18"/><path d="M8 21v-6h8v6"/></svg>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;opacity:0.8;">Bill of Quantities · บัญชีแสดงปริมาณงานและราคา</div>
+        <div style="font-size:23px;font-weight:800;letter-spacing:-0.01em;margin-top:3px;">โรงเก็บฟางอัดก้อน (Rice Straw Storage Warehouse)</div>
+      </div>
+      <div style="text-align:right;flex:none;">
+        <div style="font-size:11px;opacity:0.8;font-weight:600;">เอกสารเลขที่ / Doc No.</div>
+        <div style="font-size:15px;font-weight:700;">BOQ-SW-01</div>
+      </div>
+    </div>
+
+    <!-- meta grid -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#ece8dc;border-bottom:1px solid #ece8dc;">
+      <div style="background:#fafaf6;padding:13px 18px;"><div style="font-size:10px;color:#9aa499;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">โครงการ / Project</div><div style="font-size:13px;font-weight:700;margin-top:3px;">ศูนย์รวบรวมฟางข้าว</div></div>
+      <div style="background:#fafaf6;padding:13px 18px;"><div style="font-size:10px;color:#9aa499;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">สถานที่ / Location</div><div style="font-size:13px;font-weight:700;margin-top:3px;">พื้นที่นาข้าว ชนบท</div></div>
+      <div style="background:#fafaf6;padding:13px 18px;"><div style="font-size:10px;color:#9aa499;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">ขนาดอาคาร / Footprint</div><div style="font-size:13px;font-weight:700;margin-top:3px;">20 × 10 m (200 m²)</div></div>
+      <div style="background:#fafaf6;padding:13px 18px;"><div style="font-size:10px;color:#9aa499;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">โครงสร้าง / Structure</div><div style="font-size:13px;font-weight:700;margin-top:3px;">เหล็ก ผนังเปิด-ปิดได้ จั่ว</div></div>
+    </div>
+
+    <!-- table -->
+    <div style="padding:8px 28px 0;">
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead>
+          <tr style="background:#26342c;color:#fff;">
+            <th style="text-align:left;padding:10px 8px;font-weight:700;width:42px;">No.</th>
+            <th style="text-align:left;padding:10px 8px;font-weight:700;">รายการ / Description</th>
+            <th style="text-align:center;padding:10px 8px;font-weight:700;width:60px;">หน่วย</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:700;width:74px;">จำนวน</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:700;width:96px;">ราคา/หน่วย</th>
+            <th style="text-align:right;padding:10px 8px;font-weight:700;width:110px;">รวมเงิน (฿)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{ divisions }}" as="d" hint-placeholder-count="7">
+            <tr style="{{ d.headStyle }}">
+              <td style="padding:9px 8px;font-weight:800;color:#2f6b3f;">{{ d.code }}</td>
+              <td colspan="5" style="padding:9px 8px;font-weight:800;color:#2f6b3f;">{{ d.title }}</td>
+            </tr>
+            <sc-for list="{{ d.items }}" as="it" hint-placeholder-count="4">
+              <tr style="border-bottom:1px solid #f0ede3;">
+                <td style="padding:8px;color:#8a948b;vertical-align:top;">{{ it.no }}</td>
+                <td style="padding:8px;">
+                  <div style="font-weight:600;color:#26342c;">{{ it.th }} <span style="color:#2f6b3f;font-weight:700;font-size:9px;vertical-align:super;">{{ it.ref }}</span></div>
+                  <div style="font-size:11px;color:#9aa499;margin-top:1px;">{{ it.en }}</div>
+                </td>
+                <td style="padding:8px;text-align:center;color:#54625a;">{{ it.unit }}</td>
+                <td class="num" style="padding:8px;color:#54625a;">{{ it.qty }}</td>
+                <td class="num" style="padding:8px;color:#54625a;">{{ it.rate }}</td>
+                <td class="num" style="padding:8px;font-weight:700;color:#26342c;">{{ it.amount }}</td>
+              </tr>
+            </sc-for>
+            <tr style="background:#f6f4ec;">
+              <td colspan="5" style="padding:8px 8px;text-align:right;font-weight:700;color:#54625a;font-size:12px;">รวมหมวด {{ d.code }} / Subtotal</td>
+              <td class="num" style="padding:8px;font-weight:800;color:#2f6b3f;">{{ d.subtotal }}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- summary -->
+    <div style="display:flex;gap:24px;padding:24px 36px 30px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:260px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9aa499;margin-bottom:8px;">หมายเหตุ / Notes &amp; Exclusions</div>
+        <ul style="margin:0;padding-left:16px;font-size:11.5px;line-height:1.7;color:#5a675e;">
+          <li>ราคาเป็นการประมาณการเบื้องต้นสำหรับศึกษาความเป็นไปได้ (preliminary, feasibility-stage estimate).</li>
+          <li>ราคาวัสดุและค่าแรงอ้างอิงตลาดชนบทไทย อาจเปลี่ยนแปลงตามพื้นที่และช่วงเวลา.</li>
+          <li>ไม่รวมค่าที่ดิน, ค่าออกแบบ/ขออนุญาต, ระบบไฟฟ้าแรงสูง และงานน้ำประปา.</li>
+          <li>Foundation sizing assumes firm soil; pile foundation not included.</li>
+        </ul>
+      </div>
+      <div style="width:340px;flex:none;border:1px solid #e6e2d6;border-radius:14px;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0ede3;"><span style="font-size:13px;color:#54625a;font-weight:600;">รวมค่างานก่อสร้าง / Direct cost</span><span class="num" style="font-weight:700;">{{ sum.direct }}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0ede3;"><span style="font-size:13px;color:#54625a;font-weight:600;">ค่าดำเนินการ &amp; กำไร / OH &amp; Profit (10%)</span><span class="num" style="font-weight:700;">{{ sum.oh }}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0ede3;"><span style="font-size:13px;color:#54625a;font-weight:600;">เผื่อเหลือเผื่อขาด / Contingency (5%)</span><span class="num" style="font-weight:700;">{{ sum.cont }}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #f0ede3;"><span style="font-size:13px;color:#54625a;font-weight:600;">ภาษีมูลค่าเพิ่ม / VAT (7%)</span><span class="num" style="font-weight:700;">{{ sum.vat }}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:15px 16px;background:#2f6b3f;color:#fff;"><span style="font-size:14px;font-weight:800;">รวมทั้งสิ้น / Grand Total</span><span class="num" style="font-weight:800;font-size:17px;">{{ sum.total }}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 16px;background:#f6f4ec;"><span style="font-size:12px;color:#7c8a80;font-weight:600;">ต้นทุนต่อ ตร.ม. / Cost per m²</span><span class="num" style="font-weight:700;color:#2f6b3f;">{{ sum.perSqm }}</span></div>
+      </div>
+    </div>
+
+    <!-- cost analysis -->
+    <div style="margin:0 36px 26px;">
+      <div style="font-size:14px;font-weight:800;color:#26342c;margin-bottom:14px;">วิเคราะห์ต้นทุน / Cost Analysis</div>
+      <div style="display:flex;gap:26px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:320px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9aa499;margin-bottom:10px;">สัดส่วนต้นทุนต่อหมวด / Cost by Division</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <sc-for list="{{ breakdown }}" as="b" hint-placeholder-count="8">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="{{ b.dotStyle }}"></span>
+                <span style="flex:none;width:128px;font-size:11.5px;color:#3a473f;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ b.code }} · {{ b.label }}</span>
+                <div style="flex:1;height:11px;background:#f0ede3;border-radius:5px;overflow:hidden;"><div style="{{ b.barStyle }}"></div></div>
+                <span class="num" style="flex:none;width:42px;font-size:11px;font-weight:700;color:#54625a;">{{ b.pct }}</span>
+                <span class="num" style="flex:none;width:78px;font-size:11.5px;font-weight:700;color:#26342c;">{{ b.amount }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="width:300px;flex:none;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9aa499;margin-bottom:10px;">ค่าวัสดุ vs ค่าแรง / Material vs Labour</div>
+          <div style="display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid #e6e2d6;">
+            <div style="{{ split.matBarStyle }}">{{ split.matPct }}</div>
+            <div style="{{ split.labBarStyle }}">{{ split.labPct }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;"><span style="display:flex;align-items:center;gap:8px;color:#3a473f;font-weight:600;"><span style="width:11px;height:11px;border-radius:3px;background:#2f6b3f;"></span>ค่าวัสดุ / Material</span><span class="num" style="font-weight:700;">{{ split.matAmt }}</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:12.5px;"><span style="display:flex;align-items:center;gap:8px;color:#3a473f;font-weight:600;"><span style="width:11px;height:11px;border-radius:3px;background:#c8902f;"></span>ค่าแรง / Labour</span><span class="num" style="font-weight:700;">{{ split.labAmt }}</span></div>
+          </div>
+          <div style="font-size:10.5px;color:#a7afa4;margin-top:10px;line-height:1.5;">* สัดส่วนวัสดุ-แรงงานเป็นค่าประมาณตามลักษณะงานแต่ละหมวด · Material/labour ratios are typical estimates per work type.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- benchmark -->
+    <div style="margin:0 36px 26px;border:1px solid #e6e2d6;border-radius:14px;padding:18px 20px;background:#fafaf6;">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:6px;">
+        <div style="font-size:14px;font-weight:800;color:#26342c;">เทียบราคาตลาด / Cost Benchmark</div>
+        <div style="font-size:12px;color:#7c8a80;">ต้นทุนต่อ ตร.ม. ของโครงการนี้ <span style="font-weight:800;color:#2f6b3f;">{{ bench.project }}/ตร.ม.</span></div>
+      </div>
+      <div style="position:relative;height:10px;border-radius:6px;background:linear-gradient(90deg,#a9d2b3,#e7d27e,#e0a06a);margin:18px 4px 8px;">
+        <div style="{{ bench.markerStyle }}">
+          <div style="width:3px;height:20px;background:#26342c;margin:0 auto;border-radius:2px;"></div>
+          <div style="font-size:10px;font-weight:800;color:#26342c;white-space:nowrap;margin-top:2px;">โครงการนี้</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#9aa499;font-weight:600;margin-top:18px;">
+        <span>{{ bench.min }}/ตร.ม.</span>
+        <span>ช่วงราคาก่อสร้างโกดังโครงสร้างเหล็กในตลาด (Pebsteel / Easy Warehouse)<sup style="color:#2f6b3f;"> R5</sup></span>
+        <span>{{ bench.max }}/ตร.ม.</span>
+      </div>
+      <div style="font-size:11.5px;color:#54625a;margin-top:12px;line-height:1.5;">โครงการนี้อยู่ในช่วง <b>กลาง</b> ของราคาตลาด สมเหตุผลกับอาคารกึ่งปิดที่มี <b>ประตูหน้าและผนังด้านข้างแบบเปิด-ปิดได้</b> เพิ่มการกันฝนและความปลอดภัย แต่ยังคงระบายอากาศได้ · This project sits mid-range, reflecting the added front doors and openable side walls for rain protection and security while keeping ventilation.</div>
+    </div>
+
+    <!-- references -->
+    <div style="margin:0 36px 26px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9aa499;margin-bottom:10px;">แหล่งอ้างอิงราคา / Price References (ปี พ.ศ. 2568 / 2025)</div>
+      <div style="display:flex;flex-direction:column;gap:7px;font-size:11.5px;line-height:1.5;color:#54625a;">
+        <div style="display:flex;gap:10px;"><span style="flex:none;font-weight:800;color:#2f6b3f;width:26px;">R1</span><span>สำนักงานนโยบายและยุทธศาสตร์การค้า (สนค.) กระทรวงพาณิชย์ — ราคาวัสดุก่อสร้างรายจังหวัด 2568 · <span style="color:#9aa499;">index.tpso.go.th/construction-material-prices</span></span></div>
+        <div style="display:flex;gap:10px;"><span style="flex:none;font-weight:800;color:#2f6b3f;width:26px;">R2</span><span>บัญชีราคาค่าวัสดุก่อสร้างและค่าแรงงาน ปีงบประมาณ 2568 (สพฐ. กระทรวงศึกษาธิการ) — คอนกรีตผสมเสร็จโครงสร้างติดดิน ~1,845 บาท/ลบ.ม. · <span style="color:#9aa499;">yotathai.com/yotanews/obec2568</span></span></div>
+        <div style="display:flex;gap:10px;"><span style="flex:none;font-weight:800;color:#2f6b3f;width:26px;">R3</span><span>แสงไทยเมทัลชีท (2568) — หลังคาเมทัลชีททรงจั่ว หนารวม ≥0.47 มม. ราคา 370–430 บาท/ตร.ม. · <span style="color:#9aa499;">sangthaimetalsheet.com</span></span></div>
+        <div style="display:flex;gap:10px;"><span style="flex:none;font-weight:800;color:#2f6b3f;width:26px;">R4</span><span>KS Group Metal Sheet — ค่าวัสดุเมทัลชีท 200–300 บาท/ตร.ม. (เคลือบสี 300–400 บาท/ตร.ม.) · <span style="color:#9aa499;">ksgroup-metalsheet.com</span></span></div>
+        <div style="display:flex;gap:10px;"><span style="flex:none;font-weight:800;color:#2f6b3f;width:26px;">R5</span><span>Pebsteel TH / Easy Warehouse — โครงสร้างเหล็ก main frame 2,500–3,500 บาท/ตร.ม. · ราคารวมก่อสร้างโกดังโครงสร้างเหล็ก 5,500–9,000 บาท/ตร.ม. · <span style="color:#9aa499;">th.pebsteel.com · easywarehouse-thailand.com</span></span></div>
+        <div style="display:flex;gap:10px;"><span style="flex:none;font-weight:800;color:#2f6b3f;width:26px;">R6</span><span>มูลนิธิประเมินค่า-นายหน้าแห่งประเทศไทย — ราคาประเมินค่าก่อสร้างอาคาร (อ้างอิงเทียบเคียง) · <span style="color:#9aa499;">thaiappraisal.org</span></span></div>
+      </div>
+      <div style="font-size:10.5px;color:#a7afa4;margin-top:12px;line-height:1.5;">* ราคาทั้งหมดเป็นราคาประมาณการเทียบเคียงจากแหล่งอ้างอิงสาธารณะ ปี พ.ศ. 2568 ยังไม่ใช่ราคาเสนอจริงจากผู้รับเหมา — ควรขอใบเสนอราคา (Quotation) จากผู้รับเหมาในพื้นที่เพื่อยืนยันราคาก่อนดำเนินการ · All rates are comparative estimates from public 2025 sources; obtain contractor quotations before execution.</div>
+    </div>
+
+    <div style="padding:14px 36px 22px;border-top:1px solid #f0ede3;display:flex;justify-content:space-between;font-size:11px;color:#9aa499;">
+      <span>จัดทำเพื่อการนำเสนอโครงการและศึกษาความเป็นไปได้ · For project presentation &amp; feasibility study</span>
+      <span>สกุลเงิน: บาท (THB) · อ้างอิงราคาปี พ.ศ. 2568</span>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:960,&quot;height&quot;:1240}}">
+class Component extends DCLogic {
+  data = [
+    { code:'A', title:'งานเตรียมพื้นที่และงานดิน / Site & Earthwork', items:[
+      ['A1','ปรับเกลี่ยและถางพื้นที่','Site clearing & leveling','ตร.ม.',400,25,'R1'],
+      ['A2','ขุดดินฐานราก','Excavation for footings','ลบ.ม.',30,180,'R1'],
+      ['A3','ถมบดอัดแน่นใต้พื้น','Compacted fill under slab','ลบ.ม.',120,220,'R1'],
+      ['A4','วางผังและสำรวจ','Setting out & survey','เหมา',1,8000,''],
+    ]},
+    { code:'B', title:'งานคอนกรีตและฐานราก / Concrete & Foundation', items:[
+      ['B1','คอนกรีตหยาบรองพื้น','Lean concrete blinding','ลบ.ม.',6,2300,'R2'],
+      ['B2','ฐานรากเสา ค.ส.ล. (12 ต้น)','RC column footings','ลบ.ม.',9,3000,'R2'],
+      ['B3','พื้นยกระดับ ค.ส.ล. หนา 0.15 ม.','Raised RC floor slab','ลบ.ม.',30,2900,'R2'],
+      ['B4','คานคอดิน / คานขอบ','Grade & edge beams','ลบ.ม.',8,3200,'R2'],
+      ['B5','เหล็กเสริม','Reinforcement steel','กก.',3500,32,'R1'],
+      ['B6','ไม้แบบหล่อคอนกรีต','Formwork','ตร.ม.',180,280,''],
+    ]},
+    { code:'C', title:'งานโครงสร้างเหล็ก / Structural Steel', items:[
+      ['C1','เสาเหล็ก H-150 (12 ต้น)','Steel columns H-150','ต้น',12,4800,'R5'],
+      ['C2','โครงหลังคาเหล็ก (จันทัน)','Steel roof trusses','ชุด',6,9500,'R5'],
+      ['C3','แปและค้ำยันกันลม','Purlins & wind bracing','กก.',1200,48,'R5'],
+      ['C4','แผ่นเหล็กฐานและสมอยึด','Base plates & anchor bolts','ชุด',12,850,''],
+      ['C5','สีกันสนิมและสีทับหน้า','Anti-rust primer & paint','ตร.ม.',380,85,''],
+    ]},
+    { code:'D', title:'งานหลังคาและกันฝน / Roofing & Rain Protection', items:[
+      ['D1','หลังคาเมทัลชีท หนา 0.47 มม.','Metal sheet roofing 0.47mm','ตร.ม.',280,380,'R3'],
+      ['D2','ฉนวนพียู ใต้หลังคา','PU insulation under roof','ตร.ม.',280,150,'R4'],
+      ['D3','ครอบสันและแผ่นปิดรอยต่อ','Ridge cap & flashing','ม.',24,180,'R3'],
+      ['D4','รางน้ำฝน','Gutters','ม.',44,280,''],
+      ['D5','ท่อระบายน้ำฝน','Downpipes','ม.',24,220,''],
+    ]},
+    { code:'E', title:'งานระบบระบายน้ำ / Drainage', items:[
+      ['E1','รางระบายน้ำ ค.ส.ล. รอบอาคาร','Perimeter RC drainage channel','ม.',60,650,'R2'],
+      ['E2','ฝาปิด / ตะแกรงราง','Channel cover / grating','ม.',60,220,''],
+      ['E3','จุดเชื่อมต่อลงคลองชลประทาน','Outlet connection to canal','เหมา',1,12000,''],
+    ]},
+    { code:'F', title:'งานถนนและลานจอด / Access Road & Apron', items:[
+      ['F1','ถนนลูกรังบดอัด','Compacted laterite road','ตร.ม.',200,280,'R1'],
+      ['F2','ลานคอนกรีตและทางลาดขนถ่าย','Concrete apron & loading ramp','ตร.ม.',60,1200,'R2'],
+    ]},
+    { code:'G', title:'งานระบบและเบ็ดเตล็ด / Services & Miscellaneous', items:[
+      ['G1','ระบบไฟส่องสว่าง LED','LED high-bay lighting','เหมา',1,35000,''],
+      ['G2','อุปกรณ์ความปลอดภัยและดับเพลิง','Safety & fire equipment','เหมา',1,18000,''],
+      ['G3','ป้ายและการแบ่งโซน','Signage & zone marking','เหมา',1,6000,''],
+    ]},
+    { code:'H', title:'งานผนังและประตูเปิด-ปิด / Walls & Openable Doors', items:[
+      ['H1','ประตูเหล็กบานเปิดคู่ หน้าโรงเรือน (พร้อมวงกบ)','Front steel double swing doors (incl. frame)','ชุด',1,48000,'R5'],
+      ['H2','ผนังเมทัลชีทด้านข้างแบบม้วนเปิด-ปิด พร้อมรางและแกนม้วน','Roll-up metal-sheet side walls (incl. track & drum)','ชุด',10,11500,'R3'],
+      ['H3','อุปกรณ์ยึด รางเลื่อน และงานติดตั้ง','Hardware, tracks & installation','เหมา',1,15000,''],
+    ]},
+  ];
+
+  doPrint = () => window.print();
+
+  // typical material : labour split per division (material fraction)
+  matFrac = { A:0.35, B:0.60, C:0.70, D:0.65, E:0.55, F:0.50, G:0.70, H:0.65 };
+
+  renderVals(){
+    const f = n => Math.round(n).toLocaleString('en-US');
+    let direct = 0;
+    const subs = {};
+    const divisions = this.data.map(d=>{
+      let sub = 0;
+      const items = d.items.map(([no,th,en,unit,qty,rate,ref])=>{
+        const amount = qty*rate; sub += amount;
+        return { no, th, en, unit, qty:qty.toLocaleString('en-US'), rate:f(rate), amount:f(amount), ref:ref||'' };
+      });
+      direct += sub; subs[d.code]=sub;
+      return { code:d.code, title:d.title, items, subtotal:f(sub),
+        headStyle:'background:#eef3ec;border-top:2px solid #2f6b3f;' };
+    });
+
+    // cost breakdown by division + material/labour split
+    const palette=['#2f6b3f','#3f7fae','#c8902f','#7a6cc4','#5aa17a','#c25b46','#9a7b4f','#6a8caf'];
+    let matTotal=0, labTotal=0;
+    const breakdown = this.data.map((d,i)=>{
+      const sub=subs[d.code]; const mf=this.matFrac[d.code]??0.6;
+      matTotal+=sub*mf; labTotal+=sub*(1-mf);
+      const pct=sub/direct*100;
+      const enTitle=(d.title.split('/')[1]||d.title).trim();
+      return { code:d.code, label:enTitle, amount:'฿ '+f(sub), pct:pct.toFixed(1)+'%',
+        barStyle:'height:100%;width:'+pct.toFixed(1)+'%;background:'+palette[i%palette.length]+';border-radius:5px;',
+        dotStyle:'flex:none;width:9px;height:9px;border-radius:2px;background:'+palette[i%palette.length]+';' };
+    });
+    const matPct=matTotal/direct*100, labPct=labTotal/direct*100;
+    const split = {
+      matAmt:'฿ '+f(matTotal), labAmt:'฿ '+f(labTotal),
+      matPct:matPct.toFixed(0)+'%', labPct:labPct.toFixed(0)+'%',
+      matBarStyle:'height:100%;width:'+matPct.toFixed(1)+'%;background:#2f6b3f;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;',
+      labBarStyle:'height:100%;width:'+labPct.toFixed(1)+'%;background:#c8902f;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;'
+    };
+
+    const oh = direct*0.10;
+    const cont = direct*0.05;
+    const beforeVat = direct+oh+cont;
+    const vat = beforeVat*0.07;
+    const total = beforeVat+vat;
+    const perSqmNum = total/200;
+    const sum = {
+      direct:'฿ '+f(direct), oh:'฿ '+f(oh), cont:'฿ '+f(cont), vat:'฿ '+f(vat),
+      total:'฿ '+f(total), perSqm:'฿ '+f(perSqmNum)+' /ตร.ม.'
+    };
+    // market benchmark for steel-structure warehouses: 5,500–9,000 THB/m²
+    const bMin=5500, bMax=9000;
+    const bPos = Math.max(0,Math.min(100, (perSqmNum-bMin)/(bMax-bMin)*100));
+    const bench = {
+      project:'฿ '+f(perSqmNum), min:'฿ '+f(bMin), max:'฿ '+f(bMax),
+      markerStyle:'position:absolute;top:-5px;left:'+bPos.toFixed(1)+'%;transform:translateX(-50%);'
+    };
+    return { divisions, sum, bench, breakdown, split, doPrint:this.doPrint };
+  }
+}
+</script>
+</body>
+</html>
