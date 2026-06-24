@@ -129,8 +129,8 @@ export const META = [
 ]
 
 export const NOTES = [
-  'ราคาเป็นการประมาณการเบื้องต้นสำหรับศึกษาความเป็นไปได้ (preliminary, feasibility-stage estimate).',
-  'ราคาวัสดุและค่าแรงอ้างอิงตลาดชนบทไทย อาจเปลี่ยนแปลงตามพื้นที่และช่วงเวลา.',
-  'ไม่รวมค่าที่ดิน, ค่าออกแบบ/ขออนุญาต, ระบบไฟฟ้าแรงสูง และงานน้ำประปา.',
-  'Foundation sizing assumes firm soil; pile foundation not included.',
+  'ราคาเป็นการประมาณการเบื้องต้นสำหรับศึกษาความเป็นไปได้ · Preliminary, feasibility-stage estimate.',
+  'ราคาวัสดุและค่าแรงอ้างอิงตลาดชนบทไทย อาจเปลี่ยนแปลงตามพื้นที่และช่วงเวลา · Material & labour rates reference rural Thai market; may vary by area and timing.',
+  'ไม่รวมค่าที่ดิน, ค่าออกแบบ/ขออนุญาต, ระบบไฟฟ้าแรงสูง และงานน้ำประปา · Excludes land cost, design/permit fees, HV electrical, and water supply.',
+  'การออกแบบฐานรากสำหรับดินแข็ง ไม่รวมเสาเข็ม · Foundation sizing assumes firm soil; pile foundation not included.',
 ]

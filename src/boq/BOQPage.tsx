@@ -149,10 +149,10 @@ export default function BOQPage() {
                 <tr className="bg-[#26342c] text-white">
                   <th className="w-[42px] p-[10px_8px] text-left font-bold">No.</th>
                   <th className="p-[10px_8px] text-left font-bold">รายการ / Description</th>
-                  <th className="w-[60px] p-[10px_8px] text-center font-bold">หน่วย</th>
-                  <th className="num w-[74px] p-[10px_8px] font-bold">จำนวน</th>
-                  <th className="num w-[96px] p-[10px_8px] font-bold">ราคา/หน่วย</th>
-                  <th className="num w-[110px] p-[10px_8px] font-bold">รวมเงิน (฿)</th>
+                  <th className="w-[68px] p-[10px_8px] text-center font-bold">หน่วย / Unit</th>
+                  <th className="num w-[74px] p-[10px_8px] font-bold">จำนวน / Qty</th>
+                  <th className="num w-[100px] p-[10px_8px] font-bold">ราคา/หน่วย / Rate</th>
+                  <th className="num w-[115px] p-[10px_8px] font-bold">รวมเงิน / Amount (฿)</th>
                 </tr>
               </thead>
               <tbody>
@@ -248,8 +248,8 @@ export default function BOQPage() {
                 เทียบราคาตลาด / Cost Benchmark
               </div>
               <div className="text-xs text-[#7c8a80]">
-                ต้นทุนต่อ ตร.ม. ของโครงการนี้{' '}
-                <span className="font-extrabold text-forest">฿{f(c.perSqm)}/ตร.ม.</span>
+                ต้นทุนต่อ ตร.ม. ของโครงการนี้ / This project's cost per m²{' '}
+                <span className="font-extrabold text-forest">฿{f(c.perSqm)}/ตร.ม. (m²)</span>
               </div>
             </div>
             <div className="relative mx-1 mt-[18px] h-2.5 rounded-md bg-gradient-to-r from-[#a9d2b3] via-[#e7d27e] to-[#e0a06a]">
@@ -259,17 +259,17 @@ export default function BOQPage() {
               >
                 <div className="mx-auto h-5 w-[3px] rounded-sm bg-[#26342c]" />
                 <div className="mt-0.5 whitespace-nowrap text-[10px] font-extrabold text-[#26342c]">
-                  โครงการนี้
+                  โครงการนี้ / This project
                 </div>
               </div>
             </div>
             <div className="mt-[18px] flex justify-between text-[11px] font-semibold text-[#9aa499]">
-              <span>฿{f(BENCH_MIN)}/ตร.ม.</span>
+              <span>฿{f(BENCH_MIN)}/ตร.ม. (m²)</span>
               <span>
-                ช่วงราคาก่อสร้างโกดังโครงสร้างเหล็กในตลาด (Pebsteel / Easy Warehouse)
+                ช่วงราคาก่อสร้างโกดังโครงสร้างเหล็กในตลาด / Steel warehouse market range (Pebsteel / Easy Warehouse)
                 <sup className="text-forest"> R5</sup>
               </span>
-              <span>฿{f(BENCH_MAX)}/ตร.ม.</span>
+              <span>฿{f(BENCH_MAX)}/ตร.ม. (m²)</span>
             </div>
             <div className="mt-3 text-[11.5px] leading-[1.5] text-[#54625a]">
               โครงการนี้อยู่ในช่วง <b>กลาง</b> ของราคาตลาด สมเหตุผลกับอาคารกึ่งปิดที่มี{' '}
@@ -406,7 +406,7 @@ function SummaryCard({
       </div>
       <div className="flex justify-between bg-[#f6f4ec] px-4 py-2.5">
         <span className="text-xs font-semibold text-[#7c8a80]">ต้นทุนต่อ ตร.ม. / Cost per m²</span>
-        <span className="num font-bold text-forest">฿{f(perSqm)} /ตร.ม.</span>
+        <span className="num font-bold text-forest">฿{f(perSqm)} /ตร.ม. (m²)</span>
       </div>
     </div>
   )
