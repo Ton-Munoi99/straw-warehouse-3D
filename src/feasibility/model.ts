@@ -303,7 +303,7 @@ export const REFERENCES: Reference[] = [
     org: 'เทคโนโลยีชาวบ้าน / ข่าวสด · Khaosod Technology Chaoban',
     th: 'ธุรกิจฟางข้าวอัดก้อน — ต้นทุนรับจ้างอัด 13–15 ฿/ก้อน · รับซื้อจากเกษตรกร 5–12 ฿/ก้อน · ขายหน้าโกดัง 25 ฿/ก้อน · หน้าฝน 30–35 ฿/ก้อน · ก้อนละ ~30 กก. (40×120 ซม.)',
     en: 'Baling business — service 13–15 ฿/bale · buy 5–12 ฿/bale · sell 25 ฿ (30–35 ฿ rainy)',
-    figure: 'ราคารับซื้อ/ขายต่อก้อน · ค่าอัดฟาง',
+    figure: 'ราคารับซื้อ/ขายต่อก้อน · ค่าอัดฟาง / Buy-sell & baling price per bale',
     url: 'khaosod.co.th/technologychaoban/how-to/process/article_265417',
   },
   {
@@ -311,7 +311,7 @@ export const REFERENCES: Reference[] = [
     org: 'Thai Rice Farming Simulator (ผู้จัดทำเดียวกัน)',
     th: 'แบบจำลองทำนาข้าว — มูลค่าฟางข้าว 0.75–1.15 ฿/กก. และโครงสร้างต้นทุน-รายได้นาข้าวภาคกลาง',
     en: 'Own rice-farming model — straw value 0.75–1.15 ฿/kg; central-plains cost/revenue structure',
-    figure: 'มูลค่าฟางดิบ · ผลผลิต/ต้นทุนนาข้าว',
+    figure: 'มูลค่าฟางดิบ · ผลผลิต/ต้นทุนนาข้าว / Raw straw value & paddy economics',
     url: 'thai-rice-farming-simulator.netlify.app',
   },
   {
@@ -319,7 +319,7 @@ export const REFERENCES: Reference[] = [
     org: 'NPS (National Power Supply) · Ratch Pathana Energy',
     th: 'ศูนย์รับซื้อชีวมวล/โรงไฟฟ้าชีวมวลภาคตะวันออก (ฉะเชิงเทรา–ปราจีนบุรี, นิคม 304) — รับซื้อเศษวัสดุเกษตรเป็นเชื้อเพลิงตลอดปี',
     en: 'Eastern-region biomass plants & feedstock buying centers (Chachoengsao–Prachinburi, 304 Industrial Park) — year-round agri-residue offtake',
-    figure: 'ช่องทางระบายฟางชีวมวล (baseload)',
+    figure: 'ช่องทางระบายฟางชีวมวล (baseload) / Biomass offtake channel',
     url: 'npsplc.com · ratchpathana.com/th/our-businesses',
   },
   {
@@ -327,7 +327,7 @@ export const REFERENCES: Reference[] = [
     org: 'สนง.เกษตรฯ (opsmoac) · รักบ้านเกิด · Locals Thai PBS',
     th: 'อัดฟางก้อนสร้างรายได้หลังเก็บเกี่ยว — เฉลี่ย 40–60 ก้อน/ไร่ · รายได้ 1,000–1,500 ฿/ไร่ · อัดได้ ~1,000 ก้อน/วัน',
     en: 'Post-harvest baling income — 40–60 bales/rai · 1,000–1,500 ฿/rai · ~1,000 bales/day',
-    figure: 'ผลผลิตฟางต่อไร่ · กำลังการผลิต',
+    figure: 'ผลผลิตฟางต่อไร่ · กำลังการผลิต / Bales per rai & daily capacity',
     url: 'opsmoac.go.th · rakbankerd.com · localsthaipbs.net',
   },
   {
@@ -335,7 +335,7 @@ export const REFERENCES: Reference[] = [
     org: 'BOQ-SW-01 (เอกสารชุดนี้)',
     th: 'ราคาก่อสร้างโรงเก็บฟาง 20×10 ม. = ฿1,451,769 (≈ ฿7,259/ตร.ม.) อ้างอิงราคาวัสดุ-ค่าแรง ปี 2568',
     en: 'Warehouse construction cost ฿1,451,769 (≈ ฿7,259/m²), 2025 material/labour basis',
-    figure: 'CapEx โรงเก็บฟาง',
+    figure: 'CapEx โรงเก็บฟาง / Warehouse CapEx',
     url: '/boq',
   },
 ]
@@ -352,11 +352,25 @@ export const LOCATIONS: LocationOption[] = [
   {
     province: 'Chachoengsao', th: 'ฉะเชิงเทรา', score: 5, recommended: true,
     pros: [
-      'ศูนย์กลางโรงไฟฟ้าชีวมวล/อุตสาหกรรม (NPS, นิคม 304) — ระบายฟางได้ตลอดปี',
-      'พื้นที่นาข้าวภาคกลาง-ตะวันออกหนาแน่น วัตถุดิบใกล้',
-      'โลจิสติกส์ดี ใกล้ EEC / ท่าเรือ / ตลาดปศุสัตว์ภาคตะวันออก',
+      'ศูนย์กลางโรงไฟฟ้าชีวมวล/อุตสาหกรรม (NPS, นิคม 304) — ระบายฟางได้ตลอดปี · Biomass/industrial hub (NPS, 304 Estate) — year-round straw offtake',
+      'พื้นที่นาข้าวภาคกลาง-ตะวันออกหนาแน่น วัตถุดิบใกล้ · Dense central-eastern paddy area — feedstock close by',
+      'โลจิสติกส์ดี ใกล้ EEC / ท่าเรือ / ตลาดปศุสัตว์ภาคตะวันออก · Good logistics — near EEC / ports / eastern livestock market',
     ],
   },
-  { province: 'Suphan Buri / Ayutthaya', th: 'สุพรรณบุรี / อยุธยา', score: 4, pros: ['อู่ข้าวภาคกลาง วัตถุดิบล้นตลาด', 'ราคาวัตถุดิบถูก', 'ไกลโรงไฟฟ้าชีวมวลกว่า — ค่าขนสูงขึ้น'] },
-  { province: 'Nakhon Ratchasima', th: 'นครราชสีมา', score: 4, pros: ['ตลาดปศุสัตว์ (โค) ใหญ่ที่สุด — ราคาฟางพรีเมียม', 'พื้นที่นากว้าง', 'กระจายตัว ระยะขนส่งไกล'] },
+  {
+    province: 'Suphan Buri / Ayutthaya', th: 'สุพรรณบุรี / อยุธยา', score: 4,
+    pros: [
+      'อู่ข้าวภาคกลาง วัตถุดิบล้นตลาด · Central rice bowl — abundant feedstock',
+      'ราคาวัตถุดิบถูก · Cheaper raw material',
+      'ไกลโรงไฟฟ้าชีวมวลกว่า — ค่าขนสูงขึ้น · Farther from biomass plants — higher transport',
+    ],
+  },
+  {
+    province: 'Nakhon Ratchasima', th: 'นครราชสีมา', score: 4,
+    pros: [
+      'ตลาดปศุสัตว์ (โค) ใหญ่ที่สุด — ราคาฟางพรีเมียม · Largest cattle market — premium straw price',
+      'พื้นที่นากว้าง · Large paddy area',
+      'กระจายตัว ระยะขนส่งไกล · Dispersed — long haul distances',
+    ],
+  },
 ]

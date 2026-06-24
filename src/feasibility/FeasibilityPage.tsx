@@ -99,11 +99,11 @@ export default function FeasibilityPage() {
             <FileSpreadsheet size={16} strokeWidth={1.9} /> BOQ
           </Link>
           <button onClick={() => setShowMethod(true)} className="flex items-center gap-2 rounded-[11px] border border-[#3f7fae] bg-white px-4 py-[11px] text-[13px] font-bold text-[#3f7fae] shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
-            <Calculator size={16} strokeWidth={1.9} /> วิธีคำนวณ
+            <Calculator size={16} strokeWidth={1.9} /> วิธีคำนวณ / Method
           </button>
           {simMode ? (
             <button onClick={() => setSimMode(false)} className="flex items-center gap-2 rounded-[11px] border-none bg-[#c25b46] px-4 py-[11px] text-[13px] font-bold text-white shadow-[0_6px_18px_rgba(20,40,25,0.22)]">
-              <X size={16} strokeWidth={1.9} /> ออกจากโหมดจำลอง
+              <X size={16} strokeWidth={1.9} /> ออก / Exit
             </button>
           ) : (
             <button onClick={() => setShowConfirm(true)} className="flex items-center gap-2 rounded-[11px] border-none bg-straw px-4 py-[11px] text-[13px] font-bold text-white shadow-[0_6px_18px_rgba(20,40,25,0.22)]">
@@ -145,9 +145,9 @@ export default function FeasibilityPage() {
           {/* business model strip */}
           <div className="grid grid-cols-3 gap-px border-b border-hairline bg-hairline">
             {[
-              { icon: <Truck size={18} />, th: 'รับซื้อฟางจากเกษตรกร', en: 'Buy baled straw from farmers', sub: '~11 ฿/ก้อน · ช่วงเก็บเกี่ยว' },
-              { icon: <Warehouse size={18} />, th: 'เก็บแห้งในโกดัง', en: 'Store dry in warehouse', sub: 'ยกระดับ กันฝน · เก็บข้ามฤดู' },
-              { icon: <TrendingUp size={18} />, th: 'ขายต่อ 3 ช่องทาง', en: 'Resell to 3 channels', sub: '25–35 ฿/ก้อน · ลูกค้ามารับเอง' },
+              { icon: <Truck size={18} />, th: 'รับซื้อฟางจากเกษตรกร', en: 'Buy baled straw from farmers', sub: '~11 ฿/ก้อน · ช่วงเก็บเกี่ยว · ~11 ฿/bale at harvest' },
+              { icon: <Warehouse size={18} />, th: 'เก็บแห้งในโกดัง', en: 'Store dry in warehouse', sub: 'ยกระดับ กันฝน · เก็บข้ามฤดู · raised, rain-proof, off-season' },
+              { icon: <TrendingUp size={18} />, th: 'ขายต่อ 3 ช่องทาง', en: 'Resell to 3 channels', sub: '25–35 ฿/ก้อน · ลูกค้ามารับเอง · buyers self-pick-up' },
             ].map((s, i) => (
               <div key={i} className="bg-[#fafaf6] px-[18px] py-[14px]">
                 <div className="flex items-center gap-2 text-forest">{s.icon}
@@ -166,12 +166,12 @@ export default function FeasibilityPage() {
             </SectionTitle>
             <div className="grid grid-cols-4 gap-3.5">
               <HeroCard color="#c8902f" label="ระยะคืนทุน / Payback" value={result.paybackYears ? `~${result.paybackYears.toFixed(1)}` : '>10'} unit="ปี / years" />
-              <HeroCard color="#2f6b3f" label="IRR (10 ปี)" value={`${((result.irr ?? 0) * 100).toFixed(1)}%`} unit="อัตราผลตอบแทนภายใน" />
-              <HeroCard color="#3f7fae" label="NPV @ 8%" value={`${result.npv >= 0 ? '+' : ''}${fM(result.npv)}`} unit="มูลค่าปัจจุบันสุทธิ" />
-              <HeroCard color="#5aa17a" label="EBITDA Margin" value={`${result.ebitdaMarginPct.toFixed(0)}%`} unit={`฿${f(result.steadyEbitda)}/ปี`} />
+              <HeroCard color="#2f6b3f" label="IRR (10 ปี / yrs)" value={`${((result.irr ?? 0) * 100).toFixed(1)}%`} unit="อัตราผลตอบแทนภายใน / Internal rate of return" />
+              <HeroCard color="#3f7fae" label="NPV @ 8%" value={`${result.npv >= 0 ? '+' : ''}${fM(result.npv)}`} unit="มูลค่าปัจจุบันสุทธิ / Net present value" />
+              <HeroCard color="#5aa17a" label="EBITDA Margin" value={`${result.ebitdaMarginPct.toFixed(0)}%`} unit={`฿${f(result.steadyEbitda)}/ปี · /yr`} />
             </div>
             <div className="mt-2.5 text-[11px] leading-[1.5] text-[#9aa499]">
-              * ปริมาณ {f(active.throughputT)} ตัน/ปี · เงินลงทุนรวม ฿{f(result.totalCapex)} + ทุนหมุนเวียน ฿{f(active.workingCapital)} · คิดลด {(active.discountRate * 100).toFixed(0)}% · ภาษี {(active.taxRate * 100).toFixed(0)}%
+              * ปริมาณ / throughput {f(active.throughputT)} ตัน/ปี (t/yr) · เงินลงทุนรวม / total outlay ฿{f(result.totalCapex)} + ทุนหมุนเวียน / WC ฿{f(active.workingCapital)} · คิดลด / discount {(active.discountRate * 100).toFixed(0)}% · ภาษี / tax {(active.taxRate * 100).toFixed(0)}%
               {simMode ? ' — ค่าที่คุณกรอกเอง · your inputs' : ' — กดปุ่ม Simulation เพื่อปรับเอง · click Simulation to edit'}
             </div>
           </div>
@@ -206,8 +206,8 @@ export default function FeasibilityPage() {
                     <div key={c.key} className="rounded-[8px] bg-white p-2">
                       <div className="mb-1 text-[11px] font-bold text-ink">{c.th}</div>
                       <div className="flex gap-2">
-                        <NumField label="สัดส่วน" suffix="%" value={c.mix * 100} step={5} small onChange={(v) => patch((n) => (n.channels[i].mix = v / 100))} />
-                        <NumField label="฿/ตัน" suffix={`≈${perBale(c.pricePerTonne)}/ก้อน`} value={c.pricePerTonne} step={50} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v))} />
+                        <NumField label="สัดส่วน / Mix" suffix="%" value={c.mix * 100} step={5} small onChange={(v) => patch((n) => (n.channels[i].mix = v / 100))} />
+                        <NumField label="ราคา / Price" suffix={`฿/ต ≈${perBale(c.pricePerTonne)}/ก้อน`} value={c.pricePerTonne} step={50} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v))} />
                       </div>
                     </div>
                   ))}
@@ -219,7 +219,7 @@ export default function FeasibilityPage() {
                     <NumField key={l.key} label={l.th} suffix="฿/ต" value={l.perTonne} step={10} onChange={(v) => patch((n) => (n.cogsLines[i].perTonne = v))} />
                   ))}
                   <div className="mt-1 rounded-[6px] bg-forest px-2.5 py-1.5 text-[11px] font-bold text-white">
-                    กำไรขั้นต้น {f(gm)} ฿/ต · {perBale(gm)} ฿/ก้อน
+                    กำไรขั้นต้น / Gross margin {f(gm)} ฿/ต · {perBale(gm)} ฿/ก้อน
                   </div>
                 </CtrlGroup>
 
@@ -243,7 +243,7 @@ export default function FeasibilityPage() {
               </div>
               {Math.abs(mixSum - 1) > 0.001 && (
                 <div className="mt-3 rounded-[8px] bg-[#fbe9e4] px-3 py-2 text-[11.5px] font-semibold text-[#c25b46]">
-                  ⚠ สัดส่วนช่องทางรวม {(mixSum * 100).toFixed(0)}% (ควรเป็น 100%) — ราคาเฉลี่ยจะคำนวณตามสัดส่วนที่กรอก
+                  ⚠ สัดส่วนช่องทางรวม {(mixSum * 100).toFixed(0)}% (ควรเป็น 100%) — ราคาเฉลี่ยจะคำนวณตามสัดส่วนที่กรอก · Channel mix sums to {(mixSum * 100).toFixed(0)}% (should be 100%); blended price uses the entered weights.
                 </div>
               )}
             </div>
@@ -260,7 +260,7 @@ export default function FeasibilityPage() {
                   <th className="p-[9px_10px] text-left font-bold">รายการ / Item</th>
                   <th className="num p-[9px_10px] font-bold">ช่วงตลาด / Range</th>
                   <th className="num p-[9px_10px] font-bold">ที่ใช้ / Used</th>
-                  <th className="p-[9px_10px] text-center font-bold">อ้างอิง</th>
+                  <th className="p-[9px_10px] text-center font-bold">อ้างอิง / Ref</th>
                 </tr>
               </thead>
               <tbody>
@@ -331,14 +331,14 @@ export default function FeasibilityPage() {
                   <td className="num p-[9px_10px] font-bold">{(mixSum * 100).toFixed(0)}%</td>
                   <td className="num p-[9px_10px] font-extrabold text-forest">{perBale(sell)}</td>
                   <td className="num p-[9px_10px] font-extrabold text-forest">{f(sell)}</td>
-                  <td className="p-[9px_10px] text-[11px] text-[#7c8a80]">1 ตัน = {bpt} ก้อน</td>
+                  <td className="p-[9px_10px] text-[11px] text-[#7c8a80]">1 ตัน = {bpt} ก้อน · 1 t = {bpt} bales</td>
                 </tr>
               </tbody>
             </table>
             <div className="mt-2 flex flex-col gap-1 text-[11px] leading-[1.5] text-[#7c8a80]">
-              <div><b className="text-forest">R3</b> โรงไฟฟ้าชีวมวล ~21 ฿/ก้อน — NPS / Ratch Pathana ศูนย์รับซื้อชีวมวลภาคตะวันออก · <span className="text-[#3f7fae]">npsplc.com · ratchpathana.com</span></div>
-              <div><b className="text-forest">R1</b> อาหารสัตว์ 30–35 ฿/ก้อน (พรีเมียมหน้าแล้ง) — เทคโนโลยีชาวบ้าน/ข่าวสด · <span className="text-[#3f7fae]">khaosod.co.th/technologychaoban</span></div>
-              <div><b className="text-forest">R4</b> เพาะเห็ด/ความต้องการท้องถิ่น — สนง.เกษตรฯ · รักบ้านเกิด · <span className="text-[#3f7fae]">opsmoac.go.th · rakbankerd.com</span></div>
+              <div><b className="text-forest">R3</b> โรงไฟฟ้าชีวมวล ~21 ฿/ก้อน — NPS / Ratch Pathana ศูนย์รับซื้อชีวมวลภาคตะวันออก · Biomass plants ~21 ฿/bale — eastern feedstock buying centers · <span className="text-[#3f7fae]">npsplc.com · ratchpathana.com</span></div>
+              <div><b className="text-forest">R1</b> อาหารสัตว์ 30–35 ฿/ก้อน (พรีเมียมหน้าแล้ง) — เทคโนโลยีชาวบ้าน/ข่าวสด · Cattle feed 30–35 ฿/bale (dry-season premium) · <span className="text-[#3f7fae]">khaosod.co.th/technologychaoban</span></div>
+              <div><b className="text-forest">R4</b> เพาะเห็ด/ความต้องการท้องถิ่น — สนง.เกษตรฯ · รักบ้านเกิด · Mushroom & local demand — Dept. of Agriculture · <span className="text-[#3f7fae]">opsmoac.go.th · rakbankerd.com</span></div>
             </div>
           </div>
 
@@ -366,7 +366,7 @@ export default function FeasibilityPage() {
           {/* capex / opex */}
           <div className="mx-9 mt-7 flex flex-wrap gap-6">
             <div className="min-w-[300px] flex-1">
-              <SectionTitle kicker="เงินลงทุน / CapEx">โครงสร้างเงินลงทุน</SectionTitle>
+              <SectionTitle kicker="เงินลงทุน / CapEx">โครงสร้างเงินลงทุน / Investment Structure</SectionTitle>
               <div className="overflow-hidden rounded-[12px] border border-[#e6e2d6]">
                 {active.capexLines.map((l) => (
                   <div key={l.key} className="flex items-center justify-between border-b border-[#f0ede3] px-4 py-2.5"><div><div className="text-[12.5px] font-semibold text-ink">{l.th}</div><div className="text-[10.5px] text-[#9aa499]">{l.en}</div></div><span className="num font-bold">฿{f(l.amount)}</span></div>
@@ -376,7 +376,7 @@ export default function FeasibilityPage() {
               </div>
             </div>
             <div className="min-w-[300px] flex-1">
-              <SectionTitle kicker="ค่าดำเนินการ / OpEx (ต่อปี)">ต้นทุนดำเนินงานรายปี</SectionTitle>
+              <SectionTitle kicker="ค่าดำเนินการ / OpEx (ต่อปี · per year)">ต้นทุนดำเนินงานรายปี / Annual Operating Cost</SectionTitle>
               <div className="overflow-hidden rounded-[12px] border border-[#e6e2d6]">
                 {active.opexLines.map((l) => (
                   <div key={l.key} className="flex items-center justify-between border-b border-[#f0ede3] px-4 py-2.5"><div><div className="text-[12.5px] font-semibold text-ink">{l.th}</div><div className="text-[10.5px] text-[#9aa499]">{l.en}</div></div><span className="num font-bold">฿{f(l.perYear)}</span></div>
@@ -411,7 +411,7 @@ export default function FeasibilityPage() {
 
           {/* cash-flow projection */}
           <div className="mx-9 mt-7">
-            <SectionTitle kicker={simMode ? 'ประมาณการกระแสเงินสด (ค่าที่คุณกรอก)' : 'ประมาณการกระแสเงินสด (กรณีฐาน) / Base-Case Cash Flow'}>กระแสเงินสด 10 ปี / 10-Year Projection</SectionTitle>
+            <SectionTitle kicker={simMode ? 'ประมาณการกระแสเงินสด (ค่าที่คุณกรอก) / Cash Flow (your inputs)' : 'ประมาณการกระแสเงินสด (กรณีฐาน) / Base-Case Cash Flow'}>กระแสเงินสด 10 ปี / 10-Year Projection</SectionTitle>
             <table className="w-full border-collapse text-[12px]">
               <thead>
                 <tr className="bg-[#26342c] text-white">
@@ -440,7 +440,7 @@ export default function FeasibilityPage() {
                 ))}
               </tbody>
             </table>
-            <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">* ปีที่ 1–2 เดินเครื่องที่ {(active.rampYear1 * 100).toFixed(0)}% / {(active.rampYear2 * 100).toFixed(0)}% ระหว่างสร้างเครือข่ายรับซื้อ. † ปีที่ {active.years} รวมมูลค่าซาก (อาคาร {(active.buildingSalvageFrac * 100).toFixed(0)}% + อุปกรณ์ {(active.equipmentResidualFrac * 100).toFixed(0)}%) + คืนทุนหมุนเวียน · terminal value + WC recovery.</div>
+            <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">* ปีที่ 1–2 เดินเครื่องที่ {(active.rampYear1 * 100).toFixed(0)}% / {(active.rampYear2 * 100).toFixed(0)}% ระหว่างสร้างเครือข่ายรับซื้อ · Years 1–2 run at {(active.rampYear1 * 100).toFixed(0)}% / {(active.rampYear2 * 100).toFixed(0)}% while building the supply network. † ปีที่ {active.years} รวมมูลค่าซาก (อาคาร {(active.buildingSalvageFrac * 100).toFixed(0)}% + อุปกรณ์ {(active.equipmentResidualFrac * 100).toFixed(0)}%) + คืนทุนหมุนเวียน · Year {active.years} adds terminal value (building {(active.buildingSalvageFrac * 100).toFixed(0)}% + equipment {(active.equipmentResidualFrac * 100).toFixed(0)}%) + working-capital recovery.</div>
           </div>
 
           {/* sensitivity */}
@@ -461,7 +461,7 @@ export default function FeasibilityPage() {
                     <div className="mt-0.5 text-[11.5px] leading-[1.5] text-[#54625a]">{r.th}</div>
                     <div className="mt-0.5 text-[11px] leading-[1.4] text-[#9aa499]">{r.en}</div>
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
-                      <span className="rounded bg-[#eef3ec] px-2 py-0.5 font-semibold text-forest">ใช้สำหรับ: {r.figure}</span>
+                      <span className="rounded bg-[#eef3ec] px-2 py-0.5 font-semibold text-forest">ใช้สำหรับ / Used for: {r.figure}</span>
                       <span className="text-[#3f7fae]">{r.url}</span>
                     </div>
                   </div>
@@ -474,7 +474,7 @@ export default function FeasibilityPage() {
           {/* footer */}
           <div className="mt-7 flex justify-between border-t border-[#f0ede3] px-9 py-3.5 text-[11px] text-[#9aa499]">
             <span>การศึกษาความเป็นไปได้ทางการเงิน · Financial feasibility study · Design by <b className="text-forest">Sponlapat / BD</b></span>
-            <span>สกุลเงิน: บาท (THB) · ปีฐาน 2568 / 2025</span>
+            <span>สกุลเงิน / Currency: บาท (THB) · ปีฐาน / Base year 2568 / 2025</span>
           </div>
         </div>
       </div>
@@ -504,30 +504,30 @@ export default function FeasibilityPage() {
             <Calculator size={22} className="text-[#3f7fae]" /> วิธีการคำนวณ / How It's Calculated
           </div>
           <div className="mt-2 rounded-[8px] bg-[#eef3ec] px-3.5 py-2 text-[11.5px] font-semibold text-forest">
-            ตัวอย่างคำนวณจากค่าปัจจุบัน · worked from current inputs — ปริมาณ {f(T)} ตัน/ปี (ปีที่เดินเต็มกำลัง)
+            ตัวอย่างคำนวณจากค่าปัจจุบัน · worked from current inputs — ปริมาณ / throughput {f(T)} ตัน/ปี (t/yr, ปีที่เดินเต็มกำลัง / full-capacity year)
           </div>
           <div className="mt-3 flex flex-col gap-2">
             {[
               {
-                th: '① ราคาขายเฉลี่ยถ่วงน้ำหนัก / Blended sell price', formula: 'Σ (สัดส่วน × ราคาช่องทาง)',
-                calc: `${active.channels.map((c) => `(${c.mix}×${f(c.pricePerTonne)})`).join(' + ')} = ${active.channels.map((c) => (Math.round(c.mix * c.pricePerTonne * 10) / 10).toString()).join(' + ')} = ${f(sell)} ฿/ตัน`,
+                th: '① ราคาขายเฉลี่ยถ่วงน้ำหนัก / Blended sell price', formula: 'Σ (สัดส่วน × ราคาช่องทาง) · Σ(mix × channel price)',
+                calc: `${active.channels.map((c) => `(${c.mix}×${f(c.pricePerTonne)})`).join(' + ')} = ${active.channels.map((c) => (Math.round(c.mix * c.pricePerTonne * 10) / 10).toString()).join(' + ')} = ${f(sell)} ฿/ตัน (t)`,
               },
-              { th: '② รายได้ (เต็มกำลัง) / Revenue', formula: 'ปริมาณ × ราคาขายเฉลี่ย', calc: `${f(T)} ตัน × ${f(sell)} = ${f(wkRev)} ฿/ปี` },
-              { th: '③ ต้นทุนวัตถุดิบ / COGS', formula: 'ปริมาณ × ต้นทุนต่อตัน', calc: `${f(T)} × ${f(cogs)} = ${f(wkCogs)} ฿/ปี` },
-              { th: '④ กำไรขั้นต้น / Gross profit', formula: '(ราคาขาย − ต้นทุน) × ปริมาณ', calc: `(${f(sell)} − ${f(cogs)}) × ${f(T)} = ${f(gm)} × ${f(T)} = ${f(wkGP)} ฿/ปี` },
-              { th: '⑤ EBITDA', formula: 'กำไรขั้นต้น − ค่าดำเนินการ (OpEx)', calc: `${f(wkGP)} − ${f(opexY)} = ${f(wkEbitda)} ฿/ปี` },
-              { th: '⑥ ค่าเสื่อมราคา / Depreciation', formula: 'อาคาร÷20 ปี + อุปกรณ์÷7 ปี (เส้นตรง)', calc: `${f(bld)}÷20 + ${f(eqp)}÷7 = ${f(bld / active.buildingLifeYrs)} + ${f(eqp / active.equipmentLifeYrs)} = ${f(wkDep)} ฿/ปี` },
-              { th: '⑦ EBIT & ภาษีเงินได้ / Tax', formula: `EBIT = EBITDA − ค่าเสื่อม · ภาษี = max(0, EBIT) × ${taxPct}%`, calc: `EBIT = ${f(wkEbitda)} − ${f(wkDep)} = ${f(wkEbit)} · ภาษี = ${f(wkEbit)} × ${taxPct}% = ${f(wkTax)} ฿/ปี` },
+              { th: '② รายได้ (เต็มกำลัง) / Revenue', formula: 'ปริมาณ × ราคาขายเฉลี่ย · Volume × blended price', calc: `${f(T)} ตัน (t) × ${f(sell)} = ${f(wkRev)} ฿/ปี (yr)` },
+              { th: '③ ต้นทุนวัตถุดิบ / COGS', formula: 'ปริมาณ × ต้นทุนต่อตัน · Volume × cost per tonne', calc: `${f(T)} × ${f(cogs)} = ${f(wkCogs)} ฿/ปี (yr)` },
+              { th: '④ กำไรขั้นต้น / Gross profit', formula: '(ราคาขาย − ต้นทุน) × ปริมาณ · (price − cost) × volume', calc: `(${f(sell)} − ${f(cogs)}) × ${f(T)} = ${f(gm)} × ${f(T)} = ${f(wkGP)} ฿/ปี (yr)` },
+              { th: '⑤ EBITDA', formula: 'กำไรขั้นต้น − ค่าดำเนินการ · Gross profit − OpEx', calc: `${f(wkGP)} − ${f(opexY)} = ${f(wkEbitda)} ฿/ปี (yr)` },
+              { th: '⑥ ค่าเสื่อมราคา / Depreciation', formula: 'อาคาร÷20 + อุปกรณ์÷7 (เส้นตรง) · Building÷20 + Equipment÷7 (straight-line)', calc: `${f(bld)}÷20 + ${f(eqp)}÷7 = ${f(bld / active.buildingLifeYrs)} + ${f(eqp / active.equipmentLifeYrs)} = ${f(wkDep)} ฿/ปี (yr)` },
+              { th: '⑦ EBIT & ภาษีเงินได้ / Tax', formula: `EBIT = EBITDA − ค่าเสื่อม · Tax = max(0, EBIT) × ${taxPct}%`, calc: `EBIT = ${f(wkEbitda)} − ${f(wkDep)} = ${f(wkEbit)} · ภาษี / tax = ${f(wkEbit)} × ${taxPct}% = ${f(wkTax)} ฿/ปี (yr)` },
               {
-                th: '⑧ กระแสเงินสดจากการดำเนินงาน / Operating cash flow', formula: 'EBITDA − ภาษีเงินได้', calc: `${f(wkEbitda)} − ${f(wkTax)} = ${f(wkOcf)} ฿/ปี`,
-                note: 'ธุรกิจนี้ซื้อ-ขายด้วยเงินสดเป็นหลัก (รับซื้อจ่ายสดหน้างาน · ลูกค้าจ่ายเมื่อรับของ) — ค่าเสื่อมราคาเป็นค่าใช้จ่ายทางบัญชี ไม่ใช่เงินสดออก จึงไม่หักออกจากกระแสเงินสด (มีผลแค่ช่วยลดภาษี) · ส่วนเครดิตให้ชาวนา/สต๊อกฟาง รวมอยู่ในทุนหมุนเวียนตั้งต้น ฿' + f(active.workingCapital) + ' ที่คืนเต็มในปีสุดท้าย',
+                th: '⑧ กระแสเงินสดจากการดำเนินงาน / Operating cash flow', formula: 'EBITDA − ภาษีเงินได้ · EBITDA − income tax', calc: `${f(wkEbitda)} − ${f(wkTax)} = ${f(wkOcf)} ฿/ปี (yr)`,
+                note: 'ธุรกิจนี้ซื้อ-ขายด้วยเงินสดเป็นหลัก (รับซื้อจ่ายสดหน้างาน · ลูกค้าจ่ายเมื่อรับของ) — ค่าเสื่อมราคาเป็นค่าใช้จ่ายทางบัญชี ไม่ใช่เงินสดออก จึงไม่หักจากกระแสเงินสด (มีผลแค่ช่วยลดภาษี) · เครดิตให้ชาวนา/สต๊อกฟาง รวมอยู่ในทุนหมุนเวียนตั้งต้น ฿' + f(active.workingCapital) + ' ที่คืนเต็มในปีสุดท้าย · This is a cash business (pay on the spot · buyers pay on pickup). Depreciation is a non-cash accounting expense, so it is not deducted from cash flow — it only lowers tax. Farmer credit / straw stock sits in the initial working capital, recovered in full in the final year.',
               },
-              { th: '⑨ การเดินเครื่องช่วงต้น / Ramp-up', formula: 'ปีที่ 1 = 60% · ปีที่ 2 = 80% · ปีที่ 3+ = 100%', calc: `ปีที่ 1 ≈ ${f(T * active.rampYear1)} ตัน · ปีที่ 2 ≈ ${f(T * active.rampYear2)} ตัน · ปีที่ 3+ = ${f(T)} ตัน` },
-              { th: '⑩ มูลค่าซาก (ปีสุดท้าย) / Terminal value', formula: 'อาคาร×60% + อุปกรณ์×20% + คืนทุนหมุนเวียน', calc: `${f(bld)}×0.6 + ${f(eqp)}×0.2 + ${f(active.workingCapital)} = ${f(wkTerminal)} ฿` },
-              { th: '⑪ NPV (มูลค่าปัจจุบันสุทธิ)', formula: `Σ กระแสเงินสดปีที่ t ÷ (1 + r)ᵗ · r = ${discPct}%`, calc: `Σ CFₜ ÷ (1.${discPct.padStart(2, '0')})ᵗ − ${f(result.initialOutlay)} = ${result.npv >= 0 ? '+' : ''}${f(result.npv)} ฿` },
-              { th: '⑫ IRR (อัตราผลตอบแทนภายใน)', formula: 'อัตราคิดลด r ที่ทำให้ NPV = 0 (วิธี bisection)', calc: `= ${((result.irr ?? 0) * 100).toFixed(1)}%` },
-              { th: '⑬ ระยะคืนทุน / Payback', formula: 'ปีแรกที่กระแสเงินสดสะสม ≥ 0 (interpolate ภายในปี)', calc: result.paybackYears ? `= ${result.paybackYears.toFixed(1)} ปี` : '> 10 ปี' },
-              { th: '⑭ ROI', formula: 'กำไรสุทธิเฉลี่ยต่อปี ÷ เงินลงทุน CapEx', calc: `≈ ${result.simpleRoiPct.toFixed(1)}% ต่อปี` },
+              { th: '⑨ การเดินเครื่องช่วงต้น / Ramp-up', formula: 'ปีที่ 1 = 60% · ปีที่ 2 = 80% · ปีที่ 3+ = 100% · Year 1/2/3+', calc: `ปีที่ / Year 1 ≈ ${f(T * active.rampYear1)} ตัน (t) · ปีที่ / Year 2 ≈ ${f(T * active.rampYear2)} ตัน · ปีที่ / Year 3+ = ${f(T)} ตัน` },
+              { th: '⑩ มูลค่าซาก (ปีสุดท้าย) / Terminal value', formula: 'อาคาร×60% + อุปกรณ์×20% + คืนทุนหมุนเวียน · Building×60% + Equipment×20% + WC recovery', calc: `${f(bld)}×0.6 + ${f(eqp)}×0.2 + ${f(active.workingCapital)} = ${f(wkTerminal)} ฿` },
+              { th: '⑪ NPV (มูลค่าปัจจุบันสุทธิ / Net present value)', formula: `Σ กระแสเงินสดปีที่ t ÷ (1 + r)ᵗ · Σ CFₜ ÷ (1+r)ᵗ · r = ${discPct}%`, calc: `Σ CFₜ ÷ (1.${discPct.padStart(2, '0')})ᵗ − ${f(result.initialOutlay)} = ${result.npv >= 0 ? '+' : ''}${f(result.npv)} ฿` },
+              { th: '⑫ IRR (อัตราผลตอบแทนภายใน / Internal rate of return)', formula: 'อัตราคิดลด r ที่ทำให้ NPV = 0 · discount rate where NPV = 0 (bisection)', calc: `= ${((result.irr ?? 0) * 100).toFixed(1)}%` },
+              { th: '⑬ ระยะคืนทุน / Payback', formula: 'ปีแรกที่กระแสเงินสดสะสม ≥ 0 · first year cumulative cash flow ≥ 0 (interpolated)', calc: result.paybackYears ? `= ${result.paybackYears.toFixed(1)} ปี / yrs` : '> 10 ปี / yrs' },
+              { th: '⑭ ROI', formula: 'กำไรสุทธิเฉลี่ยต่อปี ÷ เงินลงทุน CapEx · avg annual net profit ÷ CapEx', calc: `≈ ${result.simpleRoiPct.toFixed(1)}% ต่อปี / per year` },
             ].map((s) => (
               <div key={s.th} className="rounded-[8px] bg-[#f6f4ec] px-3.5 py-2.5">
                 <div className="text-[12.5px] font-extrabold text-forest">{s.th}</div>
@@ -538,7 +538,7 @@ export default function FeasibilityPage() {
             ))}
           </div>
           <div className="mt-4 rounded-[8px] bg-[#eef3ec] px-3.5 py-2.5 text-[11.5px] leading-[1.5] text-[#54625a]">
-            ฐานการเงิน: {active.years} ปี · คิดลด {discPct}% (WACC ของ SME เกษตรไทย) · ภาษี SME {taxPct}% · ค่าเสื่อม: อาคาร {active.buildingLifeYrs} ปี / อุปกรณ์ {active.equipmentLifeYrs} ปี
+            ฐานการเงิน / Basis: {active.years} ปี / yrs · คิดลด / discount {discPct}% (WACC ของ SME เกษตรไทย / Thai agri-SME) · ภาษี / tax SME {taxPct}% · ค่าเสื่อม / depreciation: อาคาร / building {active.buildingLifeYrs} ปี / อุปกรณ์ / equipment {active.equipmentLifeYrs} ปี
           </div>
           <div className="mt-4 flex justify-end">
             <button onClick={() => setShowMethod(false)} className="rounded-[10px] border-none bg-forest px-5 py-2.5 text-[13px] font-bold text-white hover:opacity-90">เข้าใจแล้ว / Got it</button>
@@ -645,14 +645,14 @@ function SensitivityGrid({ opex, outlay }: { opex: number; outlay: number }) {
     <table className="w-full border-collapse text-[12px]">
       <thead>
         <tr>
-          <th className="p-[8px] text-left text-[11px] font-bold text-[#9aa499]">ปริมาณ ↓ / กำไรต่อตัน →</th>
+          <th className="p-[8px] text-left text-[11px] font-bold text-[#9aa499]">ปริมาณ ↓ / กำไรต่อตัน → · Volume ↓ / Margin →</th>
           {margins.map((m) => (<th key={m} className="num p-[8px] font-bold text-[#26342c]">฿{m}/ต</th>))}
         </tr>
       </thead>
       <tbody>
         {throughputs.map((t) => (
           <tr key={t}>
-            <td className="num p-[8px] font-bold text-[#26342c]">{f(t)} ตัน</td>
+            <td className="num p-[8px] font-bold text-[#26342c]">{f(t)} ตัน · t</td>
             {margins.map((m) => { const c = cell(t, m); return (<td key={m} className="num p-[8px] font-extrabold" style={{ background: c.bg, color: c.fg }}>{c.txt}</td>) })}
           </tr>
         ))}
