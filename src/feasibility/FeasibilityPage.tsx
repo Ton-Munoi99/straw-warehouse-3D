@@ -1,44 +1,62 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Box,
-  Coins,
+  Calculator,
   FileSpreadsheet,
   MapPin,
   Printer,
+  RotateCcw,
+  SlidersHorizontal,
   TrendingUp,
   Truck,
   Warehouse,
+  X,
 } from 'lucide-react'
 import {
-  BALES_PER_TONNE,
-  BALE_KG,
-  CAPEX_LINES,
-  CHANNELS,
-  COGS_LINES,
+  DEFAULT_INPUTS,
   LOCATIONS,
-  OPEX_LINES,
-  PARAMS,
-  SCENARIOS,
-  WORKING_CAPITAL,
-  blendedSellPerTonne,
+  MARKET_PRICES,
+  REFERENCES,
+  SimInputs,
+  balesPerTonne,
+  blendedSell,
+  channelMixSum,
+  cloneInputs,
   cogsPerTonne,
   opexPerYear,
   runAll,
-  runScenario,
+  runInputs,
   totalCapex,
 } from './model'
 
 const f = (n: number) => Math.round(n).toLocaleString('en-US')
-const fM = (n: number) => `฿${(n / 1_000_000).toFixed(2)}M`
-const perBale = (perT: number) => (perT / BALES_PER_TONNE).toFixed(1)
+const fM = (n: number) => `${n < 0 ? '−' : ''}฿${(Math.abs(n) / 1_000_000).toFixed(2)}M`
 
 export default function FeasibilityPage() {
-  const results = useMemo(() => runAll(), [])
-  const base = useMemo(() => runScenario(SCENARIOS.find((s) => s.key === 'base')!), [])
-  const blendedSell = blendedSellPerTonne()
-  const cogs = cogsPerTonne()
-  const gm = blendedSell - cogs
+  const [simMode, setSimMode] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [showMethod, setShowMethod] = useState(false)
+  const [inputs, setInputs] = useState<SimInputs>(() => cloneInputs(DEFAULT_INPUTS))
+
+  const active = simMode ? inputs : DEFAULT_INPUTS
+  const result = useMemo(() => runInputs(active), [active])
+  const refs = useMemo(() => runAll(), [])
+  const bpt = balesPerTonne(active.baleKg)
+  const perBale = (perT: number) => (perT / bpt).toFixed(1)
+
+  const sell = blendedSell(active)
+  const cogs = cogsPerTonne(active)
+  const gm = sell - cogs
+  const mixSum = channelMixSum(active)
+
+  // editing helpers
+  const patch = (fn: (n: SimInputs) => void) =>
+    setInputs((prev) => {
+      const n = cloneInputs(prev)
+      fn(n)
+      return n
+    })
 
   return (
     <>
@@ -54,15 +72,27 @@ export default function FeasibilityPage() {
 
       <div className="wrap min-h-screen bg-app-bg px-5 py-[34px]">
         {/* nav */}
-        <div className="no-print fixed right-[26px] top-[22px] z-20 flex gap-2.5">
+        <div className="no-print fixed right-[26px] top-[22px] z-20 flex flex-wrap justify-end gap-2.5">
           <Link to="/" className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-4 py-[11px] text-[13px] font-bold text-forest no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
-            <Box size={16} strokeWidth={1.9} /> 3D Model
+            <Box size={16} strokeWidth={1.9} /> 3D
           </Link>
           <Link to="/boq" className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-4 py-[11px] text-[13px] font-bold text-forest no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
             <FileSpreadsheet size={16} strokeWidth={1.9} /> BOQ
           </Link>
+          <button onClick={() => setShowMethod(true)} className="flex items-center gap-2 rounded-[11px] border border-[#3f7fae] bg-white px-4 py-[11px] text-[13px] font-bold text-[#3f7fae] shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
+            <Calculator size={16} strokeWidth={1.9} /> วิธีคำนวณ
+          </button>
+          {simMode ? (
+            <button onClick={() => setSimMode(false)} className="flex items-center gap-2 rounded-[11px] border-none bg-[#c25b46] px-4 py-[11px] text-[13px] font-bold text-white shadow-[0_6px_18px_rgba(20,40,25,0.22)]">
+              <X size={16} strokeWidth={1.9} /> ออกจากโหมดจำลอง
+            </button>
+          ) : (
+            <button onClick={() => setShowConfirm(true)} className="flex items-center gap-2 rounded-[11px] border-none bg-straw px-4 py-[11px] text-[13px] font-bold text-white shadow-[0_6px_18px_rgba(20,40,25,0.22)]">
+              <SlidersHorizontal size={16} strokeWidth={1.9} /> Simulation
+            </button>
+          )}
           <button onClick={() => window.print()} className="flex items-center gap-2 rounded-[11px] border-none bg-forest px-[18px] py-[11px] text-[13px] font-bold text-white shadow-[0_6px_18px_rgba(20,40,25,0.22)]">
-            <Printer size={16} strokeWidth={1.9} /> Print / Save PDF
+            <Printer size={16} strokeWidth={1.9} /> Print
           </button>
         </div>
 
@@ -73,8 +103,13 @@ export default function FeasibilityPage() {
               <TrendingUp size={26} color="#9ccfa9" strokeWidth={1.9} />
             </div>
             <div className="flex-1">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#9ccfa9]">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#9ccfa9]">
                 Feasibility &amp; ROI · การศึกษาความเป็นไปได้ทางการเงิน
+                {simMode && (
+                  <span className="rounded-full bg-straw px-2 py-0.5 text-[10px] font-bold tracking-normal text-white">
+                    ● โหมดจำลอง / SIMULATION
+                  </span>
+                )}
               </div>
               <div className="mt-1 text-[23px] font-extrabold tracking-[-0.01em]">
                 ศูนย์รวบรวม-รับซื้อ-ขายต่อฟางข้าว (Rice Straw Aggregation Hub)
@@ -93,7 +128,7 @@ export default function FeasibilityPage() {
             {[
               { icon: <Truck size={18} />, th: 'รับซื้อฟางจากเกษตรกร', en: 'Buy baled straw from farmers', sub: '~11 ฿/ก้อน · ช่วงเก็บเกี่ยว' },
               { icon: <Warehouse size={18} />, th: 'เก็บแห้งในโกดัง', en: 'Store dry in warehouse', sub: 'ยกระดับ กันฝน · เก็บข้ามฤดู' },
-              { icon: <Coins size={18} />, th: 'ขายต่อ 3 ช่องทาง', en: 'Resell to 3 channels', sub: '25–35 ฿/ก้อน · ลูกค้ามารับเอง' },
+              { icon: <TrendingUp size={18} />, th: 'ขายต่อ 3 ช่องทาง', en: 'Resell to 3 channels', sub: '25–35 ฿/ก้อน · ลูกค้ามารับเอง' },
             ].map((s, i) => (
               <div key={i} className="bg-[#fafaf6] px-[18px] py-[14px]">
                 <div className="flex items-center gap-2 text-forest">{s.icon}
@@ -105,58 +140,142 @@ export default function FeasibilityPage() {
             ))}
           </div>
 
-          {/* hero metrics (Base case) */}
+          {/* hero metrics */}
           <div className="px-9 pt-7">
-            <SectionTitle kicker="ผลตอบแทนกรณีฐาน / Base-Case Returns">
+            <SectionTitle kicker={simMode ? 'ผลจากค่าที่คุณกรอก / Your Live Result' : 'ผลตอบแทนกรณีฐาน / Base-Case Returns'}>
               ตัวเลขชี้วัดความเป็นไปได้ / Key Feasibility Metrics
             </SectionTitle>
             <div className="grid grid-cols-4 gap-3.5">
-              <HeroCard color="#c8902f" label="ระยะคืนทุน / Payback" value={`~${base.paybackYears?.toFixed(1)}`} unit="ปี / years" />
-              <HeroCard color="#2f6b3f" label="IRR (10 ปี)" value={`${((base.irr ?? 0) * 100).toFixed(1)}%`} unit="อัตราผลตอบแทนภายใน" />
-              <HeroCard color="#3f7fae" label="NPV @ 8%" value={`+${fM(base.npv)}`} unit="มูลค่าปัจจุบันสุทธิ" />
-              <HeroCard color="#5aa17a" label="EBITDA Margin" value={`${base.ebitdaMarginPct.toFixed(0)}%`} unit={`฿${f(base.steadyEbitda)}/ปี`} />
+              <HeroCard color="#c8902f" label="ระยะคืนทุน / Payback" value={result.paybackYears ? `~${result.paybackYears.toFixed(1)}` : '>10'} unit="ปี / years" />
+              <HeroCard color="#2f6b3f" label="IRR (10 ปี)" value={`${((result.irr ?? 0) * 100).toFixed(1)}%`} unit="อัตราผลตอบแทนภายใน" />
+              <HeroCard color="#3f7fae" label="NPV @ 8%" value={`${result.npv >= 0 ? '+' : ''}${fM(result.npv)}`} unit="มูลค่าปัจจุบันสุทธิ" />
+              <HeroCard color="#5aa17a" label="EBITDA Margin" value={`${result.ebitdaMarginPct.toFixed(0)}%`} unit={`฿${f(result.steadyEbitda)}/ปี`} />
             </div>
             <div className="mt-2.5 text-[11px] leading-[1.5] text-[#9aa499]">
-              * กรณีฐาน: ปริมาณหมุนเวียน {f(base.scenario.throughputT)} ตัน/ปี · เงินลงทุนรวม ฿{f(base.totalCapex)} + ทุนหมุนเวียน ฿{f(WORKING_CAPITAL)} · คิดลด {(PARAMS.discountRate * 100).toFixed(0)}% · ภาษี {(PARAMS.taxRate * 100).toFixed(0)}% — ปรับได้ตามจริง · adjust to actuals.
+              * ปริมาณ {f(active.throughputT)} ตัน/ปี · เงินลงทุนรวม ฿{f(result.totalCapex)} + ทุนหมุนเวียน ฿{f(active.workingCapital)} · คิดลด {(active.discountRate * 100).toFixed(0)}% · ภาษี {(active.taxRate * 100).toFixed(0)}%
+              {simMode ? ' — ค่าที่คุณกรอกเอง · your inputs' : ' — กดปุ่ม Simulation เพื่อปรับเอง · click Simulation to edit'}
             </div>
+          </div>
+
+          {/* simulation control panel */}
+          {simMode && (
+            <div className="mx-9 mt-6 rounded-[16px] border-2 border-straw bg-[#fdfaf3] p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[14px] font-extrabold text-[#a9772a]">
+                  <SlidersHorizontal size={18} /> แผงปรับค่าจำลอง / Simulation Controls
+                </div>
+                <button
+                  onClick={() => setInputs(cloneInputs(DEFAULT_INPUTS))}
+                  className="flex items-center gap-1.5 rounded-[9px] border border-[#e1ddd0] bg-white px-3 py-2 text-[12px] font-bold text-[#54625a] hover:bg-[#faf7ef]"
+                >
+                  <RotateCcw size={14} /> คืนค่าเริ่มต้น / Reset
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
+                {/* volume & finance */}
+                <CtrlGroup title="ปริมาณ & การเงิน / Volume & Finance">
+                  <NumField label="ปริมาณ / Throughput" suffix="ตัน/ปี" value={inputs.throughputT} step={50} onChange={(v) => patch((n) => (n.throughputT = v))} />
+                  <NumField label="คิดลด / Discount" suffix="%" value={inputs.discountRate * 100} step={0.5} onChange={(v) => patch((n) => (n.discountRate = v / 100))} />
+                  <NumField label="ภาษี / Tax" suffix="%" value={inputs.taxRate * 100} step={1} onChange={(v) => patch((n) => (n.taxRate = v / 100))} />
+                  <NumField label="ทุนหมุนเวียน / WC" suffix="฿" value={inputs.workingCapital} step={50000} onChange={(v) => patch((n) => (n.workingCapital = v))} />
+                </CtrlGroup>
+
+                {/* channels */}
+                <CtrlGroup title={`ช่องทางขาย / Channels${Math.abs(mixSum - 1) > 0.001 ? ` ⚠ ${(mixSum * 100).toFixed(0)}%` : ''}`}>
+                  {inputs.channels.map((c, i) => (
+                    <div key={c.key} className="rounded-[8px] bg-white p-2">
+                      <div className="mb-1 text-[11px] font-bold text-ink">{c.th}</div>
+                      <div className="flex gap-2">
+                        <NumField label="สัดส่วน" suffix="%" value={c.mix * 100} step={5} small onChange={(v) => patch((n) => (n.channels[i].mix = v / 100))} />
+                        <NumField label="฿/ตัน" suffix={`≈${perBale(c.pricePerTonne)}/ก้อน`} value={c.pricePerTonne} step={50} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v))} />
+                      </div>
+                    </div>
+                  ))}
+                </CtrlGroup>
+
+                {/* cogs */}
+                <CtrlGroup title="ต้นทุนวัตถุดิบ / COGS (฿/ตัน)">
+                  {inputs.cogsLines.map((l, i) => (
+                    <NumField key={l.key} label={l.th} suffix="฿/ต" value={l.perTonne} step={10} onChange={(v) => patch((n) => (n.cogsLines[i].perTonne = v))} />
+                  ))}
+                  <div className="mt-1 rounded-[6px] bg-forest px-2.5 py-1.5 text-[11px] font-bold text-white">
+                    กำไรขั้นต้น {f(gm)} ฿/ต · {perBale(gm)} ฿/ก้อน
+                  </div>
+                </CtrlGroup>
+
+                {/* opex */}
+                <CtrlGroup title="ค่าดำเนินการ / OpEx (฿/ปี)">
+                  {inputs.opexLines.map((l, i) => (
+                    <NumField key={l.key} label={l.th} suffix="฿/ปี" value={l.perYear} step={10000} onChange={(v) => patch((n) => (n.opexLines[i].perYear = v))} />
+                  ))}
+                </CtrlGroup>
+
+                {/* capex spans full width */}
+                <div className="col-span-2 lg:col-span-4">
+                  <CtrlGroup title="เงินลงทุน / CapEx (฿)">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 lg:grid-cols-4">
+                      {inputs.capexLines.map((l, i) => (
+                        <NumField key={l.key} label={l.th} suffix="฿" value={l.amount} step={50000} onChange={(v) => patch((n) => (n.capexLines[i].amount = v))} />
+                      ))}
+                    </div>
+                  </CtrlGroup>
+                </div>
+              </div>
+              {Math.abs(mixSum - 1) > 0.001 && (
+                <div className="mt-3 rounded-[8px] bg-[#fbe9e4] px-3 py-2 text-[11.5px] font-semibold text-[#c25b46]">
+                  ⚠ สัดส่วนช่องทางรวม {(mixSum * 100).toFixed(0)}% (ควรเป็น 100%) — ราคาเฉลี่ยจะคำนวณตามสัดส่วนที่กรอก
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* market price reference (the attached data) */}
+          <div className="mx-9 mt-7">
+            <SectionTitle kicker="ราคาอ้างอิงตลาดจริง / Real Market Prices (2568 / 2025)">
+              ฐานราคาที่ใช้ในแบบจำลอง / Price Basis
+            </SectionTitle>
+            <table className="w-full border-collapse text-[12.5px]">
+              <thead>
+                <tr className="bg-[#26342c] text-white">
+                  <th className="p-[9px_10px] text-left font-bold">รายการ / Item</th>
+                  <th className="num p-[9px_10px] font-bold">ช่วงตลาด / Range</th>
+                  <th className="num p-[9px_10px] font-bold">ที่ใช้ / Used</th>
+                  <th className="p-[9px_10px] text-center font-bold">อ้างอิง</th>
+                </tr>
+              </thead>
+              <tbody>
+                {MARKET_PRICES.map((p) => (
+                  <tr key={p.en} className="border-b border-[#f0ede3]">
+                    <td className="p-[8px_10px]">
+                      <span className="font-semibold text-ink">{p.th}</span>
+                      <span className="ml-1.5 text-[11px] text-[#9aa499]">{p.en}</span>
+                    </td>
+                    <td className="num p-[8px_10px] text-[#54625a]">{p.low === p.high ? p.low : `${p.low}–${p.high}`} <span className="text-[10px] text-[#9aa499]">{p.unit}</span></td>
+                    <td className="num p-[8px_10px] font-bold text-forest">{p.used} <span className="text-[10px] font-normal text-[#9aa499]">{p.unit}</span></td>
+                    <td className="p-[8px_10px] text-center"><span className="rounded bg-[#eef3ec] px-1.5 py-0.5 text-[10px] font-bold text-forest">{p.ref}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="mt-2 text-[11px] text-[#9aa499]">1 ก้อน = {active.baleKg} กก. → {bpt} ก้อน/ตัน (สอดคล้องกับโมเดล 3 มิติ ~1,500 ก้อน ≈ 30 ตัน) · 1 bale = {active.baleKg} kg → {bpt} bales/tonne</div>
           </div>
 
           {/* location */}
           <div className="mx-9 mt-7">
-            <SectionTitle kicker="ทำเลที่ตั้ง / Location Rationale">
-              ทำไมต้องฉะเชิงเทรา / Why Chachoengsao
-            </SectionTitle>
+            <SectionTitle kicker="ทำเลที่ตั้ง / Location Rationale">ทำไมต้องฉะเชิงเทรา / Why Chachoengsao</SectionTitle>
             <div className="flex flex-col gap-2">
               {LOCATIONS.map((loc) => (
-                <div
-                  key={loc.province}
-                  className="flex items-start gap-3 rounded-[12px] border px-4 py-3"
-                  style={{
-                    borderColor: loc.recommended ? '#2f6b3f' : '#ece8dc',
-                    background: loc.recommended ? '#f3f8f3' : '#fff',
-                  }}
-                >
+                <div key={loc.province} className="flex items-start gap-3 rounded-[12px] border px-4 py-3" style={{ borderColor: loc.recommended ? '#2f6b3f' : '#ece8dc', background: loc.recommended ? '#f3f8f3' : '#fff' }}>
                   <div className="flex-none">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[14px] font-extrabold text-ink">{loc.th}</span>
-                      {loc.recommended && (
-                        <span className="rounded-full bg-forest px-2 py-0.5 text-[10px] font-bold text-white">
-                          แนะนำ / Pick
-                        </span>
-                      )}
+                      {loc.recommended && <span className="rounded-full bg-forest px-2 py-0.5 text-[10px] font-bold text-white">แนะนำ / Pick</span>}
                     </div>
                     <div className="text-[11px] font-semibold text-muted">{loc.province}</div>
-                    <div className="mt-1 flex gap-0.5">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <span key={i} className={`text-[12px] ${i < loc.score ? 'text-straw' : 'text-[#e4e0d4]'}`}>★</span>
-                      ))}
-                    </div>
+                    <div className="mt-1 flex gap-0.5">{Array.from({ length: 5 }).map((_, i) => (<span key={i} className={`text-[12px] ${i < loc.score ? 'text-straw' : 'text-[#e4e0d4]'}`}>★</span>))}</div>
                   </div>
-                  <ul className="m-0 flex-1 list-disc pl-4 text-[12px] leading-[1.6] text-[#54625a]">
-                    {loc.pros.map((p) => (
-                      <li key={p}>{p}</li>
-                    ))}
-                  </ul>
+                  <ul className="m-0 flex-1 list-disc pl-4 text-[12px] leading-[1.6] text-[#54625a]">{loc.pros.map((p) => (<li key={p}>{p}</li>))}</ul>
                 </div>
               ))}
             </div>
@@ -164,9 +283,7 @@ export default function FeasibilityPage() {
 
           {/* revenue model */}
           <div className="mx-9 mt-7">
-            <SectionTitle kicker="แบบจำลองรายได้ / Revenue Model">
-              ช่องทางการขาย &amp; ราคา / Sales Channels &amp; Pricing
-            </SectionTitle>
+            <SectionTitle kicker="แบบจำลองรายได้ / Revenue Model">ช่องทางการขาย &amp; ราคา / Sales Channels &amp; Pricing</SectionTitle>
             <table className="w-full border-collapse text-[12.5px]">
               <thead>
                 <tr className="bg-[#26342c] text-white">
@@ -178,12 +295,9 @@ export default function FeasibilityPage() {
                 </tr>
               </thead>
               <tbody>
-                {CHANNELS.map((c) => (
+                {active.channels.map((c) => (
                   <tr key={c.key} className="border-b border-[#f0ede3]">
-                    <td className="p-[9px_10px]">
-                      <div className="font-semibold text-ink">{c.th}</div>
-                      <div className="text-[11px] text-[#9aa499]">{c.en}</div>
-                    </td>
+                    <td className="p-[9px_10px]"><div className="font-semibold text-ink">{c.th}</div><div className="text-[11px] text-[#9aa499]">{c.en}</div></td>
                     <td className="num p-[9px_10px] font-bold text-forest">{(c.mix * 100).toFixed(0)}%</td>
                     <td className="num p-[9px_10px] text-[#54625a]">{perBale(c.pricePerTonne)}</td>
                     <td className="num p-[9px_10px] font-bold text-ink">{f(c.pricePerTonne)}</td>
@@ -192,131 +306,85 @@ export default function FeasibilityPage() {
                 ))}
                 <tr className="bg-[#f6f4ec]">
                   <td className="p-[9px_10px] font-extrabold text-forest">ราคาขายเฉลี่ยถ่วงน้ำหนัก / Blended sell price</td>
-                  <td className="num p-[9px_10px] font-bold">100%</td>
-                  <td className="num p-[9px_10px] font-extrabold text-forest">{perBale(blendedSell)}</td>
-                  <td className="num p-[9px_10px] font-extrabold text-forest">{f(blendedSell)}</td>
-                  <td className="p-[9px_10px] text-[11px] text-[#7c8a80]">1 ตัน = {BALES_PER_TONNE} ก้อน ({BALE_KG} กก./ก้อน)</td>
+                  <td className="num p-[9px_10px] font-bold">{(mixSum * 100).toFixed(0)}%</td>
+                  <td className="num p-[9px_10px] font-extrabold text-forest">{perBale(sell)}</td>
+                  <td className="num p-[9px_10px] font-extrabold text-forest">{f(sell)}</td>
+                  <td className="p-[9px_10px] text-[11px] text-[#7c8a80]">1 ตัน = {bpt} ก้อน</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          {/* unit economics waterfall */}
+          {/* unit economics */}
           <div className="mx-9 mt-7">
-            <SectionTitle kicker="เศรษฐศาสตร์ต่อหน่วย / Unit Economics">
-              กำไรขั้นต้นต่อตัน / Gross Margin per Tonne
-            </SectionTitle>
+            <SectionTitle kicker="เศรษฐศาสตร์ต่อหน่วย / Unit Economics">กำไรขั้นต้นต่อตัน / Gross Margin per Tonne</SectionTitle>
             <div className="flex flex-wrap gap-6">
-              <div className="min-w-[300px] flex-1">
-                <Waterfall sell={blendedSell} cogs={cogs} gm={gm} />
-              </div>
+              <div className="min-w-[300px] flex-1"><Waterfall sell={sell} cogs={cogs} gm={gm} /></div>
               <div className="w-[320px] flex-none rounded-[12px] border border-[#e6e2d6] bg-[#fafaf6] p-4">
-                <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#9aa499]">
-                  ต้นทุนวัตถุดิบ / Cost of goods (landed)
-                </div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#9aa499]">ต้นทุนวัตถุดิบ / Cost of goods (landed)</div>
                 <div className="mt-2 flex flex-col gap-1.5">
-                  {COGS_LINES.map((l) => (
-                    <div key={l.key} className="flex justify-between text-[12px]">
-                      <span className="text-[#54625a]">{l.th}</span>
-                      <span className="num font-semibold">{f(l.perTonne)} <span className="text-[10px] text-[#9aa499]">/ต</span></span>
-                    </div>
+                  {active.cogsLines.map((l) => (
+                    <div key={l.key} className="flex justify-between text-[12px]"><span className="text-[#54625a]">{l.th}</span><span className="num font-semibold">{f(l.perTonne)} <span className="text-[10px] text-[#9aa499]">/ต</span></span></div>
                   ))}
-                  <div className="mt-1 flex justify-between border-t border-[#e6e2d6] pt-1.5 text-[12px]">
-                    <span className="font-bold text-ink">รวม COGS / Total</span>
-                    <span className="num font-extrabold text-[#c25b46]">{f(cogs)} <span className="text-[10px] font-normal text-[#9aa499]">/ต</span></span>
-                  </div>
+                  <div className="mt-1 flex justify-between border-t border-[#e6e2d6] pt-1.5 text-[12px]"><span className="font-bold text-ink">รวม COGS / Total</span><span className="num font-extrabold text-[#c25b46]">{f(cogs)} <span className="text-[10px] font-normal text-[#9aa499]">/ต</span></span></div>
                 </div>
                 <div className="mt-3 rounded-[8px] bg-forest px-3 py-2.5 text-white">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] font-semibold">กำไรขั้นต้น / Gross margin</span>
-                    <span className="num text-[16px] font-extrabold">฿{f(gm)}<span className="text-[11px] font-normal">/ต</span></span>
-                  </div>
-                  <div className="mt-0.5 text-right text-[11px] text-[#cfe6d4]">≈ {perBale(gm)} ฿/ก้อน · margin {((gm / blendedSell) * 100).toFixed(0)}%</div>
+                  <div className="flex items-center justify-between"><span className="text-[12px] font-semibold">กำไรขั้นต้น / Gross margin</span><span className="num text-[16px] font-extrabold">฿{f(gm)}<span className="text-[11px] font-normal">/ต</span></span></div>
+                  <div className="mt-0.5 text-right text-[11px] text-[#cfe6d4]">≈ {perBale(gm)} ฿/ก้อน · margin {sell ? ((gm / sell) * 100).toFixed(0) : 0}%</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* cost model: CapEx + OpEx */}
+          {/* capex / opex */}
           <div className="mx-9 mt-7 flex flex-wrap gap-6">
             <div className="min-w-[300px] flex-1">
               <SectionTitle kicker="เงินลงทุน / CapEx">โครงสร้างเงินลงทุน</SectionTitle>
               <div className="overflow-hidden rounded-[12px] border border-[#e6e2d6]">
-                {CAPEX_LINES.map((l) => (
-                  <div key={l.key} className="flex items-center justify-between border-b border-[#f0ede3] px-4 py-2.5">
-                    <div>
-                      <div className="text-[12.5px] font-semibold text-ink">{l.th}</div>
-                      <div className="text-[10.5px] text-[#9aa499]">{l.en}</div>
-                    </div>
-                    <span className="num font-bold">฿{f(l.amount)}</span>
-                  </div>
+                {active.capexLines.map((l) => (
+                  <div key={l.key} className="flex items-center justify-between border-b border-[#f0ede3] px-4 py-2.5"><div><div className="text-[12.5px] font-semibold text-ink">{l.th}</div><div className="text-[10.5px] text-[#9aa499]">{l.en}</div></div><span className="num font-bold">฿{f(l.amount)}</span></div>
                 ))}
-                <div className="flex items-center justify-between border-b border-[#f0ede3] bg-[#f6f4ec] px-4 py-2.5">
-                  <span className="text-[12.5px] font-semibold text-[#54625a]">ทุนหมุนเวียน / Working capital</span>
-                  <span className="num font-bold">฿{f(WORKING_CAPITAL)}</span>
-                </div>
-                <div className="flex items-center justify-between bg-forest px-4 py-3 text-white">
-                  <span className="text-[13px] font-extrabold">รวมเงินลงทุน / Total outlay</span>
-                  <span className="num text-[15px] font-extrabold">฿{f(totalCapex() + WORKING_CAPITAL)}</span>
-                </div>
+                <div className="flex items-center justify-between border-b border-[#f0ede3] bg-[#f6f4ec] px-4 py-2.5"><span className="text-[12.5px] font-semibold text-[#54625a]">ทุนหมุนเวียน / Working capital</span><span className="num font-bold">฿{f(active.workingCapital)}</span></div>
+                <div className="flex items-center justify-between bg-forest px-4 py-3 text-white"><span className="text-[13px] font-extrabold">รวมเงินลงทุน / Total outlay</span><span className="num text-[15px] font-extrabold">฿{f(totalCapex(active) + active.workingCapital)}</span></div>
               </div>
             </div>
             <div className="min-w-[300px] flex-1">
               <SectionTitle kicker="ค่าดำเนินการ / OpEx (ต่อปี)">ต้นทุนดำเนินงานรายปี</SectionTitle>
               <div className="overflow-hidden rounded-[12px] border border-[#e6e2d6]">
-                {OPEX_LINES.map((l) => (
-                  <div key={l.key} className="flex items-center justify-between border-b border-[#f0ede3] px-4 py-2.5">
-                    <div>
-                      <div className="text-[12.5px] font-semibold text-ink">{l.th}</div>
-                      <div className="text-[10.5px] text-[#9aa499]">{l.en}</div>
-                    </div>
-                    <span className="num font-bold">฿{f(l.perYear)}</span>
-                  </div>
+                {active.opexLines.map((l) => (
+                  <div key={l.key} className="flex items-center justify-between border-b border-[#f0ede3] px-4 py-2.5"><div><div className="text-[12.5px] font-semibold text-ink">{l.th}</div><div className="text-[10.5px] text-[#9aa499]">{l.en}</div></div><span className="num font-bold">฿{f(l.perYear)}</span></div>
                 ))}
-                <div className="flex items-center justify-between bg-forest px-4 py-3 text-white">
-                  <span className="text-[13px] font-extrabold">รวม OpEx / Total · ปี</span>
-                  <span className="num text-[15px] font-extrabold">฿{f(opexPerYear())}</span>
-                </div>
+                <div className="flex items-center justify-between bg-forest px-4 py-3 text-white"><span className="text-[13px] font-extrabold">รวม OpEx / Total · ปี</span><span className="num text-[15px] font-extrabold">฿{f(opexPerYear(active))}</span></div>
               </div>
             </div>
           </div>
 
-          {/* scenarios */}
+          {/* scenarios (fixed market reference) */}
           <div className="mx-9 mt-7">
-            <SectionTitle kicker="การวิเคราะห์ฉากทัศน์ / Scenario Analysis">
-              เปรียบเทียบ 3 กรณี / Conservative · Base · Upside
-            </SectionTitle>
+            <SectionTitle kicker="การวิเคราะห์ฉากทัศน์ (อ้างอิงคงที่) / Reference Scenarios">เปรียบเทียบ 3 กรณี / Conservative · Base · Upside</SectionTitle>
             <table className="w-full border-collapse text-[12.5px]">
               <thead>
                 <tr className="bg-[#26342c] text-white">
                   <th className="p-[9px_10px] text-left font-bold">ตัวชี้วัด / Metric</th>
-                  {results.map((r) => (
-                    <th key={r.scenario.key} className="num p-[9px_10px] font-bold">
-                      {r.scenario.th} / {r.scenario.en}
-                    </th>
-                  ))}
+                  {refs.map((r) => (<th key={r.scenario.key} className="num p-[9px_10px] font-bold">{r.scenario.th} / {r.scenario.en}</th>))}
                 </tr>
               </thead>
               <tbody>
-                <ScenRow label="ปริมาณหมุนเวียน / Throughput" unit="ตัน/ปี" vals={results.map((r) => f(r.scenario.throughputT))} />
-                <ScenRow label="กำไรขั้นต้น / Gross margin" unit="฿/ตัน" vals={results.map((r) => f(r.grossMarginPerT))} />
-                <ScenRow label="EBITDA (คงที่) / steady" unit="฿/ปี" vals={results.map((r) => f(r.steadyEbitda))} />
-                <ScenRow label="EBITDA Margin" unit="%" vals={results.map((r) => `${r.ebitdaMarginPct.toFixed(0)}%`)} />
-                <ScenRow label="ระยะคืนทุน / Payback" unit="ปี" highlight vals={results.map((r) => (r.paybackYears ? r.paybackYears.toFixed(1) : '>10'))} />
-                <ScenRow label="IRR (10 ปี)" unit="%" highlight vals={results.map((r) => `${((r.irr ?? 0) * 100).toFixed(1)}%`)} />
-                <ScenRow label="NPV @ 8%" unit="฿" highlight vals={results.map((r) => `${r.npv >= 0 ? '+' : ''}${fM(r.npv)}`)} />
+                <ScenRow label="ปริมาณหมุนเวียน / Throughput" unit="ตัน/ปี" vals={refs.map((r) => f(r.scenario.throughputT))} />
+                <ScenRow label="กำไรขั้นต้น / Gross margin" unit="฿/ตัน" vals={refs.map((r) => f(r.result.grossMarginPerT))} />
+                <ScenRow label="EBITDA (คงที่) / steady" unit="฿/ปี" vals={refs.map((r) => f(r.result.steadyEbitda))} />
+                <ScenRow label="EBITDA Margin" unit="%" vals={refs.map((r) => `${r.result.ebitdaMarginPct.toFixed(0)}%`)} />
+                <ScenRow label="ระยะคืนทุน / Payback" unit="ปี" highlight vals={refs.map((r) => (r.result.paybackYears ? r.result.paybackYears.toFixed(1) : '>10'))} />
+                <ScenRow label="IRR (10 ปี)" unit="%" highlight vals={refs.map((r) => `${((r.result.irr ?? 0) * 100).toFixed(1)}%`)} />
+                <ScenRow label="NPV @ 8%" unit="฿" highlight vals={refs.map((r) => fM(r.result.npv))} />
               </tbody>
             </table>
-            <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">
-              * กรณีระมัดระวังโครงการแทบไม่คุ้ม — ผลตอบแทนอ่อนไหวต่อ <b>ปริมาณ</b> และ <b>กำไรต่อตัน</b> มาก จุดคุ้มทุนอยู่ที่ ~1,500–1,600 ตัน/ปี · The project is highly sensitive to volume &amp; margin; break-even is around 1,500–1,600 t/yr.
-            </div>
+            <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">* กรณีระมัดระวังโครงการแทบไม่คุ้ม — ผลตอบแทนอ่อนไหวต่อ <b>ปริมาณ</b> และ <b>กำไรต่อตัน</b> มาก จุดคุ้มทุนอยู่ที่ ~1,500–1,600 ตัน/ปี · highly sensitive to volume &amp; margin; break-even ≈ 1,500–1,600 t/yr.</div>
           </div>
 
-          {/* cash-flow projection (base) */}
+          {/* cash-flow projection */}
           <div className="mx-9 mt-7">
-            <SectionTitle kicker="ประมาณการกระแสเงินสด (กรณีฐาน) / Base-Case Cash Flow">
-              กระแสเงินสด 10 ปี / 10-Year Projection
-            </SectionTitle>
+            <SectionTitle kicker={simMode ? 'ประมาณการกระแสเงินสด (ค่าที่คุณกรอก)' : 'ประมาณการกระแสเงินสด (กรณีฐาน) / Base-Case Cash Flow'}>กระแสเงินสด 10 ปี / 10-Year Projection</SectionTitle>
             <table className="w-full border-collapse text-[12px]">
               <thead>
                 <tr className="bg-[#26342c] text-white">
@@ -330,83 +398,120 @@ export default function FeasibilityPage() {
               </thead>
               <tbody>
                 <tr className="border-b border-[#f0ede3]">
-                  <td className="num p-[7px_8px] text-[#8a948b]">0</td>
-                  <td className="num p-[7px_8px] text-[#9aa499]">—</td>
-                  <td className="num p-[7px_8px] text-[#9aa499]">—</td>
-                  <td className="num p-[7px_8px] text-[#9aa499]">—</td>
-                  <td className="num p-[7px_8px] font-bold text-[#c25b46]">−{f(base.initialOutlay)}</td>
-                  <td className="num p-[7px_8px] font-bold text-[#c25b46]">−{f(base.initialOutlay)}</td>
+                  <td className="num p-[7px_8px] text-[#8a948b]">0</td><td className="num p-[7px_8px] text-[#9aa499]">—</td><td className="num p-[7px_8px] text-[#9aa499]">—</td><td className="num p-[7px_8px] text-[#9aa499]">—</td>
+                  <td className="num p-[7px_8px] font-bold text-[#c25b46]">−{f(result.initialOutlay)}</td><td className="num p-[7px_8px] font-bold text-[#c25b46]">−{f(result.initialOutlay)}</td>
                 </tr>
-                {base.rows.map((r) => (
+                {result.rows.map((r) => (
                   <tr key={r.year} className="border-b border-[#f0ede3]">
                     <td className="num p-[7px_8px] text-[#8a948b]">{r.year}{r.ramp < 1 ? '*' : ''}</td>
                     <td className="num p-[7px_8px] text-[#54625a]">{f(r.throughput)}</td>
                     <td className="num p-[7px_8px] text-[#54625a]">{f(r.revenue)}</td>
                     <td className="num p-[7px_8px] text-[#54625a]">{f(r.ebitda)}</td>
                     <td className="num p-[7px_8px] font-semibold text-ink">{r.terminal > 0 ? `${f(r.netCashFlow)}†` : f(r.netCashFlow)}</td>
-                    <td className={`num p-[7px_8px] font-bold ${r.cumulative >= 0 ? 'text-forest' : 'text-[#c25b46]'}`}>
-                      {r.cumulative >= 0 ? '+' : '−'}{f(Math.abs(r.cumulative))}
-                    </td>
+                    <td className={`num p-[7px_8px] font-bold ${r.cumulative >= 0 ? 'text-forest' : 'text-[#c25b46]'}`}>{r.cumulative >= 0 ? '+' : '−'}{f(Math.abs(r.cumulative))}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">
-              * ปีที่ 1–2 เดินเครื่องที่ {(PARAMS.rampYear1 * 100).toFixed(0)}% / {(PARAMS.rampYear2 * 100).toFixed(0)}% ระหว่างสร้างเครือข่ายรับซื้อ · ramp-up while building supply network. † ปีที่ 10 รวมมูลค่าซาก (อาคาร {(PARAMS.buildingSalvageFrac * 100).toFixed(0)}% + อุปกรณ์ {(PARAMS.equipmentResidualFrac * 100).toFixed(0)}%) + คืนทุนหมุนเวียน · terminal value + working-capital recovery.
-            </div>
+            <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">* ปีที่ 1–2 เดินเครื่องที่ {(active.rampYear1 * 100).toFixed(0)}% / {(active.rampYear2 * 100).toFixed(0)}% ระหว่างสร้างเครือข่ายรับซื้อ. † ปีที่ {active.years} รวมมูลค่าซาก (อาคาร {(active.buildingSalvageFrac * 100).toFixed(0)}% + อุปกรณ์ {(active.equipmentResidualFrac * 100).toFixed(0)}%) + คืนทุนหมุนเวียน · terminal value + WC recovery.</div>
           </div>
 
           {/* sensitivity */}
           <div className="mx-9 mt-7">
-            <SectionTitle kicker="การวิเคราะห์ความอ่อนไหว / Sensitivity">
-              ระยะคืนทุน (ปี): ปริมาณ × กำไรต่อตัน / Payback (yrs): Volume × Margin
-            </SectionTitle>
-            <SensitivityGrid />
+            <SectionTitle kicker="การวิเคราะห์ความอ่อนไหว / Sensitivity">ระยะคืนทุน (ปี): ปริมาณ × กำไรต่อตัน / Payback (yrs): Volume × Margin</SectionTitle>
+            <SensitivityGrid opex={opexPerYear(active)} outlay={totalCapex(active) + active.workingCapital} />
           </div>
 
-          {/* assumptions & sources */}
+          {/* references */}
           <div className="mx-9 mt-7">
-            <SectionTitle kicker="สมมติฐาน &amp; แหล่งอ้างอิง / Assumptions &amp; Sources">
-              ฐานข้อมูลตลาด ปี 2568 / 2025 Market Basis
-            </SectionTitle>
-            <div className="flex flex-col gap-1.5 text-[11.5px] leading-[1.5] text-[#54625a]">
-              {[
-                ['ก้อน / Bale', `${BALE_KG} กก./ก้อน → ${BALES_PER_TONNE} ก้อน/ตัน (สอดคล้องกับโมเดล 3 มิติ ~1,500 ก้อน ≈ 30 ตัน)`],
-                ['รับซื้อ / Buy-in', 'ฟางอัดก้อนจากเกษตรกร 5–12 ฿/ก้อน (ใช้ 11 ฿) · baling service 13–15 ฿/ก้อน'],
-                ['ขายต่อ / Resell', 'หน้าโกดัง 25 ฿/ก้อน · หน้าฝน/ขาดแคลน 30–35 ฿/ก้อน — โรงไฟฟ้าชีวมวล ~21 ฿/ก้อน (ตัน)'],
-                ['ผลผลิตฟาง / Straw yield', '~40–60 ก้อน/ไร่ · รายได้อัดฟาง 1,000–1,500 ฿/ไร่'],
-                ['ทำเล / Location', 'ฉะเชิงเทรา = ศูนย์กลางโรงไฟฟ้าชีวมวล (NPS / นิคม 304) + อู่ข้าวภาคกลาง-ตะวันออก'],
-              ].map(([k, v]) => (
-                <div key={k} className="flex gap-2.5">
-                  <span className="w-[110px] flex-none font-bold text-forest">{k}</span>
-                  <span>{v}</span>
+            <SectionTitle kicker="แหล่งอ้างอิงโดยละเอียด / Detailed References">ฐานข้อมูลตลาด ปี 2568 / 2025 Market Sources</SectionTitle>
+            <div className="flex flex-col gap-2.5">
+              {REFERENCES.map((r) => (
+                <div key={r.id} className="flex gap-3 rounded-[10px] border border-[#ece8dc] bg-[#fafaf6] px-4 py-3">
+                  <span className="flex h-[24px] w-[28px] flex-none items-center justify-center rounded bg-forest text-[12px] font-extrabold text-white">{r.id}</span>
+                  <div className="flex-1">
+                    <div className="text-[12.5px] font-extrabold text-ink">{r.org}</div>
+                    <div className="mt-0.5 text-[11.5px] leading-[1.5] text-[#54625a]">{r.th}</div>
+                    <div className="mt-0.5 text-[11px] leading-[1.4] text-[#9aa499]">{r.en}</div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                      <span className="rounded bg-[#eef3ec] px-2 py-0.5 font-semibold text-forest">ใช้สำหรับ: {r.figure}</span>
+                      <span className="text-[#3f7fae]">{r.url}</span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
-            <div className="mt-3 flex flex-col gap-1 text-[11px] leading-[1.5] text-[#7c8a80]">
-              <div><b className="text-forest">R1</b> เทคโนโลยีชาวบ้าน / ข่าวสด · ธุรกิจฟางข้าวอัดก้อน — ต้นทุน/ราคา/กำไรต่อก้อน · khaosod.co.th/technologychaoban</div>
-              <div><b className="text-forest">R2</b> Thai Rice Farming Simulator (ของผู้จัดทำ) · ราคาฟาง 0.75–1.15 ฿/กก. · thai-rice-farming-simulator.netlify.app</div>
-              <div><b className="text-forest">R3</b> NPS (National Power Supply) / Ratch Pathana Energy · ศูนย์รับซื้อชีวมวล ภาคตะวันออก · npsplc.com · ratchpathana.com</div>
-              <div><b className="text-forest">R4</b> opsmoac.go.th / rakbankerd.com · อัดฟางก้อนสร้างรายได้หลังเก็บเกี่ยว (40–60 ก้อน/ไร่)</div>
-            </div>
-            <div className="mt-3 text-[10.5px] leading-[1.5] text-[#a7afa4]">
-              * ทุกตัวเลขเป็นการประมาณการเทียบเคียงตลาด ปี พ.ศ. 2568 เพื่อการศึกษาความเป็นไปได้ — ไม่ใช่การรับประกันผลตอบแทน ควรทำสัญญารับซื้อ-ขายจริงและสำรวจราคาในพื้นที่ก่อนตัดสินใจลงทุน · All figures are 2025 market-referenced estimates for feasibility study only — not a guarantee of returns. Secure real offtake contracts and verify local prices before investing.
-            </div>
+            <div className="mt-3 text-[10.5px] leading-[1.5] text-[#a7afa4]">* ทุกตัวเลขเป็นการประมาณการเทียบเคียงตลาด ปี พ.ศ. 2568 เพื่อการศึกษาความเป็นไปได้ — ไม่ใช่การรับประกันผลตอบแทน ควรทำสัญญารับซื้อ-ขายจริงและสำรวจราคาในพื้นที่ก่อนตัดสินใจลงทุน · All figures are 2025 market-referenced estimates for feasibility study only — not a guarantee of returns. Secure real offtake contracts and verify local prices before investing.</div>
           </div>
 
           {/* footer */}
           <div className="mt-7 flex justify-between border-t border-[#f0ede3] px-9 py-3.5 text-[11px] text-[#9aa499]">
             <span>การศึกษาความเป็นไปได้ทางการเงิน · Financial feasibility study · Design by <b className="text-forest">Sponlapat / BD</b></span>
-            <span>สกุลเงิน: บาท (THB) · ปีฐาน พ.ศ. 2568 / 2025</span>
+            <span>สกุลเงิน: บาท (THB) · ปีฐาน 2568 / 2025</span>
           </div>
         </div>
       </div>
+
+      {/* confirm modal */}
+      {showConfirm && (
+        <Modal onClose={() => setShowConfirm(false)}>
+          <div className="flex items-center gap-2.5 text-[18px] font-extrabold text-ink">
+            <SlidersHorizontal size={22} className="text-straw" /> เข้าสู่โหมดจำลอง / Enter Simulation
+          </div>
+          <p className="mt-3 text-[13.5px] leading-[1.6] text-[#54625a]">
+            คุณกำลังจะเปิด <b>โหมดจำลอง</b> — สามารถปรับสมมติฐานทุกตัวได้เอง (ปริมาณ ราคาขาย ต้นทุน เงินลงทุน อัตราคิดลด ภาษี)
+            แล้วระบบจะคำนวณ <b>NPV / IRR / ระยะคืนทุน / Sensitivity</b> ใหม่ทันที<br />
+            <span className="text-[#9aa499]">You're about to enable Simulation mode — edit any assumption and all metrics recompute live. Defaults are 2025 market-referenced.</span>
+          </p>
+          <div className="mt-5 flex justify-end gap-2.5">
+            <button onClick={() => setShowConfirm(false)} className="rounded-[10px] border border-[#e1ddd0] bg-white px-5 py-2.5 text-[13px] font-bold text-[#54625a] hover:bg-[#faf7ef]">ยกเลิก / Cancel</button>
+            <button onClick={() => { setInputs(cloneInputs(DEFAULT_INPUTS)); setSimMode(true); setShowConfirm(false) }} className="rounded-[10px] border-none bg-forest px-5 py-2.5 text-[13px] font-bold text-white hover:opacity-90">✓ อนุมัติ &amp; เริ่ม / Approve &amp; Start</button>
+          </div>
+        </Modal>
+      )}
+
+      {/* methodology modal */}
+      {showMethod && (
+        <Modal onClose={() => setShowMethod(false)} wide>
+          <div className="flex items-center gap-2.5 text-[18px] font-extrabold text-ink">
+            <Calculator size={22} className="text-[#3f7fae]" /> วิธีการคำนวณ / How It's Calculated
+          </div>
+          <div className="mt-4 flex flex-col gap-2.5 text-[12.5px] leading-[1.55] text-[#3a473f]">
+            {[
+              ['ราคาขายเฉลี่ย / Blended price', 'Σ (สัดส่วนช่องทาง × ราคาช่องทาง) · Σ(mix × price)'],
+              ['รายได้ / Revenue', 'ปริมาณ (ตัน) × ราคาขายเฉลี่ย (฿/ตัน)'],
+              ['ต้นทุนวัตถุดิบ / COGS', 'ปริมาณ × Σ(รับซื้อ + ขนเข้า)  (฿/ตัน)'],
+              ['กำไรขั้นต้น / Gross margin', 'ราคาขาย − COGS  (ต่อตัน)'],
+              ['EBITDA', 'กำไรขั้นต้นรวม − ค่าดำเนินการ (OpEx)'],
+              ['ค่าเสื่อม / Depreciation', 'อาคาร ÷ 20 ปี + อุปกรณ์ ÷ 7 ปี (เส้นตรง)'],
+              ['EBIT & ภาษี / Tax', 'EBIT = EBITDA − ค่าเสื่อม · ภาษี = max(0, EBIT) × 15%'],
+              ['กระแสเงินสด / Cash flow', 'EBITDA − ภาษี (บวกกลับค่าเสื่อมเพราะไม่ใช่เงินสด)'],
+              ['Ramp-up', 'ปีที่ 1 = 60% · ปีที่ 2 = 80% · ปีที่ 3+ = 100% ของปริมาณเต็ม'],
+              ['มูลค่าซาก / Terminal (ปีสุดท้าย)', 'อาคาร×60% + อุปกรณ์×20% + คืนทุนหมุนเวียน'],
+              ['NPV', 'Σ  กระแสเงินสดปีที่ t ÷ (1 + r)^t  ·  r = อัตราคิดลด 8%'],
+              ['IRR', 'อัตราคิดลดที่ทำให้ NPV = 0 (หาด้วยวิธี bisection)'],
+              ['ระยะคืนทุน / Payback', 'ปีแรกที่กระแสเงินสดสะสม ≥ 0 (interpolate ภายในปี)'],
+              ['ROI', 'กำไรสุทธิเฉลี่ยต่อปี ÷ เงินลงทุน CapEx'],
+            ].map(([k, v]) => (
+              <div key={k} className="flex flex-col gap-0.5 rounded-[8px] bg-[#f6f4ec] px-3.5 py-2 sm:flex-row sm:items-baseline sm:gap-3">
+                <span className="w-[230px] flex-none text-[12px] font-extrabold text-forest">{k}</span>
+                <span className="num-none font-mono text-[12px] text-[#3a473f]">{v}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 rounded-[8px] bg-[#eef3ec] px-3.5 py-2.5 text-[11.5px] leading-[1.5] text-[#54625a]">
+            ฐานการเงิน: 10 ปี · คิดลด 8% (WACC ของ SME เกษตรไทย) · ภาษี SME 15% · ทั้งหมดคำนวณสดในเบราว์เซอร์จากไฟล์ <b>src/feasibility/model.ts</b> — ไม่มี backend.
+          </div>
+          <div className="mt-4 flex justify-end">
+            <button onClick={() => setShowMethod(false)} className="rounded-[10px] border-none bg-forest px-5 py-2.5 text-[13px] font-bold text-white hover:opacity-90">เข้าใจแล้ว / Got it</button>
+          </div>
+        </Modal>
+      )}
     </>
   )
 }
 
 // ---------- sub-components ----------
-
 function SectionTitle({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <div className="mb-3">
@@ -426,28 +531,53 @@ function HeroCard({ color, label, value, unit }: { color: string; label: string;
   )
 }
 
-function Waterfall({ sell, cogs, gm }: { sell: number; cogs: number; gm: number }) {
-  const max = sell
-  const bar = (v: number) => `${(v / max) * 100}%`
+function CtrlGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-3 rounded-[12px] border border-[#e6e2d6] bg-white p-4">
-      <Row label="ราคาขาย / Sell price" value={sell} color="#2f6b3f" width={bar(sell)} />
-      <Row label="− ต้นทุนวัตถุดิบ / − COGS" value={-cogs} color="#c25b46" width={bar(cogs)} />
-      <div className="border-t border-dashed border-[#e6e2d6]" />
-      <Row label="= กำไรขั้นต้น / = Gross margin" value={gm} color="#c8902f" width={bar(gm)} bold />
+    <div>
+      <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.04em] text-[#a9772a]">{title}</div>
+      <div className="flex flex-col gap-2">{children}</div>
     </div>
   )
 }
-function Row({ label, value, color, width, bold }: { label: string; value: number; color: string; width: string; bold?: boolean }) {
+
+function NumField({ label, suffix, value, onChange, step = 1, small }: { label: string; suffix?: string; value: number; onChange: (v: number) => void; step?: number; small?: boolean }) {
+  return (
+    <label className="block flex-1">
+      <span className="block text-[10.5px] font-semibold leading-tight text-[#54625a]">{label}</span>
+      <span className="mt-0.5 flex items-center gap-1 rounded-[7px] border border-[#e1ddd0] bg-white px-2 py-1 focus-within:border-straw">
+        <input
+          type="number"
+          value={Number.isFinite(value) ? Math.round(value * 100) / 100 : 0}
+          step={step}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          className={`num w-full border-none bg-transparent font-bold text-ink outline-none ${small ? 'text-[12px]' : 'text-[13px]'}`}
+        />
+        {suffix && <span className="flex-none text-[9.5px] text-[#9aa499]">{suffix}</span>}
+      </span>
+    </label>
+  )
+}
+
+function Waterfall({ sell, cogs, gm }: { sell: number; cogs: number; gm: number }) {
+  const max = Math.max(sell, 1)
+  const bar = (v: number) => `${Math.max(0, (v / max) * 100)}%`
+  return (
+    <div className="flex flex-col gap-3 rounded-[12px] border border-[#e6e2d6] bg-white p-4">
+      <WRow label="ราคาขาย / Sell price" value={sell} color="#2f6b3f" width={bar(sell)} />
+      <WRow label="− ต้นทุนวัตถุดิบ / − COGS" value={-cogs} color="#c25b46" width={bar(cogs)} />
+      <div className="border-t border-dashed border-[#e6e2d6]" />
+      <WRow label="= กำไรขั้นต้น / = Gross margin" value={gm} color="#c8902f" width={bar(gm)} bold />
+    </div>
+  )
+}
+function WRow({ label, value, color, width, bold }: { label: string; value: number; color: string; width: string; bold?: boolean }) {
   return (
     <div>
       <div className="flex items-center justify-between text-[12px]">
         <span className={bold ? 'font-extrabold text-ink' : 'font-semibold text-[#54625a]'}>{label}</span>
         <span className="num font-bold" style={{ color }}>{value < 0 ? '−' : ''}฿{f(Math.abs(value))}<span className="text-[10px] font-normal text-[#9aa499]">/ต</span></span>
       </div>
-      <div className="mt-1 h-2.5 overflow-hidden rounded-[5px] bg-[#f0ede3]">
-        <div className="h-full rounded-[5px]" style={{ width, background: color }} />
-      </div>
+      <div className="mt-1 h-2.5 overflow-hidden rounded-[5px] bg-[#f0ede3]"><div className="h-full rounded-[5px]" style={{ width, background: color }} /></div>
     </div>
   )
 }
@@ -455,27 +585,19 @@ function Row({ label, value, color, width, bold }: { label: string; value: numbe
 function ScenRow({ label, unit, vals, highlight }: { label: string; unit: string; vals: string[]; highlight?: boolean }) {
   return (
     <tr className={`border-b border-[#f0ede3] ${highlight ? 'bg-[#f6f4ec]' : ''}`}>
-      <td className="p-[8px_10px]">
-        <span className={`text-[12.5px] ${highlight ? 'font-extrabold text-ink' : 'font-semibold text-[#54625a]'}`}>{label}</span>
-        <span className="ml-1.5 text-[10px] text-[#9aa499]">{unit}</span>
-      </td>
-      {vals.map((v, i) => (
-        <td key={i} className={`num p-[8px_10px] ${highlight ? 'font-extrabold text-forest' : 'font-semibold text-ink'} ${i === 1 ? 'bg-[#eef3ec]' : ''}`}>{v}</td>
-      ))}
+      <td className="p-[8px_10px]"><span className={`text-[12.5px] ${highlight ? 'font-extrabold text-ink' : 'font-semibold text-[#54625a]'}`}>{label}</span><span className="ml-1.5 text-[10px] text-[#9aa499]">{unit}</span></td>
+      {vals.map((v, i) => (<td key={i} className={`num p-[8px_10px] ${highlight ? 'font-extrabold text-forest' : 'font-semibold text-ink'} ${i === 1 ? 'bg-[#eef3ec]' : ''}`}>{v}</td>))}
     </tr>
   )
 }
 
-function SensitivityGrid() {
+function SensitivityGrid({ opex, outlay }: { opex: number; outlay: number }) {
   const throughputs = [1200, 1600, 2000, 2400, 2800]
   const margins = [600, 700, 800, 900]
-  const capex = totalCapex() + WORKING_CAPITAL
-  // simple payback ≈ initial outlay / steady operating cash flow (EBITDA, base opex)
-  const opex = opexPerYear()
   const cell = (t: number, m: number) => {
     const ebitda = m * t - opex
     if (ebitda <= 0) return { txt: '—', bg: '#f7e7e3', fg: '#c25b46' }
-    const pb = capex / ebitda
+    const pb = outlay / ebitda
     let bg = '#e7f1e8', fg = '#2f6b3f'
     if (pb > 8) { bg = '#f7e7e3'; fg = '#c25b46' }
     else if (pb > 5) { bg = '#fbf2e0'; fg = '#a9772a' }
@@ -486,26 +608,27 @@ function SensitivityGrid() {
       <thead>
         <tr>
           <th className="p-[8px] text-left text-[11px] font-bold text-[#9aa499]">ปริมาณ ↓ / กำไรต่อตัน →</th>
-          {margins.map((m) => (
-            <th key={m} className="num p-[8px] font-bold text-[#26342c]">฿{m}/ต</th>
-          ))}
+          {margins.map((m) => (<th key={m} className="num p-[8px] font-bold text-[#26342c]">฿{m}/ต</th>))}
         </tr>
       </thead>
       <tbody>
         {throughputs.map((t) => (
           <tr key={t}>
             <td className="num p-[8px] font-bold text-[#26342c]">{f(t)} ตัน</td>
-            {margins.map((m) => {
-              const c = cell(t, m)
-              return (
-                <td key={m} className="num p-[8px] font-extrabold" style={{ background: c.bg, color: c.fg }}>
-                  {c.txt}
-                </td>
-              )
-            })}
+            {margins.map((m) => { const c = cell(t, m); return (<td key={m} className="num p-[8px] font-extrabold" style={{ background: c.bg, color: c.fg }}>{c.txt}</td>) })}
           </tr>
         ))}
       </tbody>
     </table>
+  )
+}
+
+function Modal({ children, onClose, wide }: { children: React.ReactNode; onClose: () => void; wide?: boolean }) {
+  return (
+    <div className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-5" onClick={onClose}>
+      <div className={`max-h-[88vh] overflow-y-auto rounded-[16px] bg-white p-7 shadow-[0_20px_60px_rgba(20,40,25,0.3)] ${wide ? 'w-[640px]' : 'w-[460px]'}`} onClick={(e) => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
   )
 }

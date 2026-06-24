@@ -1,5 +1,5 @@
 // ============================================================================
-// Rice Straw Aggregation Hub — Feasibility / Financial Model
+// Rice Straw Aggregation Hub — Feasibility / Financial Model (input-driven)
 // ----------------------------------------------------------------------------
 // Business model: we are a straw AGGREGATOR-TRADER based in Chachoengsao.
 // We buy baled rice straw from farmers/contractors at/after harvest (cheap,
@@ -7,162 +7,146 @@
 // channels. Customers mostly self-pick-up at the hub; nearby customers can get
 // delivery for a fee (treated as pass-through, margin-neutral).
 //
-// All figures are 2025 (พ.ศ. 2568) market-referenced estimates — see SOURCES.
-// Every number below is an explicit, editable assumption.
+// Every number is an explicit, editable assumption — the Simulation mode lets
+// the user override any of them and recomputes NPV / IRR / payback live.
+// All defaults are 2025 (พ.ศ. 2568) market-referenced — see REFERENCES.
 // ============================================================================
 
-export const BALE_KG = 20 // kg per rectangular bale (1,500 bales ≈ 30 t — matches the 3D model)
-export const BALES_PER_TONNE = 1000 / BALE_KG // = 50
+export const balesPerTonne = (baleKg: number) => 1000 / baleKg
 
-// ---- Sales channels (resale prices, market-referenced) ---------------------
 export interface Channel {
   key: string
   th: string
   en: string
   mix: number // share of annual volume (0–1)
-  pricePerTonne: number // blended resale price ฿/tonne
+  pricePerTonne: number
   note: string
 }
-
-// Base-case channel mix. Biomass = high-volume baseload (thin margin, year-round,
-// no spoilage). Cattle feed & mushroom = premium (dry-season scarcity 30–35 ฿/bale).
-export const CHANNELS: Channel[] = [
-  {
-    key: 'biomass',
-    th: 'โรงไฟฟ้าชีวมวล',
-    en: 'Biomass power plant',
-    mix: 0.45,
-    pricePerTonne: 1050, // ≈ 21 ฿/bale, delivered to plant gate
-    note: 'Baseload volume · year-round offtake · NPS / 304 corridor',
-  },
-  {
-    key: 'cattle',
-    th: 'อาหารสัตว์ (โค-กระบือ)',
-    en: 'Cattle / livestock feed',
-    mix: 0.35,
-    pricePerTonne: 1750, // ≈ 35 ฿/bale, dry-season premium
-    note: 'Premium · dry-season scarcity 30–35 ฿/bale',
-  },
-  {
-    key: 'mushroom',
-    th: 'เพาะเห็ด / อื่นๆ',
-    en: 'Mushroom growing / other',
-    mix: 0.2,
-    pricePerTonne: 1650, // ≈ 33 ฿/bale
-    note: 'Premium · steady local demand',
-  },
-]
-
-export const blendedSellPerTonne = (channels: Channel[] = CHANNELS) =>
-  channels.reduce((s, c) => s + c.mix * c.pricePerTonne, 0)
-
-// ---- Cost of goods: straw acquisition, landed into the hub -----------------
 export interface CostLine {
   key: string
   th: string
   en: string
-  perTonne: number // ฿/tonne
+  perTonne: number
 }
-
-export const COGS_LINES: CostLine[] = [
-  { key: 'buy', th: 'รับซื้อฟางอัดก้อนจากเกษตรกร', en: 'Buy baled straw from farmers', perTonne: 550 }, // ≈ 11 ฿/bale
-  { key: 'inbound', th: 'ค่าขนเข้าโกดัง', en: 'Inbound transport to hub', perTonne: 90 }, // ≈ 1.8 ฿/bale
-]
-export const cogsPerTonne = (lines: CostLine[] = COGS_LINES) =>
-  lines.reduce((s, l) => s + l.perTonne, 0)
-
-// ---- CapEx -----------------------------------------------------------------
 export interface CapexLine {
   key: string
   th: string
   en: string
   amount: number
 }
-export const CAPEX_LINES: CapexLine[] = [
-  { key: 'warehouse', th: 'โรงเก็บฟาง (ตาม BOQ)', en: 'Storage warehouse (per BOQ)', amount: 1451769 },
-  { key: 'forklift', th: 'รถโฟล์คลิฟต์', en: 'Forklift', amount: 450000 },
-  { key: 'truck', th: 'รถบรรทุก 6 ล้อ (มือสอง)', en: '6-wheel truck (used)', amount: 650000 },
-  { key: 'misc', th: 'เครื่องชั่ง เครื่องมือ สำนักงาน', en: 'Scales, tools, office setup', amount: 150000 },
-]
-export const BUILDING_CAPEX = 1451769
-export const EQUIPMENT_CAPEX = CAPEX_LINES.reduce((s, l) => s + l.amount, 0) - BUILDING_CAPEX
-export const totalCapex = (lines: CapexLine[] = CAPEX_LINES) =>
-  lines.reduce((s, l) => s + l.amount, 0)
-export const WORKING_CAPITAL = 300000 // inventory + receivables float
-
-// ---- OpEx (annual, base case) ----------------------------------------------
 export interface OpexLine {
   key: string
   th: string
   en: string
   perYear: number
 }
-export const OPEX_LINES: OpexLine[] = [
-  { key: 'staff', th: 'เงินเดือน (ผู้จัดการ + แรงงาน)', en: 'Staff (manager + crew)', perYear: 420000 },
-  { key: 'fleet', th: 'น้ำมัน + ซ่อมบำรุง (โฟล์คลิฟต์/รถ)', en: 'Fuel & maintenance (forklift/truck)', perYear: 150000 },
-  { key: 'lease', th: 'ค่าเช่าที่ดิน', en: 'Land lease', perYear: 60000 },
-  { key: 'utilities', th: 'ไฟฟ้า ประกัน เบ็ดเตล็ด', en: 'Utilities, insurance, misc', perYear: 90000 },
-  { key: 'selling', th: 'การขาย & บริหาร', en: 'Selling & admin', perYear: 100000 },
-]
-export const opexPerYear = (lines: OpexLine[] = OPEX_LINES) =>
-  lines.reduce((s, l) => s + l.perYear, 0)
 
-// ---- Shared financial parameters -------------------------------------------
-export const PARAMS = {
+// The complete editable input set for one run of the model.
+export interface SimInputs {
+  baleKg: number
+  throughputT: number // tonnes / year at steady state
+  channels: Channel[]
+  cogsLines: CostLine[]
+  capexLines: CapexLine[]
+  buildingKey: string // which capex line is the building (depreciation/salvage)
+  workingCapital: number
+  opexLines: OpexLine[]
+  taxRate: number
+  discountRate: number
+  years: number
+  buildingLifeYrs: number
+  equipmentLifeYrs: number
+  buildingSalvageFrac: number
+  equipmentResidualFrac: number
+  rampYear1: number
+  rampYear2: number
+}
+
+export const DEFAULT_INPUTS: SimInputs = {
+  baleKg: 20, // 1,500 bales ≈ 30 t — matches the 3D model
+  throughputT: 2000,
+  channels: [
+    { key: 'biomass', th: 'โรงไฟฟ้าชีวมวล', en: 'Biomass power plant', mix: 0.45, pricePerTonne: 1050, note: 'Baseload · year-round · NPS / 304 corridor' },
+    { key: 'cattle', th: 'อาหารสัตว์ (โค-กระบือ)', en: 'Cattle / livestock feed', mix: 0.35, pricePerTonne: 1750, note: 'Premium · dry-season scarcity 30–35 ฿/bale' },
+    { key: 'mushroom', th: 'เพาะเห็ด / อื่นๆ', en: 'Mushroom growing / other', mix: 0.2, pricePerTonne: 1650, note: 'Premium · steady local demand' },
+  ],
+  cogsLines: [
+    { key: 'buy', th: 'รับซื้อฟางอัดก้อนจากเกษตรกร', en: 'Buy baled straw from farmers', perTonne: 550 }, // ≈ 11 ฿/bale
+    { key: 'inbound', th: 'ค่าขนเข้าโกดัง', en: 'Inbound transport to hub', perTonne: 90 },
+  ],
+  capexLines: [
+    { key: 'warehouse', th: 'โรงเก็บฟาง (ตาม BOQ)', en: 'Storage warehouse (per BOQ)', amount: 1451769 },
+    { key: 'forklift', th: 'รถโฟล์คลิฟต์', en: 'Forklift', amount: 450000 },
+    { key: 'truck', th: 'รถบรรทุก 6 ล้อ (มือสอง)', en: '6-wheel truck (used)', amount: 650000 },
+    { key: 'misc', th: 'เครื่องชั่ง เครื่องมือ สำนักงาน', en: 'Scales, tools, office setup', amount: 150000 },
+  ],
+  buildingKey: 'warehouse',
+  workingCapital: 300000,
+  opexLines: [
+    { key: 'staff', th: 'เงินเดือน (ผู้จัดการ + แรงงาน)', en: 'Staff (manager + crew)', perYear: 420000 },
+    { key: 'fleet', th: 'น้ำมัน + ซ่อมบำรุง (โฟล์คลิฟต์/รถ)', en: 'Fuel & maintenance', perYear: 150000 },
+    { key: 'lease', th: 'ค่าเช่าที่ดิน', en: 'Land lease', perYear: 60000 },
+    { key: 'utilities', th: 'ไฟฟ้า ประกัน เบ็ดเตล็ด', en: 'Utilities, insurance, misc', perYear: 90000 },
+    { key: 'selling', th: 'การขาย & บริหาร', en: 'Selling & admin', perYear: 100000 },
+  ],
+  taxRate: 0.15,
+  discountRate: 0.08,
   years: 10,
-  taxRate: 0.15, // SME effective
-  discountRate: 0.08, // WACC for a Thai agri-SME
   buildingLifeYrs: 20,
   equipmentLifeYrs: 7,
-  buildingSalvageFrac: 0.6, // concrete + steel retain value
+  buildingSalvageFrac: 0.6,
   equipmentResidualFrac: 0.2,
-  rampYear1: 0.6, // throughput ramp while building supply network
+  rampYear1: 0.6,
   rampYear2: 0.8,
 }
 
-// ---- Scenarios -------------------------------------------------------------
-export interface Scenario {
-  key: 'conservative' | 'base' | 'upside'
-  th: string
-  en: string
-  throughputT: number // tonnes / year at steady state
-  sellPerT: number // blended resale ฿/tonne
-  cogsPerT: number // landed straw cost ฿/tonne
-  opex: number // ฿/year
-}
+export const cloneInputs = (i: SimInputs): SimInputs =>
+  JSON.parse(JSON.stringify(i)) as SimInputs
 
-export const SCENARIOS: Scenario[] = [
-  { key: 'conservative', th: 'ระมัดระวัง', en: 'Conservative', throughputT: 1500, sellPerT: 1320, cogsPerT: 660, opex: 760000 },
-  { key: 'base', th: 'ฐาน', en: 'Base', throughputT: 2000, sellPerT: blendedSellPerTonne(), cogsPerT: cogsPerTonne(), opex: opexPerYear() },
-  { key: 'upside', th: 'เชิงบวก', en: 'Upside', throughputT: 2800, sellPerT: 1500, cogsPerT: 620, opex: 920000 },
-]
+// ---- derived aggregates ----------------------------------------------------
+export const blendedSell = (i: SimInputs) =>
+  i.channels.reduce((s, c) => s + c.mix * c.pricePerTonne, 0)
+export const cogsPerTonne = (i: SimInputs) =>
+  i.cogsLines.reduce((s, l) => s + l.perTonne, 0)
+export const totalCapex = (i: SimInputs) =>
+  i.capexLines.reduce((s, l) => s + l.amount, 0)
+export const buildingCapex = (i: SimInputs) =>
+  i.capexLines.find((l) => l.key === i.buildingKey)?.amount ?? 0
+export const equipmentCapex = (i: SimInputs) => totalCapex(i) - buildingCapex(i)
+export const opexPerYear = (i: SimInputs) =>
+  i.opexLines.reduce((s, l) => s + l.perYear, 0)
+export const channelMixSum = (i: SimInputs) =>
+  i.channels.reduce((s, c) => s + c.mix, 0)
 
-// ---- Finance helpers -------------------------------------------------------
+// ---- finance helpers -------------------------------------------------------
 export function npv(rate: number, cashflows: number[]): number {
   return cashflows.reduce((s, cf, t) => s + cf / Math.pow(1 + rate, t), 0)
 }
-
 export function irr(cashflows: number[]): number | null {
-  // bisection on [-0.9, 2]; returns null if no sign change
   let lo = -0.9
   let hi = 2
   const f = (r: number) => npv(r, cashflows)
   let flo = f(lo)
-  let fhi = f(hi)
-  if (flo * fhi > 0) return null
-  for (let i = 0; i < 200; i++) {
+  if (flo * f(hi) > 0) return null
+  for (let k = 0; k < 200; k++) {
     const mid = (lo + hi) / 2
     const fm = f(mid)
     if (Math.abs(fm) < 1e-3) return mid
-    if (flo * fm < 0) {
-      hi = mid
-      fhi = fm
-    } else {
+    if (flo * fm < 0) hi = mid
+    else {
       lo = mid
       flo = fm
     }
   }
   return (lo + hi) / 2
+}
+
+// ---- a single P&L / cash-flow scenario -------------------------------------
+export interface ScnCore {
+  throughputT: number
+  sellPerT: number
+  cogsPerT: number
+  opex: number
 }
 
 export interface YearRow {
@@ -185,136 +169,193 @@ export interface YearRow {
 }
 
 export interface ScenarioResult {
-  scenario: Scenario
+  core: ScnCore
   grossMarginPerT: number
   steadyEbitda: number
   ebitdaMarginPct: number
   initialOutlay: number
+  totalCapex: number
   rows: YearRow[]
   cashflows: number[]
   npv: number
   irr: number | null
   paybackYears: number | null
-  simpleRoiPct: number // avg annual net profit / total capex
-  totalCapex: number
+  simpleRoiPct: number
 }
 
-export function runScenario(s: Scenario): ScenarioResult {
-  const capex = totalCapex()
-  const wc = WORKING_CAPITAL
+export function runScenario(core: ScnCore, i: SimInputs): ScenarioResult {
+  const capex = totalCapex(i)
+  const wc = i.workingCapital
   const initialOutlay = capex + wc
-  const dep = BUILDING_CAPEX / PARAMS.buildingLifeYrs + EQUIPMENT_CAPEX / PARAMS.equipmentLifeYrs
-  const gmPerT = s.sellPerT - s.cogsPerT
+  const dep =
+    buildingCapex(i) / i.buildingLifeYrs + equipmentCapex(i) / i.equipmentLifeYrs
+  const gmPerT = core.sellPerT - core.cogsPerT
 
   const rows: YearRow[] = []
   const cashflows: number[] = [-initialOutlay]
   let cumulative = -initialOutlay
 
-  for (let y = 1; y <= PARAMS.years; y++) {
-    const ramp = y === 1 ? PARAMS.rampYear1 : y === 2 ? PARAMS.rampYear2 : 1
-    const throughput = s.throughputT * ramp
-    const revenue = throughput * s.sellPerT
-    const cogs = throughput * s.cogsPerT
+  for (let y = 1; y <= i.years; y++) {
+    const ramp = y === 1 ? i.rampYear1 : y === 2 ? i.rampYear2 : 1
+    const throughput = core.throughputT * ramp
+    const revenue = throughput * core.sellPerT
+    const cogs = throughput * core.cogsPerT
     const grossProfit = revenue - cogs
-    const ebitda = grossProfit - s.opex
+    const ebitda = grossProfit - core.opex
     const ebit = ebitda - dep
-    const tax = Math.max(0, ebit) * PARAMS.taxRate
+    const tax = Math.max(0, ebit) * i.taxRate
     const netProfit = ebit - tax
-    const operatingCashFlow = ebitda - tax // add back depreciation
+    const operatingCashFlow = ebitda - tax
     const terminal =
-      y === PARAMS.years
-        ? BUILDING_CAPEX * PARAMS.buildingSalvageFrac +
-          EQUIPMENT_CAPEX * PARAMS.equipmentResidualFrac +
+      y === i.years
+        ? buildingCapex(i) * i.buildingSalvageFrac +
+          equipmentCapex(i) * i.equipmentResidualFrac +
           wc
         : 0
     const netCashFlow = operatingCashFlow + terminal
     cumulative += netCashFlow
     cashflows.push(netCashFlow)
     rows.push({
-      year: y,
-      ramp,
-      throughput,
-      revenue,
-      cogs,
-      grossProfit,
-      opex: s.opex,
-      ebitda,
-      depreciation: dep,
-      ebit,
-      tax,
-      netProfit,
-      operatingCashFlow,
-      terminal,
-      netCashFlow,
-      cumulative,
+      year: y, ramp, throughput, revenue, cogs, grossProfit, opex: core.opex,
+      ebitda, depreciation: dep, ebit, tax, netProfit, operatingCashFlow,
+      terminal, netCashFlow, cumulative,
     })
   }
 
-  // payback: first year cumulative >= 0, linearly interpolated
   let paybackYears: number | null = null
   let prevCum = -initialOutlay
   for (const r of rows) {
     if (r.cumulative >= 0) {
-      const within = (0 - prevCum) / (r.cumulative - prevCum)
-      paybackYears = r.year - 1 + within
+      paybackYears = r.year - 1 + (0 - prevCum) / (r.cumulative - prevCum)
       break
     }
     prevCum = r.cumulative
   }
 
-  const steadyThroughput = s.throughputT
-  const steadyEbitda = gmPerT * steadyThroughput - s.opex
-  const steadyRevenue = steadyThroughput * s.sellPerT
-  const avgNetProfit = rows.reduce((sum, r) => sum + r.netProfit, 0) / rows.length
+  const steadyEbitda = gmPerT * core.throughputT - core.opex
+  const steadyRevenue = core.throughputT * core.sellPerT
+  const avgNetProfit = rows.reduce((s, r) => s + r.netProfit, 0) / rows.length
 
   return {
-    scenario: s,
-    grossMarginPerT: gmPerT,
-    steadyEbitda,
-    ebitdaMarginPct: (steadyEbitda / steadyRevenue) * 100,
-    initialOutlay,
-    rows,
-    cashflows,
-    npv: npv(PARAMS.discountRate, cashflows),
-    irr: irr(cashflows),
-    paybackYears,
+    core, grossMarginPerT: gmPerT, steadyEbitda,
+    ebitdaMarginPct: steadyRevenue ? (steadyEbitda / steadyRevenue) * 100 : 0,
+    initialOutlay, totalCapex: capex, rows, cashflows,
+    npv: npv(i.discountRate, cashflows), irr: irr(cashflows), paybackYears,
     simpleRoiPct: (avgNetProfit / capex) * 100,
-    totalCapex: capex,
   }
 }
 
-export const runAll = () => SCENARIOS.map(runScenario)
+// Run the model straight from the (possibly edited) input set.
+export const coreFromInputs = (i: SimInputs): ScnCore => ({
+  throughputT: i.throughputT,
+  sellPerT: blendedSell(i),
+  cogsPerT: cogsPerTonne(i),
+  opex: opexPerYear(i),
+})
+export const runInputs = (i: SimInputs) => runScenario(coreFromInputs(i), i)
 
-// ---- Location options ------------------------------------------------------
+// ---- fixed market-reference scenarios (always computed on DEFAULT_INPUTS) ---
+export interface Scenario extends ScnCore {
+  key: 'conservative' | 'base' | 'upside'
+  th: string
+  en: string
+}
+export const SCENARIOS: Scenario[] = [
+  { key: 'conservative', th: 'ระมัดระวัง', en: 'Conservative', throughputT: 1500, sellPerT: 1320, cogsPerT: 660, opex: 760000 },
+  { key: 'base', th: 'ฐาน', en: 'Base', throughputT: 2000, sellPerT: blendedSell(DEFAULT_INPUTS), cogsPerT: cogsPerTonne(DEFAULT_INPUTS), opex: opexPerYear(DEFAULT_INPUTS) },
+  { key: 'upside', th: 'เชิงบวก', en: 'Upside', throughputT: 2800, sellPerT: 1500, cogsPerT: 620, opex: 920000 },
+]
+export const runAll = () => SCENARIOS.map((s) => ({ scenario: s, result: runScenario(s, DEFAULT_INPUTS) }))
+
+// ---- market price reference (the figures behind the assumptions) -----------
+export interface PriceRef {
+  th: string
+  en: string
+  low: number
+  high: number
+  used: number
+  unit: string
+  ref: string
+}
+export const MARKET_PRICES: PriceRef[] = [
+  { th: 'รับซื้อฟางอัดก้อนจากเกษตรกร', en: 'Buy baled straw from farmer', low: 5, high: 12, used: 11, unit: '฿/ก้อน', ref: 'R1' },
+  { th: 'ค่าจ้างอัดฟาง (บริการ)', en: 'Baling service charge', low: 13, high: 15, used: 14, unit: '฿/ก้อน', ref: 'R1' },
+  { th: 'ขายหน้าโกดัง (ปกติ)', en: 'Warehouse-gate sale (normal)', low: 25, high: 25, used: 25, unit: '฿/ก้อน', ref: 'R1' },
+  { th: 'ขายหน้าฝน / ขาดแคลน', en: 'Rainy / scarce season', low: 30, high: 35, used: 33, unit: '฿/ก้อน', ref: 'R1' },
+  { th: 'โรงไฟฟ้าชีวมวล (เทียบเท่า)', en: 'Biomass plant (bale-equiv.)', low: 18, high: 24, used: 21, unit: '฿/ก้อน', ref: 'R3' },
+  { th: 'มูลค่าฟางดิบ', en: 'Raw straw value', low: 0.75, high: 1.15, used: 1.0, unit: '฿/กก.', ref: 'R2' },
+  { th: 'ผลผลิตฟางต่อไร่', en: 'Bales per rai', low: 40, high: 60, used: 50, unit: 'ก้อน/ไร่', ref: 'R4' },
+]
+
+// ---- detailed references ---------------------------------------------------
+export interface Reference {
+  id: string
+  org: string
+  th: string
+  en: string
+  figure: string
+  url: string
+}
+export const REFERENCES: Reference[] = [
+  {
+    id: 'R1',
+    org: 'เทคโนโลยีชาวบ้าน / ข่าวสด · Khaosod Technology Chaoban',
+    th: 'ธุรกิจฟางข้าวอัดก้อน — ต้นทุนรับจ้างอัด 13–15 ฿/ก้อน · รับซื้อจากเกษตรกร 5–12 ฿/ก้อน · ขายหน้าโกดัง 25 ฿/ก้อน · หน้าฝน 30–35 ฿/ก้อน · ก้อนละ ~30 กก. (40×120 ซม.)',
+    en: 'Baling business — service 13–15 ฿/bale · buy 5–12 ฿/bale · sell 25 ฿ (30–35 ฿ rainy)',
+    figure: 'ราคารับซื้อ/ขายต่อก้อน · ค่าอัดฟาง',
+    url: 'khaosod.co.th/technologychaoban/how-to/process/article_265417',
+  },
+  {
+    id: 'R2',
+    org: 'Thai Rice Farming Simulator (ผู้จัดทำเดียวกัน)',
+    th: 'แบบจำลองทำนาข้าว — มูลค่าฟางข้าว 0.75–1.15 ฿/กก. และโครงสร้างต้นทุน-รายได้นาข้าวภาคกลาง',
+    en: 'Own rice-farming model — straw value 0.75–1.15 ฿/kg; central-plains cost/revenue structure',
+    figure: 'มูลค่าฟางดิบ · ผลผลิต/ต้นทุนนาข้าว',
+    url: 'thai-rice-farming-simulator.netlify.app · github.com/Ton-Munoi99/thai-rice-farming-simulator',
+  },
+  {
+    id: 'R3',
+    org: 'NPS (National Power Supply) · Ratch Pathana Energy',
+    th: 'ศูนย์รับซื้อชีวมวล/โรงไฟฟ้าชีวมวลภาคตะวันออก (ฉะเชิงเทรา–ปราจีนบุรี, นิคม 304) — รับซื้อเศษวัสดุเกษตรเป็นเชื้อเพลิงตลอดปี',
+    en: 'Eastern-region biomass plants & feedstock buying centers (Chachoengsao–Prachinburi, 304 Industrial Park) — year-round agri-residue offtake',
+    figure: 'ช่องทางระบายฟางชีวมวล (baseload)',
+    url: 'npsplc.com · ratchpathana.com/th/our-businesses',
+  },
+  {
+    id: 'R4',
+    org: 'สนง.เกษตรฯ (opsmoac) · รักบ้านเกิด · Locals Thai PBS',
+    th: 'อัดฟางก้อนสร้างรายได้หลังเก็บเกี่ยว — เฉลี่ย 40–60 ก้อน/ไร่ · รายได้ 1,000–1,500 ฿/ไร่ · อัดได้ ~1,000 ก้อน/วัน',
+    en: 'Post-harvest baling income — 40–60 bales/rai · 1,000–1,500 ฿/rai · ~1,000 bales/day',
+    figure: 'ผลผลิตฟางต่อไร่ · กำลังการผลิต',
+    url: 'opsmoac.go.th · rakbankerd.com · localsthaipbs.net',
+  },
+  {
+    id: 'R5',
+    org: 'BOQ-SW-01 (เอกสารชุดนี้)',
+    th: 'ราคาก่อสร้างโรงเก็บฟาง 20×10 ม. = ฿1,451,769 (≈ ฿7,259/ตร.ม.) อ้างอิงราคาวัสดุ-ค่าแรง ปี 2568',
+    en: 'Warehouse construction cost ฿1,451,769 (≈ ฿7,259/m²), 2025 material/labour basis',
+    figure: 'CapEx โรงเก็บฟาง',
+    url: '/boq',
+  },
+]
+
+// ---- location options ------------------------------------------------------
 export interface LocationOption {
   province: string
   th: string
-  score: number // 1–5 fit
+  score: number
   pros: string[]
   recommended?: boolean
 }
 export const LOCATIONS: LocationOption[] = [
   {
-    province: 'Chachoengsao',
-    th: 'ฉะเชิงเทรา',
-    score: 5,
-    recommended: true,
+    province: 'Chachoengsao', th: 'ฉะเชิงเทรา', score: 5, recommended: true,
     pros: [
       'ศูนย์กลางโรงไฟฟ้าชีวมวล/อุตสาหกรรม (NPS, นิคม 304) — ระบายฟางได้ตลอดปี',
       'พื้นที่นาข้าวภาคกลาง-ตะวันออกหนาแน่น วัตถุดิบใกล้',
       'โลจิสติกส์ดี ใกล้ EEC / ท่าเรือ / ตลาดปศุสัตว์ภาคตะวันออก',
     ],
   },
-  {
-    province: 'Suphan Buri / Ayutthaya',
-    th: 'สุพรรณบุรี / อยุธยา',
-    score: 4,
-    pros: ['อู่ข้าวภาคกลาง วัตถุดิบล้นตลาด', 'ราคาวัตถุดิบถูก', 'ไกลโรงไฟฟ้าชีวมวลกว่า — ค่าขนสูงขึ้น'],
-  },
-  {
-    province: 'Nakhon Ratchasima',
-    th: 'นครราชสีมา',
-    score: 4,
-    pros: ['ตลาดปศุสัตว์ (โค) ใหญ่ที่สุด — ราคาฟางพรีเมียม', 'พื้นที่นากว้าง', 'กระจายตัว ระยะขนส่งไกล'],
-  },
+  { province: 'Suphan Buri / Ayutthaya', th: 'สุพรรณบุรี / อยุธยา', score: 4, pros: ['อู่ข้าวภาคกลาง วัตถุดิบล้นตลาด', 'ราคาวัตถุดิบถูก', 'ไกลโรงไฟฟ้าชีวมวลกว่า — ค่าขนสูงขึ้น'] },
+  { province: 'Nakhon Ratchasima', th: 'นครราชสีมา', score: 4, pros: ['ตลาดปศุสัตว์ (โค) ใหญ่ที่สุด — ราคาฟางพรีเมียม', 'พื้นที่นากว้าง', 'กระจายตัว ระยะขนส่งไกล'] },
 ]
