@@ -328,6 +328,11 @@ export default function Warehouse3D() {
               ))}
             </div>
           </section>
+
+          {/* Credit */}
+          <div className="mt-auto border-t border-hairline pt-3 text-center text-[11px] font-medium text-[#9aa499]">
+            Design by <span className="font-bold text-forest">Sponlapat / BD</span>
+          </div>
         </aside>
       </div>
     </div>
