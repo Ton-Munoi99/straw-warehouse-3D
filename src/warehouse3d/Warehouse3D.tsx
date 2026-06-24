@@ -35,10 +35,10 @@ const BENEFITS = [
 ]
 
 const STATS = [
-  { label: 'Footprint', value: '20 × 10 m', accent: false },
-  { label: 'Clear height', value: '5.0 m eave', accent: false },
+  { label: 'Footprint', value: '18 × 10 m', accent: false },
+  { label: 'Clear height', value: '6.4 m eave · 9.0 m roof', accent: false },
   { label: 'Roof', value: 'Gable metal sheet', accent: false },
-  { label: 'Straw capacity', value: '~1,500 bales · ~30 t', accent: true },
+  { label: 'Straw capacity', value: '~2,000 bales · ~40 t', accent: true },
 ]
 
 function SectionTitle({ children }: { children: React.ReactNode }) {

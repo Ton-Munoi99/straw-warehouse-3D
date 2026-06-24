@@ -64,7 +64,7 @@ export interface SimInputs {
 }
 
 export const DEFAULT_INPUTS: SimInputs = {
-  baleKg: 20, // 1,500 bales ≈ 30 t — matches the 3D model
+  baleKg: 20, // ~2,000 bales ≈ 40 t static capacity — matches the 9 m-tall 3D model
   throughputT: 2000,
   channels: [
     { key: 'biomass', th: 'โรงไฟฟ้าชีวมวล', en: 'Biomass power plant', mix: 0.45, pricePerTonne: 1050, note: 'Baseload · year-round · NPS / 304 corridor', ref: 'R3' },
@@ -76,7 +76,7 @@ export const DEFAULT_INPUTS: SimInputs = {
     { key: 'inbound', th: 'ค่าขนเข้าโกดัง', en: 'Inbound transport to hub', perTonne: 90 },
   ],
   capexLines: [
-    { key: 'warehouse', th: 'โรงเก็บฟาง (ตาม BOQ)', en: 'Storage warehouse (per BOQ)', amount: 1451769 },
+    { key: 'warehouse', th: 'โรงเก็บฟาง 18×10 ม. สูง 9 ม. (ตาม BOQ)', en: 'Storage warehouse 18×10 m, 9 m tall (per BOQ)', amount: 1545237 },
     { key: 'forklift', th: 'รถโฟล์คลิฟต์', en: 'Forklift', amount: 450000 },
     { key: 'truck', th: 'รถบรรทุก 6 ล้อ (มือสอง)', en: '6-wheel truck (used)', amount: 650000 },
     { key: 'misc', th: 'เครื่องชั่ง เครื่องมือ สำนักงาน', en: 'Scales, tools, office setup', amount: 150000 },
@@ -333,8 +333,8 @@ export const REFERENCES: Reference[] = [
   {
     id: 'R5',
     org: 'BOQ-SW-01 (เอกสารชุดนี้)',
-    th: 'ราคาก่อสร้างโรงเก็บฟาง 20×10 ม. = ฿1,451,769 (≈ ฿7,259/ตร.ม.) อ้างอิงราคาวัสดุ-ค่าแรง ปี 2568',
-    en: 'Warehouse construction cost ฿1,451,769 (≈ ฿7,259/m²), 2025 material/labour basis',
+    th: 'ราคาก่อสร้างโรงเก็บฟาง 18×10 ม. สูง 9 ม. = ฿1,545,237 (≈ ฿8,585/ตร.ม.) อ้างอิงราคาวัสดุ-ค่าแรง ปี 2568',
+    en: 'Warehouse construction cost ฿1,545,237 (≈ ฿8,585/m²), 18×10 m × 9 m tall, 2025 basis',
     figure: 'CapEx โรงเก็บฟาง / Warehouse CapEx',
     url: '/boq',
   },

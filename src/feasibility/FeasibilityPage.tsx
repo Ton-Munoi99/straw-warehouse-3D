@@ -277,7 +277,7 @@ export default function FeasibilityPage() {
                 ))}
               </tbody>
             </table>
-            <div className="mt-2 text-[11px] text-[#9aa499]">1 ก้อน = {active.baleKg} กก. → {bpt} ก้อน/ตัน (สอดคล้องกับโมเดล 3 มิติ ~1,500 ก้อน ≈ 30 ตัน) · 1 bale = {active.baleKg} kg → {bpt} bales/tonne</div>
+            <div className="mt-2 text-[11px] text-[#9aa499]">1 ก้อน = {active.baleKg} กก. → {bpt} ก้อน/ตัน (สอดคล้องกับโมเดล 3 มิติ ~2,000 ก้อน ≈ 40 ตัน · อาคารสูง 9 ม. เก็บได้สูงขึ้น) · 1 bale = {active.baleKg} kg → {bpt} bales/tonne</div>
           </div>
 
           {/* location */}

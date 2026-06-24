@@ -274,16 +274,16 @@ function Site({ mats }: { mats: Mats }) {
       {/* dirt pad */}
       <B size={[30, 0.12, 17]} pos={[0, 0.06, 0]} mat={mats.dirtPad} />
       {/* raised concrete slab */}
-      <B size={[21.4, 0.6, 11]} pos={[0, 0.3, 0]} mat={mats.slab} />
+      <B size={[19.4, 0.6, 11]} pos={[0, 0.3, 0]} mat={mats.slab} />
       {/* front loading ramp */}
-      <B size={[4.4, 0.35, 5]} pos={[12.6, 0.3, 0]} rot={[0, 0, Math.atan2(0.55, 4.4)]} mat={mats.ramp} />
+      <B size={[4.4, 0.35, 5]} pos={[11.6, 0.3, 0]} rot={[0, 0, Math.atan2(0.55, 4.4)]} mat={mats.ramp} />
       {/* drainage channels */}
       {(
         [
-          [0, 6.3, 22, 0.5],
-          [0, -6.3, 22, 0.5],
-          [11.2, 0, 0.5, 12.6],
-          [-11.2, 0, 0.5, 12.6],
+          [0, 6.3, 20, 0.5],
+          [0, -6.3, 20, 0.5],
+          [10.2, 0, 0.5, 12.6],
+          [-10.2, 0, 0.5, 12.6],
         ] as const
       ).map(([x, z, w, d], i) => (
         <B key={i} size={[w, 0.12, d]} pos={[x, 0.07, z]} mat={mats.drainCh} cast={false} />
@@ -324,7 +324,7 @@ function Structure({ mats }: { mats: Mats }) {
       )}
       {/* eave beams along X */}
       {COL_ZS.map((z) => (
-        <B key={`eb${z}`} size={[21.5, 0.3, 0.3]} pos={[0, EAVE, z]} mat={mats.steel} />
+        <B key={`eb${z}`} size={[19.5, 0.3, 0.3]} pos={[0, EAVE, z]} mat={mats.steel} />
       ))}
       {/* tie beams along Z */}
       {COL_XS.map((x) => (
@@ -362,10 +362,10 @@ function Structure({ mats }: { mats: Mats }) {
         [-1, 1].map((s) => {
           const z = s * (1 - t) * 5
           const y = EAVE + t * (RIDGE - EAVE)
-          return <B key={`pu${t}_${s}`} size={[21.6, 0.1, 0.1]} pos={[0, y, z]} mat={mats.steelDark} />
+          return <B key={`pu${t}_${s}`} size={[19.6, 0.1, 0.1]} pos={[0, y, z]} mat={mats.steelDark} />
         }),
       )}
-      <B size={[21.6, 0.12, 0.12]} pos={[0, RIDGE, 0]} mat={mats.steelDark} />
+      <B size={[19.6, 0.12, 0.12]} pos={[0, RIDGE, 0]} mat={mats.steelDark} />
     </group>
   )
 }
@@ -377,7 +377,7 @@ function Roof({ mats }: { mats: Mats }) {
   const ohX = 1.5
   const runZ = 5 + ohZ
   const slopeLen = Math.hypot(runZ, (runZ * (RIDGE - EAVE)) / 5)
-  const roofLenX = 20 + ohX * 2
+  const roofLenX = 18 + ohX * 2
   const yMidPanel = (RIDGE + (EAVE - (ohZ * (RIDGE - EAVE)) / 5)) / 2
 
   const gableGeo = useMemo(() => {
@@ -416,19 +416,19 @@ function Roof({ mats }: { mats: Mats }) {
       <B size={[roofLenX + 0.1, 0.26, 0.55]} pos={[0, RIDGE + 0.16, 0]} mat={mats.ridgeCap} />
       {/* gable end triangles */}
       {[-1, 1].map((sx) => (
-        <mesh key={`g${sx}`} geometry={gableGeo} material={mats.gable} position={[sx * 10, 0, 0]} castShadow receiveShadow />
+        <mesh key={`g${sx}`} geometry={gableGeo} material={mats.gable} position={[sx * 9, 0, 0]} castShadow receiveShadow />
       ))}
       {/* gutters */}
       {[-1, 1].map((s) => (
-        <B key={`gut${s}`} size={[20.6, 0.18, 0.22]} pos={[0, EAVE - 0.18, s * (5 + ohZ - 0.1)]} mat={mats.gutter} />
+        <B key={`gut${s}`} size={[18.6, 0.18, 0.22]} pos={[0, EAVE - 0.18, s * (5 + ohZ - 0.1)]} mat={mats.gutter} />
       ))}
       {/* downpipes */}
       {(
         [
-          [-10.1, 5.9],
-          [10.1, 5.9],
-          [-10.1, -5.9],
-          [10.1, -5.9],
+          [-9.1, 5.9],
+          [9.1, 5.9],
+          [-9.1, -5.9],
+          [9.1, -5.9],
         ] as const
       ).map(([x, z], i) => (
         <B key={`dp${i}`} size={[0.16, EAVE, 0.16]} pos={[x, EAVE / 2, z]} mat={mats.downpipe} />
@@ -441,7 +441,7 @@ function Roof({ mats }: { mats: Mats }) {
 function Doors({ mats, open }: { mats: Mats; open: boolean }) {
   const leaves = useRef<(THREE.Group | null)[]>([])
   const cur = useRef(1)
-  const doorH = 4.0
+  const doorH = 5.5
   const doorY0 = FLOOR_TOP
 
   const config = useMemo(
@@ -464,7 +464,7 @@ function Doors({ mats, open }: { mats: Mats; open: boolean }) {
   return (
     <group>
       {config.map((c, i) => (
-        <group key={i} ref={(el) => (leaves.current[i] = el)} position={[10, 0, c.hz]}>
+        <group key={i} ref={(el) => (leaves.current[i] = el)} position={[9, 0, c.hz]}>
           <B size={[0.12, doorH, 4.7]} pos={[0, c.cy, c.cz]} mat={mats.panel} />
           {[doorY0 + 0.16, doorY0 + doorH - 0.16].map((ry, k) => (
             <B key={k} size={[0.16, 0.2, 4.8]} pos={[0, ry, c.cz]} mat={mats.frame} />
@@ -483,9 +483,9 @@ function Doors({ mats, open }: { mats: Mats; open: boolean }) {
 function SideWalls({ mats, open }: { mats: Mats; open: boolean }) {
   const grps = useRef<(THREE.Group | null)[]>([])
   const cur = useRef(1)
-  const wallH = 4.1
+  const wallH = 6.0
   const doorY0 = FLOOR_TOP
-  const bays = [-8, -4, 0, 4, 8]
+  const bays = [-7.2, -3.6, 0, 3.6, 7.2]
 
   const panels = useMemo(() => {
     const out: { bx: number; sz: number }[] = []
@@ -505,14 +505,14 @@ function SideWalls({ mats, open }: { mats: Mats; open: boolean }) {
       {panels.map((p, i) => (
         <group key={i}>
           <group ref={(el) => (grps.current[i] = el)} position={[p.bx, doorY0 + wallH, p.sz * 5]}>
-            <B size={[3.7, wallH, 0.08]} pos={[0, -wallH / 2, 0]} mat={mats.panel} />
-            {[-1, 0, 1].map((k) => (
-              <B key={k} size={[3.7, 0.1, 0.05]} pos={[0, -wallH / 2 + k * 1.1, 0.04]} mat={mats.doorRib} />
+            <B size={[3.3, wallH, 0.08]} pos={[0, -wallH / 2, 0]} mat={mats.panel} />
+            {[-2, -1, 0, 1, 2].map((k) => (
+              <B key={k} size={[3.3, 0.1, 0.05]} pos={[0, -wallH / 2 + k * 1.2, 0.04]} mat={mats.doorRib} />
             ))}
           </group>
           {/* roll drum at the eave (static) */}
           <mesh position={[p.bx, doorY0 + wallH + 0.12, p.sz * 5]} rotation={[0, 0, Math.PI / 2]} material={mats.frame} castShadow>
-            <cylinderGeometry args={[0.2, 0.2, 3.75, 12]} />
+            <cylinderGeometry args={[0.2, 0.2, 3.35, 12]} />
           </mesh>
         </group>
       ))}
@@ -530,27 +530,27 @@ function Bales({ mats }: { mats: Mats }) {
       out.push({ pos: [x, y, z], mat: n % 5 })
       n++
     }
-    // main storage block (4 layers, staggered)
-    for (let L = 0; L < 4; L++) {
+    // main storage block — taller clear height now allows 5 staggered layers
+    for (let L = 0; L < 5; L++) {
       const yy = slabY + 0.43 + L * 0.86
       const off = L % 2 ? 0.45 : 0
       for (let cx = 0; cx < 4; cx++) {
         for (let rz = 0; rz < 7; rz++) {
-          const x = -9.0 + cx * 2.05 + off
+          const x = -8.3 + cx * 2.05 + off
           const z = -3.4 + rz * 1.02
-          if (x > -1.3) continue
+          if (x > -1.5) continue
           push(x, yy, z)
         }
       }
     }
-    // secondary 2-high stack
-    for (let L = 0; L < 2; L++) {
-      for (let rz = 0; rz < 5; rz++) push(1.2, slabY + 0.43 + L * 0.86, -2.2 + rz * 1.02)
+    // secondary 3-high stack near middle-front
+    for (let L = 0; L < 3; L++) {
+      for (let rz = 0; rz < 5; rz++) push(1.4, slabY + 0.43 + L * 0.86, -2.2 + rz * 1.02)
     }
     // staged on the loading apron
-    push(11.2, 0.5, -2.0)
-    push(11.2, 0.5, -1.0)
-    push(11.2, 1.36, -1.5)
+    push(10.2, 0.5, -2.0)
+    push(10.2, 0.5, -1.0)
+    push(10.2, 1.36, -1.5)
     return out
   }, [slabY])
 
@@ -574,7 +574,7 @@ function Truck({ mats }: { mats: Mats }) {
     [2.6, -1, 0],
   ]
   return (
-    <group position={[16.5, 0, -1.5]}>
+    <group position={[15, 0, -1.5]}>
       <B size={[2.4, 2.0, 2.4]} pos={[-2.2, 1.5, 0]} mat={mats.truckCab} />
       <B size={[5.2, 0.5, 2.6]} pos={[1.0, 0.95, 0]} mat={mats.truckBed} />
       <B size={[0.1, 0.9, 2.0]} pos={[-3.4, 1.7, 0]} mat={mats.win} />
@@ -667,17 +667,22 @@ function Dimensions({ visible }: { visible: boolean }) {
   const geo = useMemo(() => {
     const pts: number[] = []
     const add = (a: Vec3, b: Vec3) => pts.push(...a, ...b)
-    add([-10, 0.15, 8], [10, 0.15, 8])
-    add([-10, 0.15, 7.5], [-10, 0.15, 8.5])
-    add([10, 0.15, 7.5], [10, 0.15, 8.5])
-    add([13.5, 0.15, -5], [13.5, 0.15, 5])
-    add([13, 0.15, -5], [14, 0.15, -5])
-    add([13, 0.15, 5], [14, 0.15, 5])
-    add([-12.5, 0, 8], [-12.5, 5, 8])
-    add([-13, 5, 8], [-12, 5, 8])
-    add([-13, 0, 8], [-12, 0, 8])
-    add([-15, 0, 0], [-15, 7.6, 0])
-    add([-15.5, 7.6, 0], [-14.5, 7.6, 0])
+    // width (length) 18 m
+    add([-9, 0.15, 8], [9, 0.15, 8])
+    add([-9, 0.15, 7.5], [-9, 0.15, 8.5])
+    add([9, 0.15, 7.5], [9, 0.15, 8.5])
+    // depth 10 m
+    add([12.5, 0.15, -5], [12.5, 0.15, 5])
+    add([12, 0.15, -5], [13, 0.15, -5])
+    add([12, 0.15, 5], [13, 0.15, 5])
+    // clear height (floor → eave) 6.4 m
+    add([-11.5, 0.6, 8], [-11.5, 7.0, 8])
+    add([-12, 7.0, 8], [-11, 7.0, 8])
+    add([-12, 0.6, 8], [-11, 0.6, 8])
+    // floor → roof (ridge) 9.0 m
+    add([-14, 0.6, 0], [-14, 9.6, 0])
+    add([-14.5, 9.6, 0], [-13.5, 9.6, 0])
+    add([-14.5, 0.6, 0], [-13.5, 0.6, 0])
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3))
     return g
