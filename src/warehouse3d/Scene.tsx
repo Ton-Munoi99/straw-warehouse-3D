@@ -33,12 +33,17 @@ export interface CameraController {
 }
 
 type Mat = THREE.MeshStandardMaterial
-const mk = (c: string, o: { m?: number; r?: number; side?: THREE.Side } = {}) =>
+// `po` adds a polygon offset (pulls the surface toward the camera) so thin,
+// near-coplanar ground overlays don't z-fight with the grass plane / apron.
+const mk = (c: string, o: { m?: number; r?: number; side?: THREE.Side; po?: number } = {}) =>
   new THREE.MeshStandardMaterial({
     color: new THREE.Color(c),
     roughness: o.r ?? 0.85,
     metalness: o.m ?? 0,
     ...(o.side ? { side: o.side } : {}),
+    ...(o.po
+      ? { polygonOffset: true, polygonOffsetFactor: o.po, polygonOffsetUnits: o.po }
+      : {}),
   })
 
 function useMaterials() {
@@ -51,11 +56,12 @@ function useMaterials() {
       steel: mk('#828a93', { m: 0.65, r: 0.42 }),
       steelDark: mk('#5f666e', { m: 0.6, r: 0.5 }),
       grass: mk('#7ca64d', { r: 0.97 }),
-      dirtPad: mk('#c3a87f', { r: 0.98 }),
+      apron: mk('#c2bcab', { r: 0.9, po: -1 }), // concrete yard around the warehouse
+      greenPatch: mk('#83a64a', { r: 0.96, po: -3 }), // grass patches for balance
       slab: mk('#cfc9ba', { r: 0.92 }),
       ramp: mk('#c4beac', { r: 0.95 }),
-      drainCh: mk('#5d6258', { r: 0.9 }),
-      road: mk('#b89b6f', { r: 0.98 }),
+      drainCh: mk('#565b52', { r: 0.9, po: -5 }),
+      road: mk('#b89b6f', { r: 0.98, po: -2 }),
       canalBank: mk('#bda57b', { r: 0.97 }),
       canalWater: mk('#5fa0c4', { m: 0.25, r: 0.18 }),
       paddy: mk('#6fa83c', { r: 0.95 }),
@@ -311,19 +317,31 @@ function Site({ mats }: { mats: Mats }) {
     return { tiles, bunds }
   }, [])
 
+  // green patches on the concrete apron — for visual balance (top y = 0.14)
+  const patches: { size: Vec3; pos: Vec3 }[] = [
+    { size: [4.2, 0.08, 3.2], pos: [-12.6, 0.1, 6.4] },
+    { size: [4.6, 0.08, 3.0], pos: [12.6, 0.1, 6.6] },
+    { size: [3.6, 0.08, 3.4], pos: [-12.8, 0.1, -6.2] },
+    { size: [5.2, 0.08, 2.0], pos: [-2.5, 0.1, 7.6] },
+  ]
+
   return (
     <group>
-      {/* grass plane */}
+      {/* grass base (shows beyond the apron, with the trees) — y = 0 */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} material={mats.grass} receiveShadow>
         <planeGeometry args={[300, 300]} />
       </mesh>
-      {/* dirt pad */}
-      <B size={[30, 0.12, 17]} pos={[0, 0.06, 0]} mat={mats.dirtPad} />
-      {/* raised concrete slab */}
+      {/* concrete apron / working yard around the warehouse — top y = 0.10 */}
+      <B size={[30, 0.16, 17]} pos={[0, 0.02, 0]} mat={mats.apron} cast={false} />
+      {/* green patches on the apron for balance — top y = 0.14 */}
+      {patches.map((p, i) => (
+        <B key={`gp${i}`} size={p.size} pos={p.pos} mat={mats.greenPatch} cast={false} />
+      ))}
+      {/* raised concrete slab — top y = 0.60 */}
       <B size={[19.4, 0.6, 11]} pos={[0, 0.3, 0]} mat={mats.slab} />
       {/* front loading ramp */}
       <B size={[4.4, 0.35, 5]} pos={[11.6, 0.3, 0]} rot={[0, 0, Math.atan2(0.55, 4.4)]} mat={mats.ramp} />
-      {/* drainage channels */}
+      {/* drainage channels (raised dark covers) — top y = 0.16 */}
       {(
         [
           [0, 6.3, 20, 0.5],
@@ -332,9 +350,9 @@ function Site({ mats }: { mats: Mats }) {
           [-10.2, 0, 0.5, 12.6],
         ] as const
       ).map(([x, z, w, d], i) => (
-        <B key={i} size={[w, 0.12, d]} pos={[x, 0.07, z]} mat={mats.drainCh} cast={false} />
+        <B key={i} size={[w, 0.12, d]} pos={[x, 0.1, z]} mat={mats.drainCh} cast={false} />
       ))}
-      {/* dirt access road */}
+      {/* dirt access road — top y = 0.12 */}
       <B size={[9, 0.06, 52]} pos={[20, 0.09, 12]} mat={mats.road} cast={false} />
       <B size={[9, 0.06, 40]} pos={[17, 0.09, 9.5]} rot={[0, Math.PI / 2, 0]} mat={mats.road} cast={false} />
       {/* irrigation canal */}
