@@ -353,18 +353,18 @@ function MethodModal({ c, onClose }: { c: ReturnType<typeof useComputed>; onClos
           <Calculator size={22} className="text-[#3f7fae]" /> วิธีการคำนวณ BOQ / How the BOQ Is Calculated
         </div>
         <div className="mt-2 rounded-[8px] bg-[#eef3ec] px-3.5 py-2 text-[11.5px] font-semibold text-forest">
-          ทุกบรรทัด: <b>รวมเงิน = จำนวน × ราคา/หน่วย</b> · every line: <b>Amount = Qty × Unit rate</b> — ราคา/หน่วยอ้างอิง R1–R6 (ตลาดปี 2568)
+          ทุกบรรทัด: <b>รวมเงิน = จำนวน × ราคา/หน่วย</b> · every line: <b>Amount = Qty × Unit rate</b> — แต่ละรายการบอก <b>ที่มาของปริมาณ</b> และ <b>ราคามาจากส่วนไหนของแหล่งอ้างอิง</b> (R1–R7)
         </div>
 
         {/* per-line basis */}
-        <div className="mt-4 text-[12.5px] font-extrabold text-[#26342c]">① ที่มาของปริมาณแต่ละรายการ / Quantity basis per line</div>
+        <div className="mt-4 text-[12.5px] font-extrabold text-[#26342c]">① ที่มาของปริมาณ &amp; ราคา / Quantity &amp; rate basis per line</div>
         <table className="mt-2 w-full border-collapse text-[11.5px]">
           <thead>
             <tr className="bg-[#26342c] text-white">
               <th className="w-[36px] p-[7px_6px] text-left font-bold">No.</th>
-              <th className="p-[7px_6px] text-left font-bold">ที่มาของปริมาณ / Quantity basis</th>
-              <th className="num w-[120px] p-[7px_6px] font-bold">จำนวน × ราคา</th>
-              <th className="num w-[86px] p-[7px_6px] font-bold">รวมเงิน</th>
+              <th className="p-[7px_6px] text-left font-bold">ที่มาของปริมาณ &amp; ราคา / Quantity &amp; rate basis</th>
+              <th className="num w-[110px] p-[7px_6px] font-bold">จำนวน × ราคา</th>
+              <th className="num w-[80px] p-[7px_6px] font-bold">รวมเงิน</th>
             </tr>
           </thead>
           <tbody>
@@ -421,8 +421,15 @@ function DivBasis({ div }: { div: ReturnType<typeof useComputed>['divs'][number]
         <tr key={it.no} className="border-b border-[#f0ede3] align-top">
           <td className="p-[6px_6px] text-[#8a948b]">{it.no}</td>
           <td className="p-[6px_6px] text-[11px] leading-[1.5] text-[#54625a]">
-            {it.basis || `${it.th} · ${it.en}`}
-            {it.ref && <span className="ml-1 rounded bg-[#eef3ec] px-1 py-0.5 text-[9px] font-bold text-forest">{it.ref}</span>}
+            <div>
+              <span className="font-semibold text-[#3a473f]">ปริมาณ:</span> {it.basis || `${it.th} · ${it.en}`}
+            </div>
+            {it.rateNote && (
+              <div className="mt-0.5 text-[10.5px] text-[#7c8a80]">
+                <span className="font-semibold text-[#a9772a]">💰 ราคามาจาก:</span> {it.rateNote}
+                <span className="ml-1 rounded bg-[#eef3ec] px-1 py-0.5 text-[9px] font-bold text-forest">{it.ref || 'R7'}</span>
+              </div>
+            )}
           </td>
           <td className="num p-[6px_6px] text-[#54625a]">
             {it.qty.toLocaleString('en-US')} × {f(it.rate)}
