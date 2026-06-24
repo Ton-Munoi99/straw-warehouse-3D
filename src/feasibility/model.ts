@@ -21,6 +21,7 @@ export interface Channel {
   mix: number // share of annual volume (0–1)
   pricePerTonne: number
   note: string
+  ref: string // reference id (links to REFERENCES)
 }
 export interface CostLine {
   key: string
@@ -66,9 +67,9 @@ export const DEFAULT_INPUTS: SimInputs = {
   baleKg: 20, // 1,500 bales ≈ 30 t — matches the 3D model
   throughputT: 2000,
   channels: [
-    { key: 'biomass', th: 'โรงไฟฟ้าชีวมวล', en: 'Biomass power plant', mix: 0.45, pricePerTonne: 1050, note: 'Baseload · year-round · NPS / 304 corridor' },
-    { key: 'cattle', th: 'อาหารสัตว์ (โค-กระบือ)', en: 'Cattle / livestock feed', mix: 0.35, pricePerTonne: 1750, note: 'Premium · dry-season scarcity 30–35 ฿/bale' },
-    { key: 'mushroom', th: 'เพาะเห็ด / อื่นๆ', en: 'Mushroom growing / other', mix: 0.2, pricePerTonne: 1650, note: 'Premium · steady local demand' },
+    { key: 'biomass', th: 'โรงไฟฟ้าชีวมวล', en: 'Biomass power plant', mix: 0.45, pricePerTonne: 1050, note: 'Baseload · year-round · NPS / 304 corridor', ref: 'R3' },
+    { key: 'cattle', th: 'อาหารสัตว์ (โค-กระบือ)', en: 'Cattle / livestock feed', mix: 0.35, pricePerTonne: 1750, note: 'Premium · dry-season scarcity 30–35 ฿/bale', ref: 'R1' },
+    { key: 'mushroom', th: 'เพาะเห็ด / อื่นๆ', en: 'Mushroom growing / other', mix: 0.2, pricePerTonne: 1650, note: 'Premium · steady local demand', ref: 'R4' },
   ],
   cogsLines: [
     { key: 'buy', th: 'รับซื้อฟางอัดก้อนจากเกษตรกร', en: 'Buy baled straw from farmers', perTonne: 550 }, // ≈ 11 ฿/bale
@@ -311,7 +312,7 @@ export const REFERENCES: Reference[] = [
     th: 'แบบจำลองทำนาข้าว — มูลค่าฟางข้าว 0.75–1.15 ฿/กก. และโครงสร้างต้นทุน-รายได้นาข้าวภาคกลาง',
     en: 'Own rice-farming model — straw value 0.75–1.15 ฿/kg; central-plains cost/revenue structure',
     figure: 'มูลค่าฟางดิบ · ผลผลิต/ต้นทุนนาข้าว',
-    url: 'thai-rice-farming-simulator.netlify.app · github.com/Ton-Munoi99/thai-rice-farming-simulator',
+    url: 'thai-rice-farming-simulator.netlify.app',
   },
   {
     id: 'R3',

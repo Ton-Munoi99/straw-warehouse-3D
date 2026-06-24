@@ -21,9 +21,11 @@ import {
   SimInputs,
   balesPerTonne,
   blendedSell,
+  buildingCapex,
   channelMixSum,
   cloneInputs,
   cogsPerTonne,
+  equipmentCapex,
   opexPerYear,
   runAll,
   runInputs,
@@ -49,6 +51,23 @@ export default function FeasibilityPage() {
   const cogs = cogsPerTonne(active)
   const gm = sell - cogs
   const mixSum = channelMixSum(active)
+
+  // worked-example values for the methodology modal (textbook-style, uses current inputs)
+  const bld = buildingCapex(active)
+  const eqp = equipmentCapex(active)
+  const T = active.throughputT
+  const opexY = opexPerYear(active)
+  const wkDep = bld / active.buildingLifeYrs + eqp / active.equipmentLifeYrs
+  const wkRev = T * sell
+  const wkCogs = T * cogs
+  const wkGP = gm * T
+  const wkEbitda = result.steadyEbitda
+  const wkEbit = wkEbitda - wkDep
+  const wkTax = Math.max(0, wkEbit) * active.taxRate
+  const wkOcf = wkEbitda - wkTax
+  const wkTerminal = bld * active.buildingSalvageFrac + eqp * active.equipmentResidualFrac + active.workingCapital
+  const taxPct = (active.taxRate * 100).toFixed(0)
+  const discPct = (active.discountRate * 100).toFixed(0)
 
   // editing helpers
   const patch = (fn: (n: SimInputs) => void) =>
@@ -301,7 +320,10 @@ export default function FeasibilityPage() {
                     <td className="num p-[9px_10px] font-bold text-forest">{(c.mix * 100).toFixed(0)}%</td>
                     <td className="num p-[9px_10px] text-[#54625a]">{perBale(c.pricePerTonne)}</td>
                     <td className="num p-[9px_10px] font-bold text-ink">{f(c.pricePerTonne)}</td>
-                    <td className="p-[9px_10px] text-[11px] text-[#7c8a80]">{c.note}</td>
+                    <td className="p-[9px_10px] text-[11px] text-[#7c8a80]">
+                      {c.note}
+                      <span className="ml-1.5 rounded bg-[#eef3ec] px-1.5 py-0.5 text-[10px] font-bold text-forest">{c.ref}</span>
+                    </td>
                   </tr>
                 ))}
                 <tr className="bg-[#f6f4ec]">
@@ -313,6 +335,11 @@ export default function FeasibilityPage() {
                 </tr>
               </tbody>
             </table>
+            <div className="mt-2 flex flex-col gap-1 text-[11px] leading-[1.5] text-[#7c8a80]">
+              <div><b className="text-forest">R3</b> โรงไฟฟ้าชีวมวล ~21 ฿/ก้อน — NPS / Ratch Pathana ศูนย์รับซื้อชีวมวลภาคตะวันออก · <span className="text-[#3f7fae]">npsplc.com · ratchpathana.com</span></div>
+              <div><b className="text-forest">R1</b> อาหารสัตว์ 30–35 ฿/ก้อน (พรีเมียมหน้าแล้ง) — เทคโนโลยีชาวบ้าน/ข่าวสด · <span className="text-[#3f7fae]">khaosod.co.th/technologychaoban</span></div>
+              <div><b className="text-forest">R4</b> เพาะเห็ด/ความต้องการท้องถิ่น — สนง.เกษตรฯ · รักบ้านเกิด · <span className="text-[#3f7fae]">opsmoac.go.th · rakbankerd.com</span></div>
+            </div>
           </div>
 
           {/* unit economics */}
@@ -470,37 +497,48 @@ export default function FeasibilityPage() {
         </Modal>
       )}
 
-      {/* methodology modal */}
+      {/* methodology modal — textbook-style worked example from current inputs */}
       {showMethod && (
         <Modal onClose={() => setShowMethod(false)} wide>
           <div className="flex items-center gap-2.5 text-[18px] font-extrabold text-ink">
             <Calculator size={22} className="text-[#3f7fae]" /> วิธีการคำนวณ / How It's Calculated
           </div>
-          <div className="mt-4 flex flex-col gap-2.5 text-[12.5px] leading-[1.55] text-[#3a473f]">
+          <div className="mt-2 rounded-[8px] bg-[#eef3ec] px-3.5 py-2 text-[11.5px] font-semibold text-forest">
+            ตัวอย่างคำนวณจากค่าปัจจุบัน · worked from current inputs — ปริมาณ {f(T)} ตัน/ปี (ปีที่เดินเต็มกำลัง)
+          </div>
+          <div className="mt-3 flex flex-col gap-2">
             {[
-              ['ราคาขายเฉลี่ย / Blended price', 'Σ (สัดส่วนช่องทาง × ราคาช่องทาง) · Σ(mix × price)'],
-              ['รายได้ / Revenue', 'ปริมาณ (ตัน) × ราคาขายเฉลี่ย (฿/ตัน)'],
-              ['ต้นทุนวัตถุดิบ / COGS', 'ปริมาณ × Σ(รับซื้อ + ขนเข้า)  (฿/ตัน)'],
-              ['กำไรขั้นต้น / Gross margin', 'ราคาขาย − COGS  (ต่อตัน)'],
-              ['EBITDA', 'กำไรขั้นต้นรวม − ค่าดำเนินการ (OpEx)'],
-              ['ค่าเสื่อม / Depreciation', 'อาคาร ÷ 20 ปี + อุปกรณ์ ÷ 7 ปี (เส้นตรง)'],
-              ['EBIT & ภาษี / Tax', 'EBIT = EBITDA − ค่าเสื่อม · ภาษี = max(0, EBIT) × 15%'],
-              ['กระแสเงินสด / Cash flow', 'EBITDA − ภาษี (บวกกลับค่าเสื่อมเพราะไม่ใช่เงินสด)'],
-              ['Ramp-up', 'ปีที่ 1 = 60% · ปีที่ 2 = 80% · ปีที่ 3+ = 100% ของปริมาณเต็ม'],
-              ['มูลค่าซาก / Terminal (ปีสุดท้าย)', 'อาคาร×60% + อุปกรณ์×20% + คืนทุนหมุนเวียน'],
-              ['NPV', 'Σ  กระแสเงินสดปีที่ t ÷ (1 + r)^t  ·  r = อัตราคิดลด 8%'],
-              ['IRR', 'อัตราคิดลดที่ทำให้ NPV = 0 (หาด้วยวิธี bisection)'],
-              ['ระยะคืนทุน / Payback', 'ปีแรกที่กระแสเงินสดสะสม ≥ 0 (interpolate ภายในปี)'],
-              ['ROI', 'กำไรสุทธิเฉลี่ยต่อปี ÷ เงินลงทุน CapEx'],
-            ].map(([k, v]) => (
-              <div key={k} className="flex flex-col gap-0.5 rounded-[8px] bg-[#f6f4ec] px-3.5 py-2 sm:flex-row sm:items-baseline sm:gap-3">
-                <span className="w-[230px] flex-none text-[12px] font-extrabold text-forest">{k}</span>
-                <span className="num-none font-mono text-[12px] text-[#3a473f]">{v}</span>
+              {
+                th: '① ราคาขายเฉลี่ยถ่วงน้ำหนัก / Blended sell price', formula: 'Σ (สัดส่วน × ราคาช่องทาง)',
+                calc: `${active.channels.map((c) => `(${c.mix}×${f(c.pricePerTonne)})`).join(' + ')} = ${active.channels.map((c) => (Math.round(c.mix * c.pricePerTonne * 10) / 10).toString()).join(' + ')} = ${f(sell)} ฿/ตัน`,
+              },
+              { th: '② รายได้ (เต็มกำลัง) / Revenue', formula: 'ปริมาณ × ราคาขายเฉลี่ย', calc: `${f(T)} ตัน × ${f(sell)} = ${f(wkRev)} ฿/ปี` },
+              { th: '③ ต้นทุนวัตถุดิบ / COGS', formula: 'ปริมาณ × ต้นทุนต่อตัน', calc: `${f(T)} × ${f(cogs)} = ${f(wkCogs)} ฿/ปี` },
+              { th: '④ กำไรขั้นต้น / Gross profit', formula: '(ราคาขาย − ต้นทุน) × ปริมาณ', calc: `(${f(sell)} − ${f(cogs)}) × ${f(T)} = ${f(gm)} × ${f(T)} = ${f(wkGP)} ฿/ปี` },
+              { th: '⑤ EBITDA', formula: 'กำไรขั้นต้น − ค่าดำเนินการ (OpEx)', calc: `${f(wkGP)} − ${f(opexY)} = ${f(wkEbitda)} ฿/ปี` },
+              { th: '⑥ ค่าเสื่อมราคา / Depreciation', formula: 'อาคาร÷20 ปี + อุปกรณ์÷7 ปี (เส้นตรง)', calc: `${f(bld)}÷20 + ${f(eqp)}÷7 = ${f(bld / active.buildingLifeYrs)} + ${f(eqp / active.equipmentLifeYrs)} = ${f(wkDep)} ฿/ปี` },
+              { th: '⑦ EBIT & ภาษีเงินได้ / Tax', formula: `EBIT = EBITDA − ค่าเสื่อม · ภาษี = max(0, EBIT) × ${taxPct}%`, calc: `EBIT = ${f(wkEbitda)} − ${f(wkDep)} = ${f(wkEbit)} · ภาษี = ${f(wkEbit)} × ${taxPct}% = ${f(wkTax)} ฿/ปี` },
+              {
+                th: '⑧ กระแสเงินสดจากการดำเนินงาน / Operating cash flow', formula: 'EBITDA − ภาษีเงินได้', calc: `${f(wkEbitda)} − ${f(wkTax)} = ${f(wkOcf)} ฿/ปี`,
+                note: 'ธุรกิจนี้ซื้อ-ขายด้วยเงินสดเป็นหลัก (รับซื้อจ่ายสดหน้างาน · ลูกค้าจ่ายเมื่อรับของ) — ค่าเสื่อมราคาเป็นค่าใช้จ่ายทางบัญชี ไม่ใช่เงินสดออก จึงไม่หักออกจากกระแสเงินสด (มีผลแค่ช่วยลดภาษี) · ส่วนเครดิตให้ชาวนา/สต๊อกฟาง รวมอยู่ในทุนหมุนเวียนตั้งต้น ฿' + f(active.workingCapital) + ' ที่คืนเต็มในปีสุดท้าย',
+              },
+              { th: '⑨ การเดินเครื่องช่วงต้น / Ramp-up', formula: 'ปีที่ 1 = 60% · ปีที่ 2 = 80% · ปีที่ 3+ = 100%', calc: `ปีที่ 1 ≈ ${f(T * active.rampYear1)} ตัน · ปีที่ 2 ≈ ${f(T * active.rampYear2)} ตัน · ปีที่ 3+ = ${f(T)} ตัน` },
+              { th: '⑩ มูลค่าซาก (ปีสุดท้าย) / Terminal value', formula: 'อาคาร×60% + อุปกรณ์×20% + คืนทุนหมุนเวียน', calc: `${f(bld)}×0.6 + ${f(eqp)}×0.2 + ${f(active.workingCapital)} = ${f(wkTerminal)} ฿` },
+              { th: '⑪ NPV (มูลค่าปัจจุบันสุทธิ)', formula: `Σ กระแสเงินสดปีที่ t ÷ (1 + r)ᵗ · r = ${discPct}%`, calc: `Σ CFₜ ÷ (1.${discPct.padStart(2, '0')})ᵗ − ${f(result.initialOutlay)} = ${result.npv >= 0 ? '+' : ''}${f(result.npv)} ฿` },
+              { th: '⑫ IRR (อัตราผลตอบแทนภายใน)', formula: 'อัตราคิดลด r ที่ทำให้ NPV = 0 (วิธี bisection)', calc: `= ${((result.irr ?? 0) * 100).toFixed(1)}%` },
+              { th: '⑬ ระยะคืนทุน / Payback', formula: 'ปีแรกที่กระแสเงินสดสะสม ≥ 0 (interpolate ภายในปี)', calc: result.paybackYears ? `= ${result.paybackYears.toFixed(1)} ปี` : '> 10 ปี' },
+              { th: '⑭ ROI', formula: 'กำไรสุทธิเฉลี่ยต่อปี ÷ เงินลงทุน CapEx', calc: `≈ ${result.simpleRoiPct.toFixed(1)}% ต่อปี` },
+            ].map((s) => (
+              <div key={s.th} className="rounded-[8px] bg-[#f6f4ec] px-3.5 py-2.5">
+                <div className="text-[12.5px] font-extrabold text-forest">{s.th}</div>
+                <div className="mt-1 font-mono text-[11.5px] text-[#7c8a80]">{s.formula}</div>
+                <div className="mt-0.5 font-mono text-[12px] font-semibold text-ink">{s.calc}</div>
+                {s.note && <div className="mt-1.5 rounded-[6px] bg-[#fbf6e8] px-2.5 py-1.5 text-[11px] leading-[1.5] text-[#8a6d2a]">💡 {s.note}</div>}
               </div>
             ))}
           </div>
           <div className="mt-4 rounded-[8px] bg-[#eef3ec] px-3.5 py-2.5 text-[11.5px] leading-[1.5] text-[#54625a]">
-            ฐานการเงิน: 10 ปี · คิดลด 8% (WACC ของ SME เกษตรไทย) · ภาษี SME 15% · ทั้งหมดคำนวณสดในเบราว์เซอร์จากไฟล์ <b>src/feasibility/model.ts</b> — ไม่มี backend.
+            ฐานการเงิน: {active.years} ปี · คิดลด {discPct}% (WACC ของ SME เกษตรไทย) · ภาษี SME {taxPct}% · ค่าเสื่อม: อาคาร {active.buildingLifeYrs} ปี / อุปกรณ์ {active.equipmentLifeYrs} ปี
           </div>
           <div className="mt-4 flex justify-end">
             <button onClick={() => setShowMethod(false)} className="rounded-[10px] border-none bg-forest px-5 py-2.5 text-[13px] font-bold text-white hover:opacity-90">เข้าใจแล้ว / Got it</button>
