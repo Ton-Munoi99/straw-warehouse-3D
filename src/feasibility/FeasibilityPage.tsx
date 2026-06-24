@@ -336,9 +336,9 @@ export default function FeasibilityPage() {
               </tbody>
             </table>
             <div className="mt-2 flex flex-col gap-1 text-[11px] leading-[1.5] text-[#7c8a80]">
-              <div><b className="text-forest">R3</b> โรงไฟฟ้าชีวมวล ~21 ฿/ก้อน — NPS / Ratch Pathana ศูนย์รับซื้อชีวมวลภาคตะวันออก · Biomass plants ~21 ฿/bale — eastern feedstock buying centers · <span className="text-[#3f7fae]">npsplc.com · ratchpathana.com</span></div>
-              <div><b className="text-forest">R1</b> อาหารสัตว์ 30–35 ฿/ก้อน (พรีเมียมหน้าแล้ง) — เทคโนโลยีชาวบ้าน/ข่าวสด · Cattle feed 30–35 ฿/bale (dry-season premium) · <span className="text-[#3f7fae]">khaosod.co.th/technologychaoban</span></div>
-              <div><b className="text-forest">R4</b> เพาะเห็ด/ความต้องการท้องถิ่น — สนง.เกษตรฯ · รักบ้านเกิด · Mushroom & local demand — Dept. of Agriculture · <span className="text-[#3f7fae]">opsmoac.go.th · rakbankerd.com</span></div>
+              <div><b className="text-forest">R3</b> โรงไฟฟ้าชีวมวล ~21 ฿/ก้อน — NPS (นิคม 304 ปราจีน/ตะวันออก) + ราคารับซื้อเชื้อเพลิงชีวมวล DEDE · Biomass plants ~21 ฿/bale — NPS (304 Estate) + DEDE feedstock prices · <a href="https://kc.dede.go.th/knowledge-view.aspx?p=231" target="_blank" rel="noopener noreferrer" className="text-[#3f7fae] underline">🔗 DEDE</a></div>
+              <div><b className="text-forest">R1</b> อาหารสัตว์ 30–35 ฿/ก้อน (พรีเมียมหน้าแล้ง) — รักบ้านเกิด/เทคโนโลยีชาวบ้าน · Cattle feed 30–35 ฿/bale (dry-season premium) · <a href="https://www.rakbankerd.com/agriculture/hilight-view.php?id=194" target="_blank" rel="noopener noreferrer" className="text-[#3f7fae] underline">🔗 รักบ้านเกิด</a></div>
+              <div><b className="text-forest">R4</b> เพาะเห็ด/ความต้องการท้องถิ่น — สนง.เกษตรฯ · รักบ้านเกิด · Mushroom & local demand · <a href="https://www.opsmoac.go.th/trat-local_wisdom-files-421191791800" target="_blank" rel="noopener noreferrer" className="text-[#3f7fae] underline">🔗 opsmoac</a></div>
             </div>
           </div>
 
@@ -460,9 +460,19 @@ export default function FeasibilityPage() {
                     <div className="text-[12.5px] font-extrabold text-ink">{r.org}</div>
                     <div className="mt-0.5 text-[11.5px] leading-[1.5] text-[#54625a]">{r.th}</div>
                     <div className="mt-0.5 text-[11px] leading-[1.4] text-[#9aa499]">{r.en}</div>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
                       <span className="rounded bg-[#eef3ec] px-2 py-0.5 font-semibold text-forest">ใช้สำหรับ / Used for: {r.figure}</span>
-                      <span className="text-[#3f7fae]">{r.url}</span>
+                      {r.links.map((l) => (
+                        <a
+                          key={l.href}
+                          href={l.href}
+                          target={l.href.startsWith('/') ? undefined : '_blank'}
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded bg-white px-2 py-0.5 font-semibold text-[#3f7fae] underline decoration-[#3f7fae]/40 underline-offset-2 hover:decoration-[#3f7fae]"
+                        >
+                          🔗 {l.label}
+                        </a>
+                      ))}
                     </div>
                   </div>
                 </div>

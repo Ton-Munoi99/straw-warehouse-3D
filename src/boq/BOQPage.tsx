@@ -304,7 +304,7 @@ export default function BOQPage() {
                 <div key={r.id} className="flex gap-2.5">
                   <span className="w-[26px] flex-none font-extrabold text-forest">{r.id}</span>
                   <span>
-                    {r.text} · <span className="text-[#9aa499]">{r.url}</span>
+                    {r.text} · <RefLinks url={r.url} />
                   </span>
                 </div>
               ))}
@@ -442,6 +442,36 @@ function DivBasis({ div }: { div: ReturnType<typeof useComputed>['divs'][number]
 }
 
 // ---- sub-components ----
+
+// turn a reference url string (may contain several " · "-separated domains, or
+// a non-url note) into clickable links
+function RefLinks({ url }: { url: string }) {
+  const parts = url.split('·').map((s) => s.trim()).filter(Boolean)
+  return (
+    <>
+      {parts.map((p, i) => {
+        const isDomain = /[a-z0-9-]+\.[a-z]{2,}/i.test(p) && !p.startsWith('—')
+        return (
+          <span key={i} className="text-[#9aa499]">
+            {i > 0 && ' · '}
+            {isDomain ? (
+              <a
+                href={p.startsWith('/') ? p : `https://${p}`}
+                target={p.startsWith('/') ? undefined : '_blank'}
+                rel="noopener noreferrer"
+                className="text-[#3f7fae] underline decoration-[#3f7fae]/40 underline-offset-2 hover:decoration-[#3f7fae]"
+              >
+                🔗 {p}
+              </a>
+            ) : (
+              p
+            )}
+          </span>
+        )
+      })}
+    </>
+  )
+}
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (

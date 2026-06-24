@@ -296,40 +296,52 @@ export interface Reference {
   th: string
   en: string
   figure: string
-  url: string
+  links: { label: string; href: string }[]
 }
 export const REFERENCES: Reference[] = [
   {
     id: 'R1',
-    org: 'เทคโนโลยีชาวบ้าน / ข่าวสด · Khaosod Technology Chaoban',
-    th: 'ธุรกิจฟางข้าวอัดก้อน — ต้นทุนรับจ้างอัด 13–15 ฿/ก้อน · รับซื้อจากเกษตรกร 5–12 ฿/ก้อน · ขายหน้าโกดัง 25 ฿/ก้อน · หน้าฝน 30–35 ฿/ก้อน · ก้อนละ ~30 กก. (40×120 ซม.)',
-    en: 'Baling business — service 13–15 ฿/bale · buy 5–12 ฿/bale · sell 25 ฿ (30–35 ฿ rainy)',
+    org: 'รักบ้านเกิด · เทคโนโลยีชาวบ้าน/ข่าวสด',
+    th: 'ธุรกิจฟางข้าวอัดก้อน (วังฝั่งแดงฟาร์ม ฯลฯ) — ค่ารับจ้างอัด 13–15 ฿/ก้อน · รับซื้อจากเกษตรกร 5–12 ฿/ก้อน · ขายหน้าโกดัง 25 ฿/ก้อน · หน้าฝน 30–35 ฿/ก้อน · ก้อนละ ~30 กก.',
+    en: 'Baling business (multiple farms) — service 13–15 ฿/bale · buy 5–12 ฿/bale · sell 25 ฿ (30–35 ฿ rainy)',
     figure: 'ราคารับซื้อ/ขายต่อก้อน · ค่าอัดฟาง / Buy-sell & baling price per bale',
-    url: 'khaosod.co.th/technologychaoban/how-to/process/article_265417',
+    links: [
+      { label: 'รักบ้านเกิด (อัดฟางก้อน)', href: 'https://www.rakbankerd.com/agriculture/hilight-view.php?id=194' },
+      { label: 'ข่าวสด/เทคโนโลยีชาวบ้าน', href: 'https://www.khaosod.co.th/technologychaoban/how-to/process/article_265417' },
+    ],
   },
   {
     id: 'R2',
-    org: 'Thai Rice Farming Simulator (ผู้จัดทำเดียวกัน)',
-    th: 'แบบจำลองทำนาข้าว — มูลค่าฟางข้าว 0.75–1.15 ฿/กก. และโครงสร้างต้นทุน-รายได้นาข้าวภาคกลาง',
-    en: 'Own rice-farming model — straw value 0.75–1.15 ฿/kg; central-plains cost/revenue structure',
-    figure: 'มูลค่าฟางดิบ · ผลผลิต/ต้นทุนนาข้าว / Raw straw value & paddy economics',
-    url: 'thai-rice-farming-simulator.netlify.app',
+    org: 'Thai Rice Farming Simulator (ผู้จัดทำเดียวกัน) + ราคารับซื้อชีวมวล DEDE',
+    th: 'แบบจำลองทำนาข้าวใช้มูลค่าฟาง 0.75–1.15 ฿/กก. — เทียบเคียงได้กับราคาฟางอัดก้อนในตลาด (25–35 ฿/ก้อน ÷ ~30 กก./ก้อน ≈ 0.83–1.17 ฿/กก.) และสอดคล้องกับราคารับซื้อเชื้อเพลิงชีวมวลที่ DEDE รวบรวมจากโรงไฟฟ้า 79 แห่ง',
+    en: 'Rice-farming model uses straw value 0.75–1.15 ฿/kg — consistent with the baled-straw market (25–35 ฿/bale ÷ ~30 kg ≈ 0.83–1.17 ฿/kg) and DEDE biomass-fuel purchase prices (79 plants)',
+    figure: 'มูลค่าฟางดิบ ฿/กก. / Raw straw value per kg',
+    links: [
+      { label: 'Simulator', href: 'https://thai-rice-farming-simulator.netlify.app' },
+      { label: 'DEDE · ราคารับซื้อเชื้อเพลิงชีวมวล', href: 'https://kc.dede.go.th/knowledge-view.aspx?p=231' },
+    ],
   },
   {
     id: 'R3',
-    org: 'NPS (National Power Supply) · Ratch Pathana Energy',
-    th: 'ศูนย์รับซื้อชีวมวล/โรงไฟฟ้าชีวมวลภาคตะวันออก (ฉะเชิงเทรา–ปราจีนบุรี, นิคม 304) — รับซื้อเศษวัสดุเกษตรเป็นเชื้อเพลิงตลอดปี',
-    en: 'Eastern-region biomass plants & feedstock buying centers (Chachoengsao–Prachinburi, 304 Industrial Park) — year-round agri-residue offtake',
+    org: 'NPS (National Power Supply) · DEDE — ราคารับซื้อเชื้อเพลิงชีวมวล',
+    th: 'โรงไฟฟ้าชีวมวล NPS (นิคม 304 ปราจีนบุรี ติดฉะเชิงเทรา/ภาคตะวันออก) ใช้เศษวัสดุเกษตรรวมถึงฟางข้าวเป็นเชื้อเพลิงตลอดปี · DEDE รวบรวมราคารับซื้อเชื้อเพลิงชีวมวลจากโรงไฟฟ้า 79 แห่ง ปี 2565',
+    en: 'NPS biomass plants (304 Industrial Park, Prachinburi — adjacent to Chachoengsao/the east) burn agri-residue incl. rice straw year-round · DEDE compiles biomass-fuel purchase prices from 79 plants (2022)',
     figure: 'ช่องทางระบายฟางชีวมวล (baseload) / Biomass offtake channel',
-    url: 'npsplc.com · ratchpathana.com/th/our-businesses',
+    links: [
+      { label: 'NPS · พลังงานชีวมวล', href: 'https://www.npsplc.com/en/updates/blog/543' },
+      { label: 'DEDE · ราคารับซื้อเชื้อเพลิงชีวมวล 2565', href: 'https://kc.dede.go.th/knowledge-view.aspx?p=231' },
+    ],
   },
   {
     id: 'R4',
-    org: 'สนง.เกษตรฯ (opsmoac) · รักบ้านเกิด · Locals Thai PBS',
+    org: 'สนง.เกษตรฯ (opsmoac) · รักบ้านเกิด',
     th: 'อัดฟางก้อนสร้างรายได้หลังเก็บเกี่ยว — เฉลี่ย 40–60 ก้อน/ไร่ · รายได้ 1,000–1,500 ฿/ไร่ · อัดได้ ~1,000 ก้อน/วัน',
     en: 'Post-harvest baling income — 40–60 bales/rai · 1,000–1,500 ฿/rai · ~1,000 bales/day',
     figure: 'ผลผลิตฟางต่อไร่ · กำลังการผลิต / Bales per rai & daily capacity',
-    url: 'opsmoac.go.th · rakbankerd.com · localsthaipbs.net',
+    links: [
+      { label: 'opsmoac (สนง.เกษตรฯ)', href: 'https://www.opsmoac.go.th/trat-local_wisdom-files-421191791800' },
+      { label: 'รักบ้านเกิด', href: 'https://www.rakbankerd.com/agriculture/hilight-view.php?id=194' },
+    ],
   },
   {
     id: 'R5',
@@ -337,7 +349,7 @@ export const REFERENCES: Reference[] = [
     th: 'ราคาก่อสร้างโรงเก็บฟาง 18×10 ม. สูง 9 ม. = ฿1,545,237 (≈ ฿8,585/ตร.ม.) อ้างอิงราคาวัสดุ-ค่าแรง ปี 2568',
     en: 'Warehouse construction cost ฿1,545,237 (≈ ฿8,585/m²), 18×10 m × 9 m tall, 2025 basis',
     figure: 'CapEx โรงเก็บฟาง / Warehouse CapEx',
-    url: '/boq',
+    links: [{ label: 'เปิดหน้า BOQ', href: '/boq' }],
   },
 ]
 
