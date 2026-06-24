@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Ruler,
   Tag,
+  TrendingUp,
   Truck as TruckIcon,
   ZoomIn,
   ZoomOut,
@@ -116,6 +117,13 @@ export default function Warehouse3D() {
               <div className={`text-sm font-bold ${s.accent ? 'text-forest' : ''}`}>{s.value}</div>
             </div>
           ))}
+          <Link
+            to="/feasibility"
+            className="flex items-center gap-2 rounded-[9px] border border-straw bg-straw px-4 py-[9px] text-[13px] font-bold text-white no-underline transition-opacity hover:opacity-90"
+          >
+            <TrendingUp size={16} strokeWidth={1.9} />
+            ROI
+          </Link>
           <Link
             to="/boq"
             className="flex items-center gap-2 rounded-[9px] border border-forest bg-forest px-4 py-[9px] text-[13px] font-bold text-white no-underline transition-opacity hover:opacity-90"

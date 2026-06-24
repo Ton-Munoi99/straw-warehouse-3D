@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Box, Home, Printer } from 'lucide-react'
+import { Box, Home, Printer, TrendingUp } from 'lucide-react'
 import {
   BENCH_MAX,
   BENCH_MIN,
@@ -100,6 +100,13 @@ export default function BOQPage() {
           >
             <Box size={16} strokeWidth={1.9} />
             3D Model
+          </Link>
+          <Link
+            to="/feasibility"
+            className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-[16px] py-[11px] text-[13px] font-bold text-straw no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] transition-opacity hover:opacity-90"
+          >
+            <TrendingUp size={16} strokeWidth={1.9} />
+            ROI
           </Link>
           <button
             onClick={() => window.print()}
