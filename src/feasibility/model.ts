@@ -80,6 +80,7 @@ export const DEFAULT_INPUTS: SimInputs = {
     { key: 'forklift', th: 'รถโฟล์คลิฟต์', en: 'Forklift', amount: 450000 },
     { key: 'truck', th: 'รถบรรทุก 6 ล้อ (มือสอง)', en: '6-wheel truck (used)', amount: 650000 },
     { key: 'misc', th: 'เครื่องชั่ง เครื่องมือ สำนักงาน', en: 'Scales, tools, office setup', amount: 150000 },
+    { key: 'softcost', th: 'ค่าออกแบบ ขออนุญาต และเชื่อมไฟฟ้า-ประปา (ไม่อยู่ใน BOQ)', en: 'Design, permits & utility hook-ups (excluded from BOQ)', amount: 180000 },
   ],
   buildingKey: 'warehouse',
   workingCapital: 300000,

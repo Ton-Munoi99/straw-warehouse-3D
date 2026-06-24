@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Box, Home, Printer, TrendingUp } from 'lucide-react'
+import { Box, Calculator, Home, Printer, TrendingUp } from 'lucide-react'
 import {
   BENCH_MAX,
   BENCH_MIN,
@@ -77,6 +77,7 @@ function useComputed() {
 
 export default function BOQPage() {
   const c = useComputed()
+  const [showMethod, setShowMethod] = useState(false)
 
   return (
     <>
@@ -108,6 +109,13 @@ export default function BOQPage() {
             <TrendingUp size={16} strokeWidth={1.9} />
             ROI
           </Link>
+          <button
+            onClick={() => setShowMethod(true)}
+            className="flex items-center gap-2 rounded-[11px] border border-[#3f7fae] bg-white px-[16px] py-[11px] text-[13px] font-bold text-[#3f7fae] shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90"
+          >
+            <Calculator size={16} strokeWidth={1.9} />
+            วิธีคำนวณ / Method
+          </button>
           <button
             onClick={() => window.print()}
             className="flex items-center gap-2 rounded-[11px] border-none bg-forest px-[18px] py-[11px] text-[13px] font-bold text-white shadow-[0_6px_18px_rgba(20,40,25,0.22)]"
@@ -320,6 +328,108 @@ export default function BOQPage() {
           </div>
         </div>
       </div>
+
+      {showMethod && <MethodModal c={c} onClose={() => setShowMethod(false)} />}
+    </>
+  )
+}
+
+// ---- methodology modal — how every line & total is calculated ----
+function MethodModal({ c, onClose }: { c: ReturnType<typeof useComputed>; onClose: () => void }) {
+  const beforeVat = c.direct + c.oh + c.cont
+  const rollup: { label: string; calc: string; value: number; strong?: boolean }[] = [
+    { label: 'รวมค่างานก่อสร้าง / Direct cost', calc: 'Σ ทุกหมวด A–H (จำนวน × ราคา) · sum of all divisions', value: c.direct, strong: true },
+    { label: 'ค่าดำเนินการ & กำไร / OH & Profit', calc: `Direct × ${(OH_RATE * 100).toFixed(0)}% = ${f(c.direct)} × 0.10`, value: c.oh },
+    { label: 'เผื่อเหลือเผื่อขาด / Contingency', calc: `Direct × ${(CONT_RATE * 100).toFixed(0)}% = ${f(c.direct)} × 0.05`, value: c.cont },
+    { label: 'ก่อน VAT / Before VAT', calc: `${f(c.direct)} + ${f(c.oh)} + ${f(c.cont)}`, value: beforeVat },
+    { label: 'ภาษีมูลค่าเพิ่ม / VAT', calc: `Before-VAT × ${(VAT_RATE * 100).toFixed(0)}% = ${f(beforeVat)} × 0.07`, value: c.vat },
+    { label: 'รวมทั้งสิ้น / Grand Total', calc: `${f(beforeVat)} + ${f(c.vat)}`, value: c.total, strong: true },
+  ]
+
+  return (
+    <div className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-5" onClick={onClose}>
+      <div className="max-h-[88vh] w-[760px] overflow-y-auto rounded-[16px] bg-white p-7 shadow-[0_20px_60px_rgba(20,40,25,0.3)]" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2.5 text-[18px] font-extrabold text-ink">
+          <Calculator size={22} className="text-[#3f7fae]" /> วิธีการคำนวณ BOQ / How the BOQ Is Calculated
+        </div>
+        <div className="mt-2 rounded-[8px] bg-[#eef3ec] px-3.5 py-2 text-[11.5px] font-semibold text-forest">
+          ทุกบรรทัด: <b>รวมเงิน = จำนวน × ราคา/หน่วย</b> · every line: <b>Amount = Qty × Unit rate</b> — ราคา/หน่วยอ้างอิง R1–R6 (ตลาดปี 2568)
+        </div>
+
+        {/* per-line basis */}
+        <div className="mt-4 text-[12.5px] font-extrabold text-[#26342c]">① ที่มาของปริมาณแต่ละรายการ / Quantity basis per line</div>
+        <table className="mt-2 w-full border-collapse text-[11.5px]">
+          <thead>
+            <tr className="bg-[#26342c] text-white">
+              <th className="w-[36px] p-[7px_6px] text-left font-bold">No.</th>
+              <th className="p-[7px_6px] text-left font-bold">ที่มาของปริมาณ / Quantity basis</th>
+              <th className="num w-[120px] p-[7px_6px] font-bold">จำนวน × ราคา</th>
+              <th className="num w-[86px] p-[7px_6px] font-bold">รวมเงิน</th>
+            </tr>
+          </thead>
+          <tbody>
+            {c.divs.map((d) => (
+              <DivBasis key={d.code} div={d} />
+            ))}
+          </tbody>
+        </table>
+
+        {/* roll-up */}
+        <div className="mt-5 text-[12.5px] font-extrabold text-[#26342c]">② การรวมยอด / Roll-up to Grand Total</div>
+        <div className="mt-2 flex flex-col gap-1.5">
+          {rollup.map((r) => (
+            <div key={r.label} className={`flex flex-col gap-0.5 rounded-[8px] px-3.5 py-2 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3 ${r.strong ? 'bg-forest text-white' : 'bg-[#f6f4ec]'}`}>
+              <div className="flex-1">
+                <span className={`text-[12px] font-bold ${r.strong ? 'text-white' : 'text-forest'}`}>{r.label}</span>
+                <span className={`ml-2 font-mono text-[11px] ${r.strong ? 'text-[#cfe6d4]' : 'text-[#7c8a80]'}`}>{r.calc}</span>
+              </div>
+              <span className={`num font-extrabold ${r.strong ? 'text-[15px] text-white' : 'text-ink'}`}>฿{f(r.value)}</span>
+            </div>
+          ))}
+          <div className="flex items-center justify-between rounded-[8px] bg-[#f6f4ec] px-3.5 py-2">
+            <span className="font-mono text-[11.5px] text-[#54625a]">ต้นทุนต่อ ตร.ม. / Cost per m² = Grand Total ÷ {FOOTPRINT_SQM} ตร.ม.</span>
+            <span className="num font-extrabold text-forest">฿{f(c.perSqm)}/ตร.ม.</span>
+          </div>
+        </div>
+
+        {/* exclusions */}
+        <div className="mt-5 text-[12.5px] font-extrabold text-[#26342c]">③ ข้อยกเว้น &amp; ไปคิดที่ไหน / Exclusions &amp; where they are costed</div>
+        <div className="mt-2 rounded-[8px] bg-[#fbf6e8] px-3.5 py-2.5 text-[11.5px] leading-[1.6] text-[#8a6d2a]">
+          BOQ คิดเฉพาะ <b>งานก่อสร้างจริง</b> — ค่าที่ดิน, ค่าออกแบบ/ขออนุญาต, เชื่อมไฟฟ้าแรงสูง-ประปา <b>ไม่อยู่ใน BOQ</b> แต่ถูกนำไปคิดในหน้า <b>Feasibility</b>:
+          ที่ดิน = <b>ค่าเช่าใน OpEx</b> (฿60,000/ปี) · ค่าออกแบบ/ขออนุญาต + เชื่อมไฟฟ้า-ประปา = <b>soft-cost ใน CapEx</b> (฿180,000)
+          <br />
+          <span className="text-[#a08a4a]">A BOQ covers physical works only. Land, design/permit fees and HV/water hook-ups sit in the Feasibility — land as an OpEx lease, the rest as a CapEx soft-cost line.</span>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button onClick={onClose} className="rounded-[10px] border-none bg-forest px-5 py-2.5 text-[13px] font-bold text-white hover:opacity-90">เข้าใจแล้ว / Got it</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DivBasis({ div }: { div: ReturnType<typeof useComputed>['divs'][number] }) {
+  return (
+    <>
+      <tr className="bg-[#eef3ec]">
+        <td colSpan={4} className="p-[6px_6px] text-[11px] font-extrabold text-forest">
+          {div.code} · {div.title}
+        </td>
+      </tr>
+      {div.items.map((it) => (
+        <tr key={it.no} className="border-b border-[#f0ede3] align-top">
+          <td className="p-[6px_6px] text-[#8a948b]">{it.no}</td>
+          <td className="p-[6px_6px] text-[11px] leading-[1.5] text-[#54625a]">
+            {it.basis || `${it.th} · ${it.en}`}
+            {it.ref && <span className="ml-1 rounded bg-[#eef3ec] px-1 py-0.5 text-[9px] font-bold text-forest">{it.ref}</span>}
+          </td>
+          <td className="num p-[6px_6px] text-[#54625a]">
+            {it.qty.toLocaleString('en-US')} × {f(it.rate)}
+          </td>
+          <td className="num p-[6px_6px] font-bold text-[#26342c]">{f(it.amount)}</td>
+        </tr>
+      ))}
     </>
   )
 }
