@@ -292,7 +292,7 @@ export default function FeasibilityPage() {
                 ))}
               </tbody>
             </table>
-            <div className="mt-2 text-[11px] text-[#9aa499]">1 ก้อน = {active.baleKg} กก. → {bptDisplay} ก้อน/ตัน (ถ้าเก็บ ~2,000 ก้อน ≈ {f(staticCapacityT)} ตัน static capacity; throughput 2,000 ตัน/ปี คือการหมุนสต๊อกหลายรอบ) · 1 bale = {active.baleKg} kg → {bptDisplay} bales/tonne</div>
+            <div className="mt-2 text-[11px] text-[#9aa499]">1 ก้อน = {active.baleKg} กก. → {bptDisplay} ก้อน/ตัน (ถ้าเก็บ ~2,000 ก้อน ≈ {f(staticCapacityT)} ตัน static capacity; throughput {f(active.throughputT)} ตัน/ปี คือการหมุนสต๊อกหลายรอบ) · 1 bale = {active.baleKg} kg → {bptDisplay} bales/tonne</div>
           </div>
 
           {/* location */}
