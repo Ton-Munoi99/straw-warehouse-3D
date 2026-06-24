@@ -45,6 +45,8 @@ export default function FeasibilityPage() {
   const result = useMemo(() => runInputs(active), [active])
   const refs = useMemo(() => runAll(), [])
   const bpt = balesPerTonne(active.baleKg)
+  const bptDisplay = bpt.toFixed(1)
+  const staticCapacityT = (active.baleKg * 2000) / 1000
   const perBale = (perT: number) => (perT / bpt).toFixed(1)
 
   const sell = blendedSell(active)
@@ -161,7 +163,7 @@ export default function FeasibilityPage() {
 
           {/* hero metrics */}
           <div className="px-9 pt-7">
-            <SectionTitle kicker={simMode ? 'ผลจากค่าที่คุณกรอก / Your Live Result' : 'ผลตอบแทนกรณีฐาน / Base-Case Returns'}>
+            <SectionTitle kicker={simMode ? 'ผลจากค่าที่คุณกรอก / Your Live Result' : 'ความเป็นไปได้กรณีฐาน / Base-Case Feasibility'}>
               ตัวเลขชี้วัดความเป็นไปได้ / Key Feasibility Metrics
             </SectionTitle>
             <div className="grid grid-cols-4 gap-3.5">
@@ -174,6 +176,19 @@ export default function FeasibilityPage() {
               * ปริมาณ / throughput {f(active.throughputT)} ตัน/ปี (t/yr) · เงินลงทุนรวม / total outlay ฿{f(result.totalCapex)} + ทุนหมุนเวียน / WC ฿{f(active.workingCapital)} · คิดลด / discount {(active.discountRate * 100).toFixed(0)}% · ภาษี / tax {(active.taxRate * 100).toFixed(0)}%
               {simMode ? ' — ค่าที่คุณกรอกเอง · your inputs' : ' — กดปุ่ม Simulation เพื่อปรับเอง · click Simulation to edit'}
             </div>
+            {!simMode && result.npv < 0 && (
+              <div className="mt-3 rounded-[10px] border border-[#e3b15d] bg-[#fff7e8] px-4 py-2.5 text-[11.5px] font-semibold leading-[1.55] text-[#8a651d]">
+                ผลลัพธ์ยังไม่คุ้มทุนใน 10 ปี เว้นแต่เพิ่มปริมาณหมุนเวียนหรือกำไรต่อตัน · This case needs higher
+                throughput or margin to clear a 10-year return.
+              </div>
+            )}
+            {!simMode && result.npv >= 0 && (
+              <div className="mt-3 rounded-[10px] border border-[#bdd7bf] bg-[#f2f8f2] px-4 py-2.5 text-[11.5px] font-semibold leading-[1.55] text-forest">
+                ฐานนี้ใช้ 1 ก้อน = 20 กก. สำหรับฟางอัดก้อนสี่เหลี่ยมเล็กในตลาดทั่วไป จึงกลับมาเป็นบวก
+                แต่ควรชั่งน้ำหนักจริงหน้าไซต์และเทียบ sensitivity 15-30 กก./ก้อนก่อนลงทุน · This base case uses
+                20 kg/bale for common small bales; verify actual bale weight and test 15-30 kg/bale before committing.
+              </div>
+            )}
           </div>
 
           {/* simulation control panel */}
@@ -277,7 +292,7 @@ export default function FeasibilityPage() {
                 ))}
               </tbody>
             </table>
-            <div className="mt-2 text-[11px] text-[#9aa499]">1 ก้อน = {active.baleKg} กก. → {bpt} ก้อน/ตัน (สอดคล้องกับโมเดล 3 มิติ ~2,000 ก้อน ≈ 40 ตัน · อาคารสูง 9 ม. เก็บได้สูงขึ้น) · 1 bale = {active.baleKg} kg → {bpt} bales/tonne</div>
+            <div className="mt-2 text-[11px] text-[#9aa499]">1 ก้อน = {active.baleKg} กก. → {bptDisplay} ก้อน/ตัน (ถ้าเก็บ ~2,000 ก้อน ≈ {f(staticCapacityT)} ตัน static capacity; throughput 2,000 ตัน/ปี คือการหมุนสต๊อกหลายรอบ) · 1 bale = {active.baleKg} kg → {bptDisplay} bales/tonne</div>
           </div>
 
           {/* location */}
@@ -331,7 +346,7 @@ export default function FeasibilityPage() {
                   <td className="num p-[9px_10px] font-bold">{(mixSum * 100).toFixed(0)}%</td>
                   <td className="num p-[9px_10px] font-extrabold text-forest">{perBale(sell)}</td>
                   <td className="num p-[9px_10px] font-extrabold text-forest">{f(sell)}</td>
-                  <td className="p-[9px_10px] text-[11px] text-[#7c8a80]">1 ตัน = {bpt} ก้อน · 1 t = {bpt} bales</td>
+                  <td className="p-[9px_10px] text-[11px] text-[#7c8a80]">1 ตัน = {bptDisplay} ก้อน · 1 t = {bptDisplay} bales</td>
                 </tr>
               </tbody>
             </table>
@@ -406,7 +421,7 @@ export default function FeasibilityPage() {
                 <ScenRow label="NPV @ 8%" unit="฿" highlight vals={refs.map((r) => fM(r.result.npv))} />
               </tbody>
             </table>
-            <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">* กรณีระมัดระวังโครงการแทบไม่คุ้ม — ผลตอบแทนอ่อนไหวต่อ <b>ปริมาณ</b> และ <b>กำไรต่อตัน</b> มาก จุดคุ้มทุนอยู่ที่ ~1,500–1,600 ตัน/ปี · highly sensitive to volume &amp; margin; break-even ≈ 1,500–1,600 t/yr.</div>
+            <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">* กรณีฐานใช้ 20 กก./ก้อน ซึ่งเหมาะกับฟางอัดก้อนสี่เหลี่ยมเล็กทั่วไป แต่ผลตอบแทนยังอ่อนไหวต่อ <b>น้ำหนักก้อนจริง</b>, <b>ปริมาณหมุนเวียน</b>, และ <b>กำไรต่อตัน</b> มาก · base case uses 20 kg/bale for common small bales, but returns remain sensitive to actual bale weight, throughput, and margin.</div>
           </div>
 
           {/* cash-flow projection */}

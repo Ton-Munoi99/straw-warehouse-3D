@@ -64,15 +64,15 @@ export interface SimInputs {
 }
 
 export const DEFAULT_INPUTS: SimInputs = {
-  baleKg: 20, // ~2,000 bales ≈ 40 t static capacity — matches the 9 m-tall 3D model
+  baleKg: 20, // base case: common small-bale market weight; sources also range ~10-35 kg/bale
   throughputT: 2000,
   channels: [
-    { key: 'biomass', th: 'โรงไฟฟ้าชีวมวล', en: 'Biomass power plant', mix: 0.45, pricePerTonne: 1050, note: 'Baseload · year-round · NPS / 304 corridor', ref: 'R3' },
-    { key: 'cattle', th: 'อาหารสัตว์ (โค-กระบือ)', en: 'Cattle / livestock feed', mix: 0.35, pricePerTonne: 1750, note: 'Premium · dry-season scarcity 30–35 ฿/bale', ref: 'R1' },
-    { key: 'mushroom', th: 'เพาะเห็ด / อื่นๆ', en: 'Mushroom growing / other', mix: 0.2, pricePerTonne: 1650, note: 'Premium · steady local demand', ref: 'R4' },
+    { key: 'biomass', th: 'โรงไฟฟ้าชีวมวล', en: 'Biomass power plant', mix: 0.45, pricePerTonne: 1050, note: 'Baseload · ~21 ฿/bale · NPS / 304 corridor', ref: 'R3' },
+    { key: 'cattle', th: 'อาหารสัตว์ (โค-กระบือ)', en: 'Cattle / livestock feed', mix: 0.35, pricePerTonne: 1750, note: 'Premium · dry-season scarcity ~35 ฿/bale', ref: 'R1' },
+    { key: 'mushroom', th: 'เพาะเห็ด / อื่นๆ', en: 'Mushroom growing / other', mix: 0.2, pricePerTonne: 1650, note: 'Premium · ~33 ฿/bale steady local demand', ref: 'R4' },
   ],
   cogsLines: [
-    { key: 'buy', th: 'รับซื้อฟางอัดก้อนจากเกษตรกร', en: 'Buy baled straw from farmers', perTonne: 550 }, // ≈ 11 ฿/bale
+    { key: 'buy', th: 'รับซื้อฟางอัดก้อนจากเกษตรกร', en: 'Buy baled straw from farmers', perTonne: 550 }, // ≈ 11 ฿/bale at 20 kg/bale
     { key: 'inbound', th: 'ค่าขนเข้าโกดัง', en: 'Inbound transport to hub', perTonne: 90 },
   ],
   capexLines: [
