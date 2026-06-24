@@ -309,7 +309,7 @@ export default function BOQPage() {
               จัดทำเพื่อการนำเสนอโครงการและศึกษาความเป็นไปได้ · For project presentation &amp;
               feasibility study
             </span>
-            <span>สกุลเงิน: บาท (THB) · อ้างอิงราคาปี พ.ศ. 2568</span>
+            <span>สกุลเงิน: บาท (THB) · อ้างอิงราคาปี พ.ศ. 2568 / Currency: THB · Price ref. year 2025</span>
           </div>
         </div>
       </div>

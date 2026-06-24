@@ -113,12 +113,12 @@ export const PALETTE = [
 ]
 
 export const REFERENCES = [
-  { id: 'R1', text: 'สำนักงานนโยบายและยุทธศาสตร์การค้า (สนค.) กระทรวงพาณิชย์ — ราคาวัสดุก่อสร้างรายจังหวัด 2568', url: 'index.tpso.go.th/construction-material-prices' },
-  { id: 'R2', text: 'บัญชีราคาค่าวัสดุก่อสร้างและค่าแรงงาน ปีงบประมาณ 2568 (สพฐ. กระทรวงศึกษาธิการ) — คอนกรีตผสมเสร็จโครงสร้างติดดิน ~1,845 บาท/ลบ.ม.', url: 'yotathai.com/yotanews/obec2568' },
-  { id: 'R3', text: 'แสงไทยเมทัลชีท (2568) — หลังคาเมทัลชีททรงจั่ว หนารวม ≥0.47 มม. ราคา 370–430 บาท/ตร.ม.', url: 'sangthaimetalsheet.com' },
-  { id: 'R4', text: 'KS Group Metal Sheet — ค่าวัสดุเมทัลชีท 200–300 บาท/ตร.ม. (เคลือบสี 300–400 บาท/ตร.ม.)', url: 'ksgroup-metalsheet.com' },
-  { id: 'R5', text: 'Pebsteel TH / Easy Warehouse — โครงสร้างเหล็ก main frame 2,500–3,500 บาท/ตร.ม. · ราคารวมก่อสร้างโกดังโครงสร้างเหล็ก 5,500–9,000 บาท/ตร.ม.', url: 'th.pebsteel.com · easywarehouse-thailand.com' },
-  { id: 'R6', text: 'มูลนิธิประเมินค่า-นายหน้าแห่งประเทศไทย — ราคาประเมินค่าก่อสร้างอาคาร (อ้างอิงเทียบเคียง)', url: 'thaiappraisal.org' },
+  { id: 'R1', text: 'สำนักงานนโยบายและยุทธศาสตร์การค้า (สนค.) กระทรวงพาณิชย์ — ราคาวัสดุก่อสร้างรายจังหวัด 2568 · Office of Trade Policy & Strategy, Ministry of Commerce — Provincial construction material prices 2025', url: 'index.tpso.go.th/construction-material-prices' },
+  { id: 'R2', text: 'บัญชีราคาค่าวัสดุก่อสร้างและค่าแรงงาน ปีงบประมาณ 2568 (สพฐ. กระทรวงศึกษาธิการ) — คอนกรีตผสมเสร็จโครงสร้างติดดิน ~1,845 บาท/ลบ.ม. · OBEC construction material & labour price schedule FY 2025 — Ready-mix concrete ~1,845 THB/m³', url: 'yotathai.com/yotanews/obec2568' },
+  { id: 'R3', text: 'แสงไทยเมทัลชีท (2568) — หลังคาเมทัลชีททรงจั่ว หนารวม ≥0.47 มม. ราคา 370–430 บาท/ตร.ม. · Sangthai Metal Sheet (2025) — Gable metal sheet roofing ≥0.47 mm, 370–430 THB/m²', url: 'sangthaimetalsheet.com' },
+  { id: 'R4', text: 'KS Group Metal Sheet — ค่าวัสดุเมทัลชีท 200–300 บาท/ตร.ม. (เคลือบสี 300–400 บาท/ตร.ม.) · Metal sheet material 200–300 THB/m² (colour-coated 300–400 THB/m²)', url: 'ksgroup-metalsheet.com' },
+  { id: 'R5', text: 'Pebsteel TH / Easy Warehouse — โครงสร้างเหล็ก main frame 2,500–3,500 บาท/ตร.ม. · ราคารวมก่อสร้างโกดังโครงสร้างเหล็ก 5,500–9,000 บาท/ตร.ม. · Steel main frame 2,500–3,500 THB/m² · Total steel warehouse construction 5,500–9,000 THB/m²', url: 'th.pebsteel.com · easywarehouse-thailand.com' },
+  { id: 'R6', text: 'มูลนิธิประเมินค่า-นายหน้าแห่งประเทศไทย — ราคาประเมินค่าก่อสร้างอาคาร (อ้างอิงเทียบเคียง) · Thai Appraisal Foundation — Building construction cost appraisal (comparative reference)', url: 'thaiappraisal.org' },
 ]
 
 export const META = [
