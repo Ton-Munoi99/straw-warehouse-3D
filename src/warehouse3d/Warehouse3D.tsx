@@ -146,6 +146,10 @@ export default function Warehouse3D() {
             <RefreshCw size={15} color="#2f6b3f" strokeWidth={1.8} />
             Drag to orbit · Scroll to zoom · Click a tag for details
           </div>
+
+          <div className="absolute bottom-4 right-4 z-[3] text-[11px] font-medium text-[#5a6b5f]">
+            Design by <span className="font-bold text-forest">Sponlapat / BD</span>
+          </div>
         </div>
 
         {/* CONTROL PANEL */}
@@ -329,10 +333,6 @@ export default function Warehouse3D() {
             </div>
           </section>
 
-          {/* Credit */}
-          <div className="mt-auto border-t border-hairline pt-3 text-center text-[11px] font-medium text-[#9aa499]">
-            Design by <span className="font-bold text-forest">Sponlapat / BD</span>
-          </div>
         </aside>
       </div>
     </div>
