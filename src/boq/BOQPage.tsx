@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { Home, Printer } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Box, Home, Printer } from 'lucide-react'
 import {
   BENCH_MAX,
   BENCH_MIN,
@@ -91,14 +92,23 @@ export default function BOQPage() {
       `}</style>
 
       <div className="wrap min-h-screen bg-app-bg px-5 py-[34px]">
-        {/* Print button */}
-        <button
-          onClick={() => window.print()}
-          className="no-print fixed right-[26px] top-[22px] z-20 flex items-center gap-2 rounded-[11px] border-none bg-forest px-[18px] py-[11px] text-[13px] font-bold text-white shadow-[0_6px_18px_rgba(20,40,25,0.22)]"
-        >
-          <Printer size={16} strokeWidth={1.9} />
-          Print / Save PDF
-        </button>
+        {/* Top action buttons */}
+        <div className="no-print fixed right-[26px] top-[22px] z-20 flex gap-2.5">
+          <Link
+            to="/"
+            className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-[16px] py-[11px] text-[13px] font-bold text-forest no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] transition-opacity hover:opacity-90"
+          >
+            <Box size={16} strokeWidth={1.9} />
+            3D Model
+          </Link>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 rounded-[11px] border-none bg-forest px-[18px] py-[11px] text-[13px] font-bold text-white shadow-[0_6px_18px_rgba(20,40,25,0.22)]"
+          >
+            <Printer size={16} strokeWidth={1.9} />
+            Print / Save PDF
+          </button>
+        </div>
 
         <div className="sheet mx-auto max-w-[940px] overflow-hidden rounded-md bg-white shadow-[0_10px_40px_rgba(20,40,25,0.12)]">
           {/* Header band */}

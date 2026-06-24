@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Canvas } from '@react-three/fiber'
 import {
   Check,
   CloudSun,
+  FileSpreadsheet,
   Home,
   RefreshCw,
   Ruler,
@@ -114,6 +116,13 @@ export default function Warehouse3D() {
               <div className={`text-sm font-bold ${s.accent ? 'text-forest' : ''}`}>{s.value}</div>
             </div>
           ))}
+          <Link
+            to="/boq"
+            className="flex items-center gap-2 rounded-[9px] border border-forest bg-forest px-4 py-[9px] text-[13px] font-bold text-white no-underline transition-opacity hover:opacity-90"
+          >
+            <FileSpreadsheet size={16} strokeWidth={1.9} />
+            BOQ
+          </Link>
         </div>
       </header>
 
