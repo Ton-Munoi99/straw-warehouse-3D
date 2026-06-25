@@ -6,7 +6,6 @@ import {
   CloudSun,
   FileSpreadsheet,
   Home,
-  Presentation,
   RefreshCw,
   Ruler,
   Tag,
@@ -118,20 +117,6 @@ export default function Warehouse3D() {
               <div className={`text-sm font-bold ${s.accent ? 'text-forest' : ''}`}>{s.value}</div>
             </div>
           ))}
-          <Link
-            to="/"
-            className="flex items-center gap-2 rounded-[9px] border border-hairline bg-white px-4 py-[9px] text-[13px] font-bold text-forest no-underline transition-opacity hover:opacity-90"
-          >
-            <Home size={16} strokeWidth={1.9} />
-            Home
-          </Link>
-          <Link
-            to="/deck"
-            className="flex items-center gap-2 rounded-[9px] border border-forest-dark bg-forest-dark px-4 py-[9px] text-[13px] font-bold text-white no-underline transition-opacity hover:opacity-90"
-          >
-            <Presentation size={16} strokeWidth={1.9} />
-            Deck
-          </Link>
           <Link
             to="/feasibility"
             className="flex items-center gap-2 rounded-[9px] border border-straw bg-straw px-4 py-[9px] text-[13px] font-bold text-white no-underline transition-opacity hover:opacity-90"

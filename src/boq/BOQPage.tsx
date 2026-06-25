@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Box, Calculator, Home, Presentation, Printer, TrendingUp } from 'lucide-react'
+import { Box, Calculator, Home, Printer, TrendingUp } from 'lucide-react'
 import {
   BENCH_MAX,
   BENCH_MIN,
@@ -97,24 +97,10 @@ export default function BOQPage() {
         <div className="no-print fixed right-[14px] top-[14px] z-20 flex max-w-[calc(100vw-28px)] flex-wrap justify-end gap-2">
           <Link
             to="/"
-            className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-[14px] py-[10px] text-[13px] font-bold text-forest no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] transition-opacity hover:opacity-90"
-          >
-            <Home size={16} strokeWidth={1.9} />
-            Home
-          </Link>
-          <Link
-            to="/3d"
-            className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-[14px] py-[10px] text-[13px] font-bold text-forest no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] transition-opacity hover:opacity-90"
+            className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-[16px] py-[11px] text-[13px] font-bold text-forest no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] transition-opacity hover:opacity-90"
           >
             <Box size={16} strokeWidth={1.9} />
-            3D
-          </Link>
-          <Link
-            to="/deck"
-            className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-[16px] py-[11px] text-[13px] font-bold text-forest-dark no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] transition-opacity hover:opacity-90"
-          >
-            <Presentation size={16} strokeWidth={1.9} />
-            Deck
+            3D Model
           </Link>
           <Link
             to="/feasibility"
