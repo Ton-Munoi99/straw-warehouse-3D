@@ -18,6 +18,7 @@ import {
   LOCATIONS,
   MARKET_PRICES,
   REFERENCES,
+  ScenarioResult,
   SimInputs,
   balesPerTonne,
   blendedSell,
@@ -458,6 +459,17 @@ export default function FeasibilityPage() {
             <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">* ปีที่ 1–2 เดินเครื่องที่ {(active.rampYear1 * 100).toFixed(0)}% / {(active.rampYear2 * 100).toFixed(0)}% ระหว่างสร้างเครือข่ายรับซื้อ · Years 1–2 run at {(active.rampYear1 * 100).toFixed(0)}% / {(active.rampYear2 * 100).toFixed(0)}% while building the supply network. † ปีที่ {active.years} รวมมูลค่าซาก (อาคาร {(active.buildingSalvageFrac * 100).toFixed(0)}% + อุปกรณ์ {(active.equipmentResidualFrac * 100).toFixed(0)}%) + คืนทุนหมุนเวียน · Year {active.years} adds terminal value (building {(active.buildingSalvageFrac * 100).toFixed(0)}% + equipment {(active.equipmentResidualFrac * 100).toFixed(0)}%) + working-capital recovery.</div>
           </div>
 
+          {/* cumulative cash-flow chart */}
+          <div className="mx-9 mt-7">
+            <SectionTitle kicker="กราฟกระแสเงินสดสะสม / Cumulative Cash Flow">เห็นจุดคืนทุนชัดๆ / Where it breaks even</SectionTitle>
+            <div className="rounded-[12px] border border-[#e6e2d6] bg-white p-3">
+              <CashFlowChart result={result} />
+            </div>
+            <div className="mt-1.5 text-[11px] leading-[1.5] text-[#9aa499]">
+              เส้นตัดเส้นศูนย์ = จุดคืนทุน ({result.paybackYears ? `${result.paybackYears.toFixed(1)} ปี` : '>10 ปี'}) · เหนือเส้นศูนย์ = เริ่มมีกำไรสะสม · the line crossing zero is the payback point; above zero = cumulative profit.
+            </div>
+          </div>
+
           {/* sensitivity */}
           <div className="mx-9 mt-7">
             <SectionTitle kicker="การวิเคราะห์ความอ่อนไหว / Sensitivity">ระยะคืนทุน (ปี): ปริมาณ × กำไรต่อตัน / Payback (yrs): Volume × Margin</SectionTitle>
@@ -581,6 +593,54 @@ function SectionTitle({ kicker, children }: { kicker: string; children: React.Re
       <div className="text-[11px] font-bold uppercase tracking-[0.07em] text-[#9aa499]">{kicker}</div>
       <div className="mt-0.5 text-[15px] font-extrabold text-[#26342c]">{children}</div>
     </div>
+  )
+}
+
+// cumulative cash-flow line chart (pure SVG, no chart lib) — shows the payback crossing
+function CashFlowChart({ result }: { result: ScenarioResult }) {
+  const pts = [{ year: 0, cum: -result.initialOutlay }, ...result.rows.map((r) => ({ year: r.year, cum: r.cumulative }))]
+  const years = pts.length - 1
+  const W = 680
+  const H = 230
+  const PL = 64
+  const PR = 16
+  const PT = 16
+  const PB = 26
+  const minY = Math.min(0, ...pts.map((p) => p.cum))
+  const maxY = Math.max(0, ...pts.map((p) => p.cum))
+  const span = maxY - minY || 1
+  const X = (yr: number) => PL + (yr / years) * (W - PL - PR)
+  const Y = (v: number) => PT + (1 - (v - minY) / span) * (H - PT - PB)
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${X(p.year).toFixed(1)},${Y(p.cum).toFixed(1)}`).join(' ')
+  const zeroY = Y(0)
+  const area = `${line} L${X(years).toFixed(1)},${zeroY.toFixed(1)} L${X(0).toFixed(1)},${zeroY.toFixed(1)} Z`
+  const pb = result.paybackYears
+  const fMm = (v: number) => `${v < 0 ? '−' : ''}฿${(Math.abs(v) / 1e6).toFixed(1)}M`
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 260 }} role="img" aria-label="Cumulative cash flow">
+      {[minY, maxY].map((v, i) => (
+        <g key={i}>
+          <line x1={PL} y1={Y(v)} x2={W - PR} y2={Y(v)} stroke="#ece8dc" strokeWidth={1} />
+          <text x={PL - 6} y={Y(v) + 3} textAnchor="end" fontSize="10" fill="#9aa499">{fMm(v)}</text>
+        </g>
+      ))}
+      {/* zero / break-even baseline */}
+      <line x1={PL} y1={zeroY} x2={W - PR} y2={zeroY} stroke="#33403a" strokeWidth={1.2} strokeDasharray="4 3" />
+      <text x={PL - 6} y={zeroY + 3} textAnchor="end" fontSize="10" fontWeight="700" fill="#33403a">฿0</text>
+      <path d={area} fill="#2f6b3f" opacity={0.1} />
+      <path d={line} fill="none" stroke="#2f6b3f" strokeWidth={2.4} strokeLinejoin="round" strokeLinecap="round" />
+      {pts.map((p, i) => (
+        <circle key={i} cx={X(p.year)} cy={Y(p.cum)} r={2.6} fill={p.cum >= 0 ? '#2f6b3f' : '#c25b46'} />
+      ))}
+      {pb && (
+        <g>
+          <line x1={X(pb)} y1={PT} x2={X(pb)} y2={H - PB} stroke="#c8902f" strokeWidth={1.4} strokeDasharray="4 3" />
+          <circle cx={X(pb)} cy={zeroY} r={4.5} fill="#c8902f" stroke="#fff" strokeWidth={1.5} />
+          <text x={X(pb)} y={PT + 11} textAnchor="middle" fontSize="11" fontWeight="800" fill="#a9772a">คืนทุน {pb.toFixed(1)} ปี</text>
+        </g>
+      )}
+      {pts.map((p, i) => (i % 2 === 0 ? <text key={`x${i}`} x={X(p.year)} y={H - 8} textAnchor="middle" fontSize="9.5" fill="#9aa499">{p.year}</text> : null))}
+    </svg>
   )
 }
 
