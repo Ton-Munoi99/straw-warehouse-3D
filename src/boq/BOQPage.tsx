@@ -94,7 +94,7 @@ export default function BOQPage() {
 
       <div className="wrap min-h-screen bg-app-bg px-5 py-[34px]">
         {/* Top action buttons */}
-        <div className="no-print fixed right-[14px] top-[14px] z-20 flex max-w-[calc(100vw-28px)] flex-wrap justify-end gap-2">
+        <div className="no-print static mx-auto mb-3 flex max-w-[940px] flex-wrap justify-center gap-2 sm:fixed sm:right-[14px] sm:top-[14px] sm:z-20 sm:mx-0 sm:mb-0 sm:max-w-[calc(100vw-28px)] sm:justify-end">
           <Link
             to="/"
             className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-[16px] py-[11px] text-[13px] font-bold text-forest no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] transition-opacity hover:opacity-90"
@@ -127,7 +127,7 @@ export default function BOQPage() {
 
         <div className="sheet mx-auto max-w-[940px] overflow-hidden rounded-md bg-white shadow-[0_10px_40px_rgba(20,40,25,0.12)]">
           {/* Header band */}
-          <div className="flex items-center gap-[18px] bg-forest px-9 py-[26px] text-white">
+          <div className="flex items-center gap-[18px] bg-forest px-5 py-5 sm:px-9 sm:py-[26px] text-white">
             <div className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[11px] bg-white/[0.16]">
               <Home size={26} color="#fff" strokeWidth={1.7} />
             </div>
@@ -146,7 +146,7 @@ export default function BOQPage() {
           </div>
 
           {/* Meta grid */}
-          <div className="grid grid-cols-4 gap-px border-b border-hairline bg-hairline">
+          <div className="grid grid-cols-2 gap-px sm:grid-cols-4 border-b border-hairline bg-hairline">
             {META.map((m) => (
               <div key={m.label} className="bg-[#fafaf6] px-[18px] py-[13px]">
                 <div className="text-[10px] font-bold uppercase tracking-[0.05em] text-[#9aa499]">
@@ -158,8 +158,8 @@ export default function BOQPage() {
           </div>
 
           {/* Table */}
-          <div className="px-7 pt-2">
-            <table className="w-full border-collapse text-[12.5px]">
+          <div className="px-3 pt-2 sm:px-7">
+            <div className="-mx-1 overflow-x-auto px-1"><table className="w-full min-w-[560px] border-collapse text-[12.5px]">
               <thead>
                 <tr className="bg-[#26342c] text-white">
                   <th className="w-[42px] p-[10px_8px] text-left font-bold">No.</th>
@@ -175,12 +175,12 @@ export default function BOQPage() {
                   <DivisionRows key={d.code} div={d} />
                 ))}
               </tbody>
-            </table>
+            </table></div>
           </div>
 
           {/* Summary + Notes */}
-          <div className="flex flex-wrap gap-6 px-9 pb-[30px] pt-6">
-            <div className="min-w-[260px] flex-1">
+          <div className="flex flex-wrap gap-6 px-4 pb-[30px] pt-6 sm:px-9">
+            <div className="w-full flex-1 md:min-w-[260px]">
               <SectionLabel>หมายเหตุ / Notes &amp; Exclusions</SectionLabel>
               <ul className="m-0 list-disc pl-4 text-[11.5px] leading-[1.7] text-[#5a675e]">
                 {NOTES.map((n) => (
@@ -192,13 +192,13 @@ export default function BOQPage() {
           </div>
 
           {/* Cost Analysis */}
-          <div className="mx-9 mb-[26px]">
+          <div className="mx-4 sm:mx-9 mb-[26px]">
             <div className="mb-3.5 text-sm font-extrabold text-[#26342c]">
               วิเคราะห์ต้นทุน / Cost Analysis
             </div>
             <div className="flex flex-wrap gap-[26px]">
               {/* Cost by Division */}
-              <div className="min-w-[320px] flex-1">
+              <div className="w-full flex-1 md:min-w-[320px]">
                 <SectionLabel>สัดส่วนต้นทุนต่อหมวด / Cost by Division</SectionLabel>
                 <div className="flex flex-col gap-2">
                   {c.breakdown.map((b) => (
@@ -228,7 +228,7 @@ export default function BOQPage() {
               </div>
 
               {/* Material vs Labour */}
-              <div className="w-[300px] flex-none">
+              <div className="w-full md:w-[300px] md:flex-none">
                 <SectionLabel>ค่าวัสดุ vs ค่าแรง / Material vs Labour</SectionLabel>
                 <div className="flex h-[34px] overflow-hidden rounded-lg border border-[#e6e2d6]">
                   <div
@@ -257,7 +257,7 @@ export default function BOQPage() {
           </div>
 
           {/* Benchmark */}
-          <div className="mx-9 mb-[26px] rounded-[14px] border border-[#e6e2d6] bg-[#fafaf6] px-5 py-[18px]">
+          <div className="mx-4 sm:mx-9 mb-[26px] rounded-[14px] border border-[#e6e2d6] bg-[#fafaf6] px-5 py-[18px]">
             <div className="mb-3.5 flex flex-wrap items-baseline justify-between gap-1.5">
               <div className="text-sm font-extrabold text-[#26342c]">
                 เทียบราคาตลาด / Cost Benchmark
@@ -295,7 +295,7 @@ export default function BOQPage() {
           </div>
 
           {/* References */}
-          <div className="mx-9 mb-[26px]">
+          <div className="mx-4 sm:mx-9 mb-[26px]">
             <SectionLabel>
               แหล่งอ้างอิงราคา / Price References (ปี พ.ศ. 2568 / 2025)
             </SectionLabel>
@@ -319,7 +319,7 @@ export default function BOQPage() {
           </div>
 
           {/* Footer */}
-          <div className="flex justify-between border-t border-[#f0ede3] px-9 py-3.5 text-[11px] text-[#9aa499]">
+          <div className="flex flex-col gap-1 border-t border-[#f0ede3] px-4 py-3.5 sm:flex-row sm:justify-between sm:px-9 text-[11px] text-[#9aa499]">
             <span>
               จัดทำเพื่อการนำเสนอโครงการและศึกษาความเป็นไปได้ · For project presentation &amp;
               feasibility study
@@ -348,7 +348,7 @@ function MethodModal({ c, onClose }: { c: ReturnType<typeof useComputed>; onClos
 
   return (
     <div className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-5" onClick={onClose}>
-      <div className="max-h-[88vh] w-[760px] overflow-y-auto rounded-[16px] bg-white p-7 shadow-[0_20px_60px_rgba(20,40,25,0.3)]" onClick={(e) => e.stopPropagation()}>
+      <div className="max-h-[88vh] w-full overflow-y-auto rounded-[16px] bg-white p-5 sm:w-[760px] sm:p-7 shadow-[0_20px_60px_rgba(20,40,25,0.3)]" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2.5 text-[18px] font-extrabold text-ink">
           <Calculator size={22} className="text-[#3f7fae]" /> วิธีการคำนวณ BOQ / How the BOQ Is Calculated
         </div>
@@ -358,7 +358,7 @@ function MethodModal({ c, onClose }: { c: ReturnType<typeof useComputed>; onClos
 
         {/* per-line basis */}
         <div className="mt-4 text-[12.5px] font-extrabold text-[#26342c]">① ที่มาของปริมาณ &amp; ราคา / Quantity &amp; rate basis per line</div>
-        <table className="mt-2 w-full border-collapse text-[11.5px]">
+        <div className="-mx-1 overflow-x-auto px-1"><table className="mt-2 w-full border-collapse text-[11.5px]">
           <thead>
             <tr className="bg-[#26342c] text-white">
               <th className="w-[36px] p-[7px_6px] text-left font-bold">No.</th>
@@ -372,7 +372,7 @@ function MethodModal({ c, onClose }: { c: ReturnType<typeof useComputed>; onClos
               <DivBasis key={d.code} div={d} />
             ))}
           </tbody>
-        </table>
+        </table></div>
 
         {/* roll-up */}
         <div className="mt-5 text-[12.5px] font-extrabold text-[#26342c]">② การรวมยอด / Roll-up to Grand Total</div>
@@ -544,7 +544,7 @@ function SummaryCard({
     ['ภาษีมูลค่าเพิ่ม / VAT (7%)', vat],
   ]
   return (
-    <div className="w-[340px] flex-none overflow-hidden rounded-[14px] border border-[#e6e2d6]">
+    <div className="w-full md:w-[340px] md:flex-none overflow-hidden rounded-[14px] border border-[#e6e2d6]">
       {rows.map(([label, val]) => (
         <div
           key={label}

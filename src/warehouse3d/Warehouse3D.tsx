@@ -150,12 +150,13 @@ export default function Warehouse3D() {
             <Scene state={state} controllerRef={controller} onSelectZone={selectZone} />
           </Canvas>
 
-          <div className="absolute bottom-4 left-[18px] z-[3] flex items-center gap-2 rounded-[10px] border border-hairline bg-white/[0.86] px-[13px] py-2 text-xs font-medium text-[#5a6b5f] backdrop-blur">
+          <div className="absolute bottom-3 left-3 z-[3] flex items-center gap-2 rounded-[10px] border border-hairline bg-white/[0.86] px-[11px] py-1.5 text-[11px] font-medium text-[#5a6b5f] backdrop-blur sm:bottom-4 sm:left-[18px] sm:px-[13px] sm:py-2 sm:text-xs">
             <RefreshCw size={15} color="#2f6b3f" strokeWidth={1.8} />
-            Drag to orbit · Scroll to zoom · Click a tag for details
+            <span className="sm:hidden">Drag · zoom · tap a tag</span>
+            <span className="hidden sm:inline">Drag to orbit · Scroll to zoom · Click a tag for details</span>
           </div>
 
-          <div className="absolute bottom-4 right-4 z-[3] text-[11px] font-medium text-[#5a6b5f]">
+          <div className="absolute bottom-3 right-3 z-[3] text-[10px] font-medium text-[#5a6b5f] sm:bottom-4 sm:right-4 sm:text-[11px]">
             Design by <span className="font-bold text-forest">Sponlapat / BD</span>
           </div>
         </div>

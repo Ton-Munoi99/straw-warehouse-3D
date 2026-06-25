@@ -94,7 +94,7 @@ export default function FeasibilityPage() {
 
       <div className="wrap min-h-screen bg-app-bg px-5 py-[34px]">
         {/* nav */}
-        <div className="no-print fixed right-[14px] top-[14px] z-20 flex max-w-[calc(100vw-28px)] flex-wrap justify-end gap-2">
+        <div className="no-print static mx-auto mb-3 flex max-w-[1040px] flex-wrap justify-center gap-2 sm:fixed sm:right-[14px] sm:top-[14px] sm:z-20 sm:mx-0 sm:mb-0 sm:max-w-[calc(100vw-28px)] sm:justify-end">
           <Link to="/" className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-4 py-[11px] text-[13px] font-bold text-forest no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
             <Box size={16} strokeWidth={1.9} /> 3D Model
           </Link>
@@ -120,7 +120,7 @@ export default function FeasibilityPage() {
 
         <div className="sheet mx-auto max-w-[1040px] overflow-hidden rounded-md bg-white shadow-[0_10px_40px_rgba(20,40,25,0.12)]">
           {/* header */}
-          <div className="flex items-center gap-[18px] bg-forest-dark px-9 py-[28px] text-white">
+          <div className="flex items-center gap-3 bg-forest-dark px-5 py-5 text-white sm:gap-[18px] sm:px-9 sm:py-[28px]">
             <div className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[11px] bg-white/[0.14]">
               <TrendingUp size={26} color="#9ccfa9" strokeWidth={1.9} />
             </div>
@@ -163,11 +163,11 @@ export default function FeasibilityPage() {
           </div>
 
           {/* hero metrics */}
-          <div className="px-9 pt-7">
+          <div className="px-4 sm:px-9 pt-7">
             <SectionTitle kicker={simMode ? 'ผลจากค่าที่คุณกรอก / Your Live Result' : 'ความเป็นไปได้กรณีฐาน / Base-Case Feasibility'}>
               ตัวเลขชี้วัดความเป็นไปได้ / Key Feasibility Metrics
             </SectionTitle>
-            <div className="grid grid-cols-4 gap-3.5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-3.5">
               <HeroCard color="#c8902f" label="ระยะคืนทุน / Payback" value={result.paybackYears ? `~${result.paybackYears.toFixed(1)}` : '>10'} unit="ปี / years" />
               <HeroCard color="#2f6b3f" label="IRR (10 ปี / yrs)" value={`${((result.irr ?? 0) * 100).toFixed(1)}%`} unit="อัตราผลตอบแทนภายใน / Internal rate of return" />
               <HeroCard color="#3f7fae" label="NPV @ 8%" value={`${result.npv >= 0 ? '+' : ''}${fM(result.npv)}`} unit="มูลค่าปัจจุบันสุทธิ / Net present value" />
@@ -194,7 +194,7 @@ export default function FeasibilityPage() {
 
           {/* simulation control panel */}
           {simMode && (
-            <div className="mx-9 mt-6 rounded-[16px] border-2 border-straw bg-[#fdfaf3] p-5">
+            <div className="mx-4 sm:mx-9 mt-6 rounded-[16px] border-2 border-straw bg-[#fdfaf3] p-5">
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[14px] font-extrabold text-[#a9772a]">
                   <SlidersHorizontal size={18} /> แผงปรับค่าจำลอง / Simulation Controls
@@ -266,11 +266,11 @@ export default function FeasibilityPage() {
           )}
 
           {/* market price reference (the attached data) */}
-          <div className="mx-9 mt-7">
+          <div className="mx-4 sm:mx-9 mt-7">
             <SectionTitle kicker="ราคาอ้างอิงตลาดจริง / Real Market Prices (2568 / 2025)">
               ฐานราคาที่ใช้ในแบบจำลอง / Price Basis
             </SectionTitle>
-            <table className="w-full border-collapse text-[12.5px]">
+            <div className="-mx-1 overflow-x-auto px-1"><table className="w-full min-w-[560px] border-collapse text-[12.5px]">
               <thead>
                 <tr className="bg-[#26342c] text-white">
                   <th className="p-[9px_10px] text-left font-bold">รายการ / Item</th>
@@ -292,12 +292,12 @@ export default function FeasibilityPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
             <div className="mt-2 text-[11px] text-[#9aa499]">1 ก้อน = {active.baleKg} กก. → {bptDisplay} ก้อน/ตัน (ถ้าเก็บ ~2,000 ก้อน ≈ {f(staticCapacityT)} ตัน static capacity; throughput {f(active.throughputT)} ตัน/ปี คือการหมุนสต๊อกหลายรอบ) · 1 bale = {active.baleKg} kg → {bptDisplay} bales/tonne</div>
           </div>
 
           {/* location */}
-          <div className="mx-9 mt-7">
+          <div className="mx-4 sm:mx-9 mt-7">
             <SectionTitle kicker="ทำเลที่ตั้ง / Location Rationale">ทำไมต้องฉะเชิงเทรา / Why Chachoengsao</SectionTitle>
             <div className="flex flex-col gap-2">
               {LOCATIONS.map((loc) => (
@@ -317,9 +317,9 @@ export default function FeasibilityPage() {
           </div>
 
           {/* revenue model */}
-          <div className="mx-9 mt-7">
+          <div className="mx-4 sm:mx-9 mt-7">
             <SectionTitle kicker="แบบจำลองรายได้ / Revenue Model">ช่องทางการขาย &amp; ราคา / Sales Channels &amp; Pricing</SectionTitle>
-            <table className="w-full border-collapse text-[12.5px]">
+            <div className="-mx-1 overflow-x-auto px-1"><table className="w-full min-w-[560px] border-collapse text-[12.5px]">
               <thead>
                 <tr className="bg-[#26342c] text-white">
                   <th className="p-[9px_10px] text-left font-bold">ช่องทาง / Channel</th>
@@ -350,7 +350,7 @@ export default function FeasibilityPage() {
                   <td className="p-[9px_10px] text-[11px] text-[#7c8a80]">1 ตัน = {bptDisplay} ก้อน · 1 t = {bptDisplay} bales</td>
                 </tr>
               </tbody>
-            </table>
+            </table></div>
             <div className="mt-2 flex flex-col gap-1 text-[11px] leading-[1.5] text-[#7c8a80]">
               <div><b className="text-forest">R3</b> โรงไฟฟ้าชีวมวล ~21 ฿/ก้อน — NPS (นิคม 304 ปราจีน/ตะวันออก) + ราคารับซื้อเชื้อเพลิงชีวมวล DEDE · Biomass plants ~21 ฿/bale — NPS (304 Estate) + DEDE feedstock prices · <a href="https://kc.dede.go.th/knowledge-view.aspx?p=231" target="_blank" rel="noopener noreferrer" className="text-[#3f7fae] underline">🔗 DEDE</a></div>
               <div><b className="text-forest">R1</b> อาหารสัตว์ 30–35 ฿/ก้อน (พรีเมียมหน้าแล้ง) — รักบ้านเกิด/เทคโนโลยีชาวบ้าน · Cattle feed 30–35 ฿/bale (dry-season premium) · <a href="https://www.rakbankerd.com/agriculture/hilight-view.php?id=194" target="_blank" rel="noopener noreferrer" className="text-[#3f7fae] underline">🔗 รักบ้านเกิด</a></div>
@@ -359,11 +359,11 @@ export default function FeasibilityPage() {
           </div>
 
           {/* unit economics */}
-          <div className="mx-9 mt-7">
+          <div className="mx-4 sm:mx-9 mt-7">
             <SectionTitle kicker="เศรษฐศาสตร์ต่อหน่วย / Unit Economics">กำไรขั้นต้นต่อตัน / Gross Margin per Tonne</SectionTitle>
             <div className="flex flex-wrap gap-6">
-              <div className="min-w-[300px] flex-1"><Waterfall sell={sell} cogs={cogs} gm={gm} /></div>
-              <div className="w-[320px] flex-none rounded-[12px] border border-[#e6e2d6] bg-[#fafaf6] p-4">
+              <div className="w-full flex-1 md:min-w-[300px]"><Waterfall sell={sell} cogs={cogs} gm={gm} /></div>
+              <div className="w-full md:w-[320px] md:flex-none rounded-[12px] border border-[#e6e2d6] bg-[#fafaf6] p-4">
                 <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#9aa499]">ต้นทุนวัตถุดิบ / Cost of goods (landed)</div>
                 <div className="mt-2 flex flex-col gap-1.5">
                   {active.cogsLines.map((l) => (
@@ -380,8 +380,8 @@ export default function FeasibilityPage() {
           </div>
 
           {/* capex / opex */}
-          <div className="mx-9 mt-7 flex flex-wrap gap-6">
-            <div className="min-w-[300px] flex-1">
+          <div className="mx-4 sm:mx-9 mt-7 flex flex-wrap gap-6">
+            <div className="w-full flex-1 md:min-w-[300px]">
               <SectionTitle kicker="เงินลงทุน / CapEx">โครงสร้างเงินลงทุน / Investment Structure</SectionTitle>
               <div className="overflow-hidden rounded-[12px] border border-[#e6e2d6]">
                 {active.capexLines.map((l) => (
@@ -391,7 +391,7 @@ export default function FeasibilityPage() {
                 <div className="flex items-center justify-between bg-forest px-4 py-3 text-white"><span className="text-[13px] font-extrabold">รวมเงินลงทุน / Total outlay</span><span className="num text-[15px] font-extrabold">฿{f(totalCapex(active) + active.workingCapital)}</span></div>
               </div>
             </div>
-            <div className="min-w-[300px] flex-1">
+            <div className="w-full flex-1 md:min-w-[300px]">
               <SectionTitle kicker="ค่าดำเนินการ / OpEx (ต่อปี · per year)">ต้นทุนดำเนินงานรายปี / Annual Operating Cost</SectionTitle>
               <div className="overflow-hidden rounded-[12px] border border-[#e6e2d6]">
                 {active.opexLines.map((l) => (
@@ -403,9 +403,9 @@ export default function FeasibilityPage() {
           </div>
 
           {/* scenarios (fixed market reference) */}
-          <div className="mx-9 mt-7">
+          <div className="mx-4 sm:mx-9 mt-7">
             <SectionTitle kicker="การวิเคราะห์ฉากทัศน์ (อ้างอิงคงที่) / Reference Scenarios">เปรียบเทียบ 3 กรณี / Conservative · Base · Upside</SectionTitle>
-            <table className="w-full border-collapse text-[12.5px]">
+            <div className="-mx-1 overflow-x-auto px-1"><table className="w-full min-w-[560px] border-collapse text-[12.5px]">
               <thead>
                 <tr className="bg-[#26342c] text-white">
                   <th className="p-[9px_10px] text-left font-bold">ตัวชี้วัด / Metric</th>
@@ -421,14 +421,14 @@ export default function FeasibilityPage() {
                 <ScenRow label="IRR (10 ปี)" unit="%" highlight vals={refs.map((r) => `${((r.result.irr ?? 0) * 100).toFixed(1)}%`)} />
                 <ScenRow label="NPV @ 8%" unit="฿" highlight vals={refs.map((r) => fM(r.result.npv))} />
               </tbody>
-            </table>
+            </table></div>
             <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">* กรณีฐานใช้ 20 กก./ก้อน ซึ่งเหมาะกับฟางอัดก้อนสี่เหลี่ยมเล็กทั่วไป แต่ผลตอบแทนยังอ่อนไหวต่อ <b>น้ำหนักก้อนจริง</b>, <b>ปริมาณหมุนเวียน</b>, และ <b>กำไรต่อตัน</b> มาก · base case uses 20 kg/bale for common small bales, but returns remain sensitive to actual bale weight, throughput, and margin.</div>
           </div>
 
           {/* cash-flow projection */}
-          <div className="mx-9 mt-7">
+          <div className="mx-4 sm:mx-9 mt-7">
             <SectionTitle kicker={simMode ? 'ประมาณการกระแสเงินสด (ค่าที่คุณกรอก) / Cash Flow (your inputs)' : 'ประมาณการกระแสเงินสด (กรณีฐาน) / Base-Case Cash Flow'}>กระแสเงินสด 10 ปี / 10-Year Projection</SectionTitle>
-            <table className="w-full border-collapse text-[12px]">
+            <div className="-mx-1 overflow-x-auto px-1"><table className="w-full min-w-[560px] border-collapse text-[12px]">
               <thead>
                 <tr className="bg-[#26342c] text-white">
                   <th className="num p-[8px_8px] font-bold">ปี / Yr</th>
@@ -455,12 +455,12 @@ export default function FeasibilityPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
             <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">* ปีที่ 1–2 เดินเครื่องที่ {(active.rampYear1 * 100).toFixed(0)}% / {(active.rampYear2 * 100).toFixed(0)}% ระหว่างสร้างเครือข่ายรับซื้อ · Years 1–2 run at {(active.rampYear1 * 100).toFixed(0)}% / {(active.rampYear2 * 100).toFixed(0)}% while building the supply network. † ปีที่ {active.years} รวมมูลค่าซาก (อาคาร {(active.buildingSalvageFrac * 100).toFixed(0)}% + อุปกรณ์ {(active.equipmentResidualFrac * 100).toFixed(0)}%) + คืนทุนหมุนเวียน · Year {active.years} adds terminal value (building {(active.buildingSalvageFrac * 100).toFixed(0)}% + equipment {(active.equipmentResidualFrac * 100).toFixed(0)}%) + working-capital recovery.</div>
           </div>
 
           {/* cumulative cash-flow chart */}
-          <div className="mx-9 mt-7">
+          <div className="mx-4 sm:mx-9 mt-7">
             <SectionTitle kicker="กราฟกระแสเงินสดสะสม / Cumulative Cash Flow">เห็นจุดคืนทุนชัดๆ / Where it breaks even</SectionTitle>
             <div className="rounded-[12px] border border-[#e6e2d6] bg-white p-3">
               <CashFlowChart result={result} />
@@ -471,13 +471,13 @@ export default function FeasibilityPage() {
           </div>
 
           {/* sensitivity */}
-          <div className="mx-9 mt-7">
+          <div className="mx-4 sm:mx-9 mt-7">
             <SectionTitle kicker="การวิเคราะห์ความอ่อนไหว / Sensitivity">ระยะคืนทุน (ปี): ปริมาณ × กำไรต่อตัน / Payback (yrs): Volume × Margin</SectionTitle>
             <SensitivityGrid opex={opexPerYear(active)} outlay={totalCapex(active) + active.workingCapital} />
           </div>
 
           {/* references */}
-          <div className="mx-9 mt-7">
+          <div className="mx-4 sm:mx-9 mt-7">
             <SectionTitle kicker="แหล่งอ้างอิงโดยละเอียด / Detailed References">ฐานข้อมูลตลาด ปี 2568 / 2025 Market Sources</SectionTitle>
             <div className="flex flex-col gap-2.5">
               {REFERENCES.map((r) => (
@@ -509,7 +509,7 @@ export default function FeasibilityPage() {
           </div>
 
           {/* footer */}
-          <div className="mt-7 flex justify-between border-t border-[#f0ede3] px-9 py-3.5 text-[11px] text-[#9aa499]">
+          <div className="mt-7 flex flex-col gap-1 border-t border-[#f0ede3] px-4 py-3.5 sm:flex-row sm:justify-between sm:px-9 text-[11px] text-[#9aa499]">
             <span>การศึกษาความเป็นไปได้ทางการเงิน · Financial feasibility study · Design by <b className="text-forest">Sponlapat / BD</b></span>
             <span>สกุลเงิน / Currency: บาท (THB) · ปีฐาน / Base year 2568 / 2025</span>
           </div>
@@ -646,9 +646,9 @@ function CashFlowChart({ result }: { result: ScenarioResult }) {
 
 function HeroCard({ color, label, value, unit }: { color: string; label: string; value: string; unit: string }) {
   return (
-    <div className="rounded-[14px] border border-[#e6e2d6] p-4" style={{ background: `${color}0d` }}>
+    <div className="rounded-[14px] border border-[#e6e2d6] p-3.5 sm:p-4" style={{ background: `${color}0d` }}>
       <div className="text-[11px] font-bold uppercase tracking-[0.04em]" style={{ color }}>{label}</div>
-      <div className="mt-1.5 text-[30px] font-extrabold leading-none tracking-[-0.02em] text-ink">{value}</div>
+      <div className="mt-1.5 break-words text-[24px] font-extrabold leading-none tracking-[-0.02em] text-ink sm:text-[30px]">{value}</div>
       <div className="mt-1.5 text-[11px] font-medium text-[#7c8a80]">{unit}</div>
     </div>
   )
@@ -727,7 +727,7 @@ function SensitivityGrid({ opex, outlay }: { opex: number; outlay: number }) {
     return { txt: pb.toFixed(1), bg, fg }
   }
   return (
-    <table className="w-full border-collapse text-[12px]">
+    <div className="-mx-1 overflow-x-auto px-1"><table className="w-full min-w-[560px] border-collapse text-[12px]">
       <thead>
         <tr>
           <th className="p-[8px] text-left text-[11px] font-bold text-[#9aa499]">ปริมาณ ↓ / กำไรต่อตัน → · Volume ↓ / Margin →</th>
@@ -742,14 +742,14 @@ function SensitivityGrid({ opex, outlay }: { opex: number; outlay: number }) {
           </tr>
         ))}
       </tbody>
-    </table>
+    </table></div>
   )
 }
 
 function Modal({ children, onClose, wide }: { children: React.ReactNode; onClose: () => void; wide?: boolean }) {
   return (
     <div className="no-print fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-5" onClick={onClose}>
-      <div className={`max-h-[88vh] overflow-y-auto rounded-[16px] bg-white p-7 shadow-[0_20px_60px_rgba(20,40,25,0.3)] ${wide ? 'w-[640px]' : 'w-[460px]'}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`max-h-[88vh] w-full overflow-y-auto rounded-[16px] bg-white p-5 shadow-[0_20px_60px_rgba(20,40,25,0.3)] sm:p-7 ${wide ? 'sm:w-[640px]' : 'sm:w-[460px]'}`} onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>
