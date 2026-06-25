@@ -280,13 +280,13 @@ export interface PriceRef {
   ref: string
 }
 export const MARKET_PRICES: PriceRef[] = [
-  { th: 'รับซื้อฟางอัดก้อนจากเกษตรกร', en: 'Buy baled straw from farmer', low: 5, high: 12, used: 11, unit: '฿/ก้อน', ref: 'R1' },
-  { th: 'ค่าจ้างอัดฟาง (บริการ)', en: 'Baling service charge', low: 13, high: 15, used: 14, unit: '฿/ก้อน', ref: 'R1' },
-  { th: 'ขายหน้าโกดัง (ปกติ)', en: 'Warehouse-gate sale (normal)', low: 25, high: 25, used: 25, unit: '฿/ก้อน', ref: 'R1' },
-  { th: 'ขายหน้าฝน / ขาดแคลน', en: 'Rainy / scarce season', low: 30, high: 35, used: 33, unit: '฿/ก้อน', ref: 'R1' },
-  { th: 'โรงไฟฟ้าชีวมวล (เทียบเท่า)', en: 'Biomass plant (bale-equiv.)', low: 18, high: 24, used: 21, unit: '฿/ก้อน', ref: 'R3' },
-  { th: 'มูลค่าฟางดิบ', en: 'Raw straw value', low: 0.75, high: 1.15, used: 1.0, unit: '฿/กก.', ref: 'R2' },
-  { th: 'ผลผลิตฟางต่อไร่', en: 'Bales per rai', low: 40, high: 60, used: 50, unit: 'ก้อน/ไร่', ref: 'R4' },
+  { th: 'รับซื้อฟางอัดก้อนจากเกษตรกร', en: 'Buy baled straw from farmer', low: 5, high: 12, used: 11, unit: '฿/ก้อน (bale)', ref: 'R1' },
+  { th: 'ค่าจ้างอัดฟาง (บริการ)', en: 'Baling service charge', low: 13, high: 15, used: 14, unit: '฿/ก้อน (bale)', ref: 'R1' },
+  { th: 'ขายหน้าโกดัง (ปกติ)', en: 'Warehouse-gate sale (normal)', low: 25, high: 25, used: 25, unit: '฿/ก้อน (bale)', ref: 'R1' },
+  { th: 'ขายหน้าฝน / ขาดแคลน', en: 'Rainy / scarce season', low: 30, high: 35, used: 33, unit: '฿/ก้อน (bale)', ref: 'R1' },
+  { th: 'โรงไฟฟ้าชีวมวล (เทียบเท่า)', en: 'Biomass plant (bale-equiv.)', low: 18, high: 24, used: 21, unit: '฿/ก้อน (bale)', ref: 'R3' },
+  { th: 'มูลค่าฟางดิบ', en: 'Raw straw value', low: 0.75, high: 1.15, used: 1.0, unit: '฿/กก. (kg)', ref: 'R2' },
+  { th: 'ผลผลิตฟางต่อไร่', en: 'Bales per rai', low: 40, high: 60, used: 50, unit: 'ก้อน/ไร่ (bales/rai)', ref: 'R4' },
 ]
 
 // ---- detailed references ---------------------------------------------------

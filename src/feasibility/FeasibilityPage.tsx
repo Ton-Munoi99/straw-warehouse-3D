@@ -150,7 +150,7 @@ export default function FeasibilityPage() {
             {[
               { icon: <Truck size={18} />, th: 'รับซื้อฟางจากเกษตรกร', en: 'Buy baled straw from farmers', sub: '~11 ฿/ก้อน · ช่วงเก็บเกี่ยว · ~11 ฿/bale at harvest' },
               { icon: <Warehouse size={18} />, th: 'เก็บแห้งในโกดัง', en: 'Store dry in warehouse', sub: 'ยกระดับ กันฝน · เก็บข้ามฤดู · raised, rain-proof, off-season' },
-              { icon: <TrendingUp size={18} />, th: 'ขายต่อ 3 ช่องทาง', en: 'Resell to 3 channels', sub: '25–35 ฿/ก้อน · ลูกค้ามารับเอง · buyers self-pick-up' },
+              { icon: <TrendingUp size={18} />, th: 'ขายต่อ 3 ช่องทาง', en: 'Resell to 3 channels', sub: '25–35 ฿/ก้อน (bale) · ลูกค้ามารับเอง · buyers self-pick-up' },
             ].map((s, i) => (
               <div key={i} className="bg-[#fafaf6] px-[18px] py-[14px]">
                 <div className="flex items-center gap-2 text-forest">{s.icon}
@@ -210,7 +210,7 @@ export default function FeasibilityPage() {
               <div className="grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
                 {/* volume & finance */}
                 <CtrlGroup title="ปริมาณ & การเงิน / Volume & Finance">
-                  <NumField label="ปริมาณ / Throughput" suffix="ตัน/ปี" value={inputs.throughputT} step={50} onChange={(v) => patch((n) => (n.throughputT = v))} />
+                  <NumField label="ปริมาณ / Throughput" suffix="ตัน/ปี (t/yr)" value={inputs.throughputT} step={50} onChange={(v) => patch((n) => (n.throughputT = v))} />
                   <NumField label="คิดลด / Discount" suffix="%" value={inputs.discountRate * 100} step={0.5} onChange={(v) => patch((n) => (n.discountRate = v / 100))} />
                   <NumField label="ภาษี / Tax" suffix="%" value={inputs.taxRate * 100} step={1} onChange={(v) => patch((n) => (n.taxRate = v / 100))} />
                   <NumField label="ทุนหมุนเวียน / WC" suffix="฿" value={inputs.workingCapital} step={50000} onChange={(v) => patch((n) => (n.workingCapital = v))} />
@@ -223,26 +223,26 @@ export default function FeasibilityPage() {
                       <div className="mb-1 text-[11px] font-bold text-ink">{c.th}</div>
                       <div className="flex gap-2">
                         <NumField label="สัดส่วน / Mix" suffix="%" value={c.mix * 100} step={5} small onChange={(v) => patch((n) => (n.channels[i].mix = v / 100))} />
-                        <NumField label="ราคา / Price" suffix={`฿/ต ≈${perBale(c.pricePerTonne)}/ก้อน`} value={c.pricePerTonne} step={50} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v))} />
+                        <NumField label="ราคา / Price" suffix={`฿/ต (t) ≈${perBale(c.pricePerTonne)}/ก้อน (bale)`} value={c.pricePerTonne} step={50} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v))} />
                       </div>
                     </div>
                   ))}
                 </CtrlGroup>
 
                 {/* cogs */}
-                <CtrlGroup title="ต้นทุนวัตถุดิบ / COGS (฿/ตัน)">
+                <CtrlGroup title="ต้นทุนวัตถุดิบ / COGS (฿/ตัน · /t)">
                   {inputs.cogsLines.map((l, i) => (
-                    <NumField key={l.key} label={l.th} suffix="฿/ต" value={l.perTonne} step={10} onChange={(v) => patch((n) => (n.cogsLines[i].perTonne = v))} />
+                    <NumField key={l.key} label={l.th} suffix="฿/ต (t)" value={l.perTonne} step={10} onChange={(v) => patch((n) => (n.cogsLines[i].perTonne = v))} />
                   ))}
                   <div className="mt-1 rounded-[6px] bg-forest px-2.5 py-1.5 text-[11px] font-bold text-white">
-                    กำไรขั้นต้น / Gross margin {f(gm)} ฿/ต · {perBale(gm)} ฿/ก้อน
+                    กำไรขั้นต้น / Gross margin {f(gm)} ฿/ต (t) · {perBale(gm)} ฿/ก้อน (bale)
                   </div>
                 </CtrlGroup>
 
                 {/* opex */}
-                <CtrlGroup title="ค่าดำเนินการ / OpEx (฿/ปี)">
+                <CtrlGroup title="ค่าดำเนินการ / OpEx (฿/ปี · /yr)">
                   {inputs.opexLines.map((l, i) => (
-                    <NumField key={l.key} label={l.th} suffix="฿/ปี" value={l.perYear} step={10000} onChange={(v) => patch((n) => (n.opexLines[i].perYear = v))} />
+                    <NumField key={l.key} label={l.th} suffix="฿/ปี (/yr)" value={l.perYear} step={10000} onChange={(v) => patch((n) => (n.opexLines[i].perYear = v))} />
                   ))}
                 </CtrlGroup>
 
@@ -367,13 +367,13 @@ export default function FeasibilityPage() {
                 <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#9aa499]">ต้นทุนวัตถุดิบ / Cost of goods (landed)</div>
                 <div className="mt-2 flex flex-col gap-1.5">
                   {active.cogsLines.map((l) => (
-                    <div key={l.key} className="flex justify-between text-[12px]"><span className="text-[#54625a]">{l.th}</span><span className="num font-semibold">{f(l.perTonne)} <span className="text-[10px] text-[#9aa499]">/ต</span></span></div>
+                    <div key={l.key} className="flex justify-between text-[12px]"><span className="text-[#54625a]">{l.th}</span><span className="num font-semibold">{f(l.perTonne)} <span className="text-[10px] text-[#9aa499]">/ต (t)</span></span></div>
                   ))}
-                  <div className="mt-1 flex justify-between border-t border-[#e6e2d6] pt-1.5 text-[12px]"><span className="font-bold text-ink">รวม COGS / Total</span><span className="num font-extrabold text-[#c25b46]">{f(cogs)} <span className="text-[10px] font-normal text-[#9aa499]">/ต</span></span></div>
+                  <div className="mt-1 flex justify-between border-t border-[#e6e2d6] pt-1.5 text-[12px]"><span className="font-bold text-ink">รวม COGS / Total</span><span className="num font-extrabold text-[#c25b46]">{f(cogs)} <span className="text-[10px] font-normal text-[#9aa499]">/ต (t)</span></span></div>
                 </div>
                 <div className="mt-3 rounded-[8px] bg-forest px-3 py-2.5 text-white">
-                  <div className="flex items-center justify-between"><span className="text-[12px] font-semibold">กำไรขั้นต้น / Gross margin</span><span className="num text-[16px] font-extrabold">฿{f(gm)}<span className="text-[11px] font-normal">/ต</span></span></div>
-                  <div className="mt-0.5 text-right text-[11px] text-[#cfe6d4]">≈ {perBale(gm)} ฿/ก้อน · margin {sell ? ((gm / sell) * 100).toFixed(0) : 0}%</div>
+                  <div className="flex items-center justify-between"><span className="text-[12px] font-semibold">กำไรขั้นต้น / Gross margin</span><span className="num text-[16px] font-extrabold">฿{f(gm)}<span className="text-[11px] font-normal">/ต (t)</span></span></div>
+                  <div className="mt-0.5 text-right text-[11px] text-[#cfe6d4]">≈ {perBale(gm)} ฿/ก้อน (bale) · margin {sell ? ((gm / sell) * 100).toFixed(0) : 0}%</div>
                 </div>
               </div>
             </div>
@@ -413,11 +413,11 @@ export default function FeasibilityPage() {
                 </tr>
               </thead>
               <tbody>
-                <ScenRow label="ปริมาณหมุนเวียน / Throughput" unit="ตัน/ปี" vals={refs.map((r) => f(r.scenario.throughputT))} />
-                <ScenRow label="กำไรขั้นต้น / Gross margin" unit="฿/ตัน" vals={refs.map((r) => f(r.result.grossMarginPerT))} />
-                <ScenRow label="EBITDA (คงที่) / steady" unit="฿/ปี" vals={refs.map((r) => f(r.result.steadyEbitda))} />
+                <ScenRow label="ปริมาณหมุนเวียน / Throughput" unit="ตัน/ปี (t/yr)" vals={refs.map((r) => f(r.scenario.throughputT))} />
+                <ScenRow label="กำไรขั้นต้น / Gross margin" unit="฿/ตัน (/t)" vals={refs.map((r) => f(r.result.grossMarginPerT))} />
+                <ScenRow label="EBITDA (คงที่) / steady" unit="฿/ปี (/yr)" vals={refs.map((r) => f(r.result.steadyEbitda))} />
                 <ScenRow label="EBITDA Margin" unit="%" vals={refs.map((r) => `${r.result.ebitdaMarginPct.toFixed(0)}%`)} />
-                <ScenRow label="ระยะคืนทุน / Payback" unit="ปี" highlight vals={refs.map((r) => (r.result.paybackYears ? r.result.paybackYears.toFixed(1) : '>10'))} />
+                <ScenRow label="ระยะคืนทุน / Payback" unit="ปี (yrs)" highlight vals={refs.map((r) => (r.result.paybackYears ? r.result.paybackYears.toFixed(1) : '>10'))} />
                 <ScenRow label="IRR (10 ปี)" unit="%" highlight vals={refs.map((r) => `${((r.result.irr ?? 0) * 100).toFixed(1)}%`)} />
                 <ScenRow label="NPV @ 8%" unit="฿" highlight vals={refs.map((r) => fM(r.result.npv))} />
               </tbody>
@@ -636,7 +636,7 @@ function CashFlowChart({ result }: { result: ScenarioResult }) {
         <g>
           <line x1={X(pb)} y1={PT} x2={X(pb)} y2={H - PB} stroke="#c8902f" strokeWidth={1.4} strokeDasharray="4 3" />
           <circle cx={X(pb)} cy={zeroY} r={4.5} fill="#c8902f" stroke="#fff" strokeWidth={1.5} />
-          <text x={X(pb)} y={PT + 11} textAnchor="middle" fontSize="11" fontWeight="800" fill="#a9772a">คืนทุน {pb.toFixed(1)} ปี</text>
+          <text x={X(pb)} y={PT + 11} textAnchor="middle" fontSize="11" fontWeight="800" fill="#a9772a">คืนทุน / Payback {pb.toFixed(1)} ปี (yrs)</text>
         </g>
       )}
       {pts.map((p, i) => (i % 2 === 0 ? <text key={`x${i}`} x={X(p.year)} y={H - 8} textAnchor="middle" fontSize="9.5" fill="#9aa499">{p.year}</text> : null))}
@@ -698,7 +698,7 @@ function WRow({ label, value, color, width, bold }: { label: string; value: numb
     <div>
       <div className="flex items-center justify-between text-[12px]">
         <span className={bold ? 'font-extrabold text-ink' : 'font-semibold text-[#54625a]'}>{label}</span>
-        <span className="num font-bold" style={{ color }}>{value < 0 ? '−' : ''}฿{f(Math.abs(value))}<span className="text-[10px] font-normal text-[#9aa499]">/ต</span></span>
+        <span className="num font-bold" style={{ color }}>{value < 0 ? '−' : ''}฿{f(Math.abs(value))}<span className="text-[10px] font-normal text-[#9aa499]">/ต (t)</span></span>
       </div>
       <div className="mt-1 h-2.5 overflow-hidden rounded-[5px] bg-[#f0ede3]"><div className="h-full rounded-[5px]" style={{ width, background: color }} /></div>
     </div>
@@ -731,7 +731,7 @@ function SensitivityGrid({ opex, outlay }: { opex: number; outlay: number }) {
       <thead>
         <tr>
           <th className="p-[8px] text-left text-[11px] font-bold text-[#9aa499]">ปริมาณ ↓ / กำไรต่อตัน → · Volume ↓ / Margin →</th>
-          {margins.map((m) => (<th key={m} className="num p-[8px] font-bold text-[#26342c]">฿{m}/ต</th>))}
+          {margins.map((m) => (<th key={m} className="num p-[8px] font-bold text-[#26342c]">฿{m}/ต (t)</th>))}
         </tr>
       </thead>
       <tbody>

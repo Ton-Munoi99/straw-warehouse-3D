@@ -319,12 +319,17 @@ export default function BOQPage() {
           </div>
 
           {/* Footer */}
-          <div className="flex flex-col gap-1 border-t border-[#f0ede3] px-4 py-3.5 sm:flex-row sm:justify-between sm:px-9 text-[11px] text-[#9aa499]">
-            <span>
-              จัดทำเพื่อการนำเสนอโครงการและศึกษาความเป็นไปได้ · For project presentation &amp;
-              feasibility study
-            </span>
-            <span>สกุลเงิน: บาท (THB) · อ้างอิงราคาปี พ.ศ. 2568 / Currency: THB · Price ref. year 2025</span>
+          <div className="flex flex-col gap-1 border-t border-[#f0ede3] px-4 py-3.5 sm:px-9 text-[11px] text-[#9aa499]">
+            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
+              <span>
+                จัดทำเพื่อการนำเสนอโครงการและศึกษาความเป็นไปได้ · For project presentation &amp;
+                feasibility study
+              </span>
+              <span>สกุลเงิน: บาท (THB) · อ้างอิงราคาปี พ.ศ. 2568 / Currency: THB · Price ref. year 2025</span>
+            </div>
+            <div className="text-right text-[10.5px] font-medium text-[#9aa499]">
+              Design by <span className="font-bold text-forest">Sponlapat / BD</span>
+            </div>
           </div>
         </div>
       </div>
@@ -388,7 +393,7 @@ function MethodModal({ c, onClose }: { c: ReturnType<typeof useComputed>; onClos
           ))}
           <div className="flex items-center justify-between rounded-[8px] bg-[#f6f4ec] px-3.5 py-2">
             <span className="font-mono text-[11.5px] text-[#54625a]">ต้นทุนต่อ ตร.ม. / Cost per m² = Grand Total ÷ {FOOTPRINT_SQM} ตร.ม.</span>
-            <span className="num font-extrabold text-forest">฿{f(c.perSqm)}/ตร.ม.</span>
+            <span className="num font-extrabold text-forest">฿{f(c.perSqm)}/ตร.ม. (m²)</span>
           </div>
         </div>
 
