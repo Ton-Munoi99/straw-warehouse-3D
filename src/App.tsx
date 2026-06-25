@@ -4,6 +4,7 @@ import { lazy, Suspense } from 'react'
 const Warehouse3D = lazy(() => import('./warehouse3d/Warehouse3D'))
 const BOQ = lazy(() => import('./boq/BOQPage'))
 const Feasibility = lazy(() => import('./feasibility/FeasibilityPage'))
+const Deck = lazy(() => import('./deck/DeckPage'))
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/" element={<Warehouse3D />} />
           <Route path="/boq" element={<BOQ />} />
           <Route path="/feasibility" element={<Feasibility />} />
+          <Route path="/deck" element={<Deck />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

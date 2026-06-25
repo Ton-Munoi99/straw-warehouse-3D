@@ -5,6 +5,7 @@ import {
   Calculator,
   FileSpreadsheet,
   MapPin,
+  Presentation,
   Printer,
   RotateCcw,
   SlidersHorizontal,
@@ -100,6 +101,9 @@ export default function FeasibilityPage() {
           </Link>
           <Link to="/boq" className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-4 py-[11px] text-[13px] font-bold text-forest no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
             <FileSpreadsheet size={16} strokeWidth={1.9} /> BOQ
+          </Link>
+          <Link to="/deck" className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-4 py-[11px] text-[13px] font-bold text-forest-dark no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
+            <Presentation size={16} strokeWidth={1.9} /> Deck
           </Link>
           <button onClick={() => setShowMethod(true)} className="flex items-center gap-2 rounded-[11px] border border-[#3f7fae] bg-white px-4 py-[11px] text-[13px] font-bold text-[#3f7fae] shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
             <Calculator size={16} strokeWidth={1.9} /> วิธีคำนวณ / Method
