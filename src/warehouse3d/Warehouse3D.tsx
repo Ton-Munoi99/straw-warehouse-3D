@@ -88,7 +88,7 @@ export default function Warehouse3D() {
   return (
     <div className="fixed inset-0 flex flex-col bg-app-bg text-ink">
       {/* HEADER */}
-      <header className="z-[5] flex flex-none items-center gap-5 border-b border-hairline bg-white px-[22px] py-3.5">
+      <header className="z-[5] flex flex-none flex-wrap items-center gap-x-5 gap-y-2 border-b border-hairline bg-white px-4 py-3 sm:px-[22px]">
         <div className="flex items-center gap-3">
           <div className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] bg-forest">
             <Home size={22} color="#fff" strokeWidth={1.8} />
@@ -100,11 +100,11 @@ export default function Warehouse3D() {
             </div>
           </div>
         </div>
-        <div className="ml-auto flex gap-2.5">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           {STATS.map((s) => (
             <div
               key={s.label}
-              className={`rounded-[9px] border px-3.5 py-[7px] ${
+              className={`hidden rounded-[9px] border px-3.5 py-[7px] xl:block ${
                 s.accent ? 'border-hairline bg-pale-green' : 'border-hairline bg-[#fafaf6]'
               }`}
             >
@@ -118,6 +118,13 @@ export default function Warehouse3D() {
               <div className={`text-sm font-bold ${s.accent ? 'text-forest' : ''}`}>{s.value}</div>
             </div>
           ))}
+          <Link
+            to="/"
+            className="flex items-center gap-2 rounded-[9px] border border-hairline bg-white px-4 py-[9px] text-[13px] font-bold text-forest no-underline transition-opacity hover:opacity-90"
+          >
+            <Home size={16} strokeWidth={1.9} />
+            Home
+          </Link>
           <Link
             to="/deck"
             className="flex items-center gap-2 rounded-[9px] border border-forest-dark bg-forest-dark px-4 py-[9px] text-[13px] font-bold text-white no-underline transition-opacity hover:opacity-90"
@@ -143,10 +150,10 @@ export default function Warehouse3D() {
       </header>
 
       {/* MAIN ROW */}
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
         {/* 3D STAGE */}
         <div
-          className="relative min-w-0 flex-1 overflow-hidden"
+          className="relative min-h-[48vh] min-w-0 flex-1 overflow-hidden md:min-h-0"
           style={{ background: 'linear-gradient(#cfe6f1,#dfeede)' }}
         >
           <Canvas
@@ -169,7 +176,7 @@ export default function Warehouse3D() {
         </div>
 
         {/* CONTROL PANEL */}
-        <aside className="scrl flex w-[336px] flex-none flex-col gap-[18px] overflow-y-auto border-l border-hairline bg-white p-[18px]">
+        <aside className="scrl flex w-full flex-none flex-col gap-[18px] overflow-y-auto border-t border-hairline bg-white p-[18px] md:w-[336px] md:border-l md:border-t-0">
           {/* Camera Views */}
           <section>
             <SectionTitle>Camera Views</SectionTitle>

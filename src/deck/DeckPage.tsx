@@ -110,7 +110,8 @@ export default function DeckPage() {
           Pitch Deck · ฟางอัดก้อน
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <NavBtn to="/" icon={<Box size={14} />} label="3D" />
+          <NavBtn to="/" icon={<Home size={14} />} label="Home" />
+          <NavBtn to="/3d" icon={<Box size={14} />} label="3D" />
           <NavBtn to="/boq" icon={<FileSpreadsheet size={14} />} label="BOQ" />
           <NavBtn to="/feasibility" icon={<TrendingUp size={14} />} label="ROI" />
           <button onClick={() => window.print()} className="flex items-center gap-1.5 rounded-md bg-white/10 px-3 py-1.5 text-[12px] font-bold hover:bg-white/20">
@@ -485,7 +486,7 @@ function Row({ k, v }: { k: string; v: string }) {
 function ImageSlot({ dark }: { dark?: boolean }) {
   return (
     <Link
-      to="/"
+      to="/3d"
       className={`flex h-full min-h-[300px] w-full flex-col items-center justify-center gap-3 rounded-[22px] border-2 border-dashed no-underline ${
         dark ? 'border-[#cdbf9a] bg-[#efe9da] text-[#7c8a80]' : 'border-white/30 bg-white/[0.06] text-[#9ccfa9]'
       }`}

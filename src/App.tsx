@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 
+const HomePage = lazy(() => import('./home/HomePage'))
 const Warehouse3D = lazy(() => import('./warehouse3d/Warehouse3D'))
 const BOQ = lazy(() => import('./boq/BOQPage'))
 const Feasibility = lazy(() => import('./feasibility/FeasibilityPage'))
@@ -17,7 +18,8 @@ export default function App() {
         }
       >
         <Routes>
-          <Route path="/" element={<Warehouse3D />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/3d" element={<Warehouse3D />} />
           <Route path="/boq" element={<BOQ />} />
           <Route path="/feasibility" element={<Feasibility />} />
           <Route path="/deck" element={<Deck />} />

@@ -4,6 +4,7 @@ import {
   Box,
   Calculator,
   FileSpreadsheet,
+  Home,
   MapPin,
   Presentation,
   Printer,
@@ -95,8 +96,11 @@ export default function FeasibilityPage() {
 
       <div className="wrap min-h-screen bg-app-bg px-5 py-[34px]">
         {/* nav */}
-        <div className="no-print fixed right-[26px] top-[22px] z-20 flex flex-wrap justify-end gap-2.5">
-          <Link to="/" className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-4 py-[11px] text-[13px] font-bold text-forest no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
+        <div className="no-print fixed right-[14px] top-[14px] z-20 flex max-w-[calc(100vw-28px)] flex-wrap justify-end gap-2">
+          <Link to="/" className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-3.5 py-[10px] text-[13px] font-bold text-forest no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
+            <Home size={16} strokeWidth={1.9} /> Home
+          </Link>
+          <Link to="/3d" className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-3.5 py-[10px] text-[13px] font-bold text-forest no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
             <Box size={16} strokeWidth={1.9} /> 3D
           </Link>
           <Link to="/boq" className="flex items-center gap-2 rounded-[11px] border border-white/30 bg-white px-4 py-[11px] text-[13px] font-bold text-forest no-underline shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
