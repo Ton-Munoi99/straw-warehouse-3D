@@ -72,6 +72,21 @@ export default function FeasibilityPage() {
   const taxPct = (active.taxRate * 100).toFixed(0)
   const discPct = (active.discountRate * 100).toFixed(0)
 
+  // per-year net profit for ROI worked example
+  const roiYears = Array.from({ length: active.years }, (_, i) => {
+    const y = i + 1
+    const ramp = y === 1 ? active.rampYear1 : y === 2 ? active.rampYear2 : 1
+    const tp = T * ramp
+    const gp = gm * tp
+    const ebitda = gp - opexY
+    const ebit = ebitda - wkDep
+    const tax = Math.max(0, ebit) * active.taxRate
+    const np = ebit - tax
+    return { y, ramp, tp, ebitda, ebit, tax, np }
+  })
+  const roiSumNP = roiYears.reduce((s, r) => s + r.np, 0)
+  const roiAvgNP = roiSumNP / active.years
+
   // editing helpers
   const patch = (fn: (n: SimInputs) => void) =>
     setInputs((prev) => {
@@ -571,7 +586,8 @@ export default function FeasibilityPage() {
               { th: '⑪ NPV (มูลค่าปัจจุบันสุทธิ / Net present value)', formula: `Σ กระแสเงินสดปีที่ t ÷ (1 + r)ᵗ · Σ CFₜ ÷ (1+r)ᵗ · r = ${discPct}%`, calc: `Σ CFₜ ÷ (1.${discPct.padStart(2, '0')})ᵗ − ${f(result.initialOutlay)} = ${result.npv >= 0 ? '+' : ''}${f(result.npv)} ฿` },
               { th: '⑫ IRR (อัตราผลตอบแทนภายใน / Internal rate of return)', formula: 'อัตราคิดลด r ที่ทำให้ NPV = 0 · discount rate where NPV = 0 (bisection)', calc: `= ${((result.irr ?? 0) * 100).toFixed(1)}%` },
               { th: '⑬ ระยะคืนทุน / Payback', formula: 'ปีแรกที่กระแสเงินสดสะสม ≥ 0 · first year cumulative cash flow ≥ 0 (interpolated)', calc: result.paybackYears ? `= ${result.paybackYears.toFixed(1)} ปี / yrs` : '> 10 ปี / yrs' },
-              { th: '⑭ ROI', formula: 'กำไรสุทธิเฉลี่ยต่อปี ÷ เงินลงทุน CapEx · avg annual net profit ÷ CapEx', calc: `≈ ${result.simpleRoiPct.toFixed(1)}% ต่อปี / per year` },
+              { th: '⑭ ROI', formula: 'กำไรสุทธิเฉลี่ยต่อปี ÷ เงินลงทุน CapEx · avg annual net profit ÷ CapEx', calc: `${f(roiAvgNP)} ÷ ${f(result.totalCapex)} × 100 = ${result.simpleRoiPct.toFixed(1)}% ต่อปี / per year`,
+                note: `กำไรสุทธิ (Net profit) แต่ละปี = EBIT − ภาษี = (EBITDA − ค่าเสื่อม ${f(wkDep)}) − tax ${taxPct}%:\n${roiYears.map(r => `ปี ${r.y} (${(r.ramp * 100).toFixed(0)}%): EBITDA ${f(r.ebitda)} → EBIT ${f(r.ebit)} → ภาษี ${f(r.tax)} → NP = ${f(r.np)}`).join(' · ')}\nรวม / Sum = ${f(roiSumNP)} ÷ ${active.years} ปี = เฉลี่ย ${f(roiAvgNP)} ฿/ปี · then ${f(roiAvgNP)} ÷ CapEx ${f(result.totalCapex)} = ${result.simpleRoiPct.toFixed(1)}%` },
             ].map((s) => (
               <div key={s.th} className="rounded-[8px] bg-[#f6f4ec] px-3.5 py-2.5">
                 <div className="text-[12.5px] font-extrabold text-forest">{s.th}</div>
