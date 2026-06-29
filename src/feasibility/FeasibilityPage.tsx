@@ -375,6 +375,13 @@ export default function FeasibilityPage() {
                   <div className="flex items-center justify-between"><span className="text-[12px] font-semibold">กำไรขั้นต้น / Gross margin</span><span className="num text-[16px] font-extrabold">฿{f(gm)}<span className="text-[11px] font-normal">/ต (t)</span></span></div>
                   <div className="mt-0.5 text-right text-[11px] text-[#cfe6d4]">≈ {perBale(gm)} ฿/ก้อน (bale) · margin {sell ? ((gm / sell) * 100).toFixed(0) : 0}%</div>
                 </div>
+                <div className="mt-2.5 rounded-[6px] bg-[#fbf6e8] px-2.5 py-1.5 text-[10.5px] leading-[1.5] text-[#8a6d2a]">
+                  💡 ค่าขนเข้าโกดัง 90 ฿/ตัน = ต้นทุนส่วนเพิ่ม (น้ำมัน+สึกหรอ) เท่านั้น เพราะมีรถ 6 ล้อเป็นของตัวเอง (CapEx) + คนขับอยู่ใน OpEx แล้ว — ระยะเก็บ ~20–30 กม. · ถ้าจ้างรถนอกจะอยู่ที่ 400–600 ฿/ตัน ·
+                  Inbound 90 ฿/t = marginal cost only (fuel + wear) — the hub owns the truck (CapEx) and the driver is in OpEx; ~20–30 km radius. Outsourced haulage would be 400–600 ฿/t. ·{' '}
+                  <a href="https://www.sciencedirect.com/science/article/abs/pii/S0360544211000272" target="_blank" rel="noopener noreferrer" className="text-[#3f7fae] underline">🔗 ScienceDirect</a>
+                  {' · '}
+                  <a href="https://wemove.co.th/categories/knowledge-and-law/standard-freight/standard-freight-rates-trucking-thailand-2025-update" target="_blank" rel="noopener noreferrer" className="text-[#3f7fae] underline">🔗 WeMove 2568</a>
+                </div>
               </div>
             </div>
           </div>
@@ -550,7 +557,7 @@ export default function FeasibilityPage() {
                 calc: `${active.channels.map((c) => `(${c.mix}×${f(c.pricePerTonne)})`).join(' + ')} = ${active.channels.map((c) => (Math.round(c.mix * c.pricePerTonne * 10) / 10).toString()).join(' + ')} = ${f(sell)} ฿/ตัน (t)`,
               },
               { th: '② รายได้ (เต็มกำลัง) / Revenue', formula: 'ปริมาณ × ราคาขายเฉลี่ย · Volume × blended price', calc: `${f(T)} ตัน (t) × ${f(sell)} = ${f(wkRev)} ฿/ปี (yr)` },
-              { th: '③ ต้นทุนวัตถุดิบ / COGS', formula: 'ปริมาณ × ต้นทุนต่อตัน · Volume × cost per tonne', calc: `${f(T)} × ${f(cogs)} = ${f(wkCogs)} ฿/ปี (yr)` },
+              { th: '③ ต้นทุนวัตถุดิบ / COGS', formula: 'ปริมาณ × ต้นทุนต่อตัน · Volume × cost per tonne', calc: `${f(T)} × ${f(cogs)} = ${f(wkCogs)} ฿/ปี (yr)`, note: 'COGS ประกอบด้วย: ค่าซื้อฟาง (R1) + ค่าขนเข้าโกดัง 90 ฿/ตัน — ค่าขน 90 ฿/ตัน เป็นต้นทุนส่วนเพิ่ม (น้ำมัน+สึกหรอ) ของรถ 6 ล้อที่มีอยู่ใน CapEx + คนขับอยู่ใน OpEx แล้ว ระยะเก็บ ~20–30 กม. · ถ้าจ้างรถนอกจะ 400–600 ฿/ตัน (อ้างอิง: Sokhansanj et al., Energy 36 (2011) — logistics 18.75–19.89 USD/t; WeMove 2568 — รถ 6 ล้อ 3,000–10,000 ฿/เที่ยว) · COGS = straw purchase (R1) + inbound transport 90 ฿/t. The 90 ฿/t is marginal cost (fuel + wear) for the hub\'s own truck (in CapEx) + salaried driver (in OpEx), ~20–30 km radius. Outsourced haulage would be 400–600 ฿/t.' },
               { th: '④ กำไรขั้นต้น / Gross profit', formula: '(ราคาขาย − ต้นทุน) × ปริมาณ · (price − cost) × volume', calc: `(${f(sell)} − ${f(cogs)}) × ${f(T)} = ${f(gm)} × ${f(T)} = ${f(wkGP)} ฿/ปี (yr)` },
               { th: '⑤ EBITDA', formula: 'กำไรขั้นต้น − ค่าดำเนินการ · Gross profit − OpEx', calc: `${f(wkGP)} − ${f(opexY)} = ${f(wkEbitda)} ฿/ปี (yr)` },
               { th: '⑥ ค่าเสื่อมราคา / Depreciation', formula: 'อาคาร÷20 + อุปกรณ์÷7 (เส้นตรง) · Building÷20 + Equipment÷7 (straight-line)', calc: `${f(bld)}÷20 + ${f(eqp)}÷7 = ${f(bld / active.buildingLifeYrs)} + ${f(eqp / active.equipmentLifeYrs)} = ${f(wkDep)} ฿/ปี (yr)` },

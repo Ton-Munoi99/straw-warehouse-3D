@@ -73,7 +73,7 @@ export const DEFAULT_INPUTS: SimInputs = {
   ],
   cogsLines: [
     { key: 'buy', th: 'รับซื้อฟางอัดก้อนจากเกษตรกร', en: 'Buy baled straw from farmers', perTonne: 550 }, // ≈ 11 ฿/bale at 20 kg/bale
-    { key: 'inbound', th: 'ค่าขนเข้าโกดัง', en: 'Inbound transport to hub', perTonne: 90 },
+    { key: 'inbound', th: 'ค่าขนเข้าโกดัง (รถตัวเอง ~20–30 กม.)', en: 'Inbound transport to hub (own truck ~20–30 km)', perTonne: 90 },
   ],
   capexLines: [
     { key: 'warehouse', th: 'โรงเก็บฟาง 18×10 ม. สูง 9 ม. (ตาม BOQ)', en: 'Storage warehouse 18×10 m, 9 m tall (per BOQ)', amount: 1545237 },
@@ -350,6 +350,17 @@ export const REFERENCES: Reference[] = [
     en: 'Warehouse construction cost ฿1,545,237 (≈ ฿8,585/m²), 18×10 m × 9 m tall, 2025 basis',
     figure: 'CapEx โรงเก็บฟาง / Warehouse CapEx',
     links: [{ label: 'เปิดหน้า BOQ', href: '/boq' }],
+  },
+  {
+    id: 'R6',
+    org: 'ScienceDirect · WeMove',
+    th: 'ค่าโลจิสติกส์ฟางข้าว 18.75–19.89 USD/ตัน (ขนส่งคิดเป็น 54–63%) — Sokhansanj et al., Energy 36 (2011) · ค่ารถ 6 ล้อ 3,000–10,000 ฿/เที่ยว หรือ 30–50 ฿/กม. — WeMove 2568',
+    en: 'Rice straw logistics 18.75–19.89 USD/t (transport = 54–63%) — Sokhansanj et al., Energy 36 (2011) · 6-wheel truck 3,000–10,000 ฿/trip or 30–50 ฿/km — WeMove 2025',
+    figure: 'ค่าขนส่งฟางเข้าโกดัง / Inbound straw transport cost',
+    links: [
+      { label: 'ScienceDirect · Logistics cost analysis', href: 'https://www.sciencedirect.com/science/article/abs/pii/S0360544211000272' },
+      { label: 'WeMove · ค่าขนส่งรถบรรทุก 2568', href: 'https://wemove.co.th/categories/knowledge-and-law/standard-freight/standard-freight-rates-trucking-thailand-2025-update' },
+    ],
   },
 ]
 
