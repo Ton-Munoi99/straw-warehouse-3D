@@ -44,7 +44,7 @@ export default function FeasibilityPage() {
 
   const active = simMode ? inputs : DEFAULT_INPUTS
   const result = useMemo(() => runInputs(active), [active])
-  const refs = useMemo(() => runAll(), [])
+  const refs = useMemo(() => runAll(active), [active])
   const bpt = balesPerTonne(active.baleKg)
   const bptDisplay = bpt.toFixed(1)
   const staticCapacityT = (active.baleKg * 2000) / 1000
@@ -424,14 +424,14 @@ export default function FeasibilityPage() {
             </div>
           </div>
 
-          {/* scenarios (fixed market reference) */}
+          {/* scenarios — Conservative/Upside keep fixed sales assumptions; Base tracks Simulation */}
           <div className="mx-4 sm:mx-9 mt-7">
-            <SectionTitle kicker="การวิเคราะห์ฉากทัศน์ (อ้างอิงคงที่) / Reference Scenarios">เปรียบเทียบ 3 กรณี / Conservative · Base · Upside</SectionTitle>
+            <SectionTitle kicker={simMode ? 'การวิเคราะห์ฉากทัศน์ (Base = ค่าที่คุณกรอก) / Reference Scenarios (Base = your inputs)' : 'การวิเคราะห์ฉากทัศน์ (อ้างอิงคงที่) / Reference Scenarios'}>เปรียบเทียบ 3 กรณี / Conservative · Base · Upside</SectionTitle>
             <div className="-mx-1 overflow-x-auto px-1"><table className="w-full min-w-[560px] border-collapse text-[12.5px]">
               <thead>
                 <tr className="bg-[#26342c] text-white">
                   <th className="p-[9px_10px] text-left font-bold">ตัวชี้วัด / Metric</th>
-                  {refs.map((r) => (<th key={r.scenario.key} className="num p-[9px_10px] font-bold">{r.scenario.th} / {r.scenario.en}</th>))}
+                  {refs.map((r) => (<th key={r.scenario.key} className={`num p-[9px_10px] font-bold ${r.scenario.key === 'base' && simMode ? 'bg-straw' : ''}`}>{r.scenario.th} / {r.scenario.en}</th>))}
                 </tr>
               </thead>
               <tbody>
@@ -444,7 +444,11 @@ export default function FeasibilityPage() {
                 <ScenRow label="NPV @ 8%" unit="฿" highlight vals={refs.map((r) => fM(r.result.npv))} />
               </tbody>
             </table></div>
-            <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">* กรณีฐานใช้ 20 กก./ก้อน ซึ่งเหมาะกับฟางอัดก้อนสี่เหลี่ยมเล็กทั่วไป แต่ผลตอบแทนยังอ่อนไหวต่อ <b>น้ำหนักก้อนจริง</b>, <b>ปริมาณหมุนเวียน</b>, และ <b>กำไรต่อตัน</b> มาก · base case uses 20 kg/bale for common small bales, but returns remain sensitive to actual bale weight, throughput, and margin.</div>
+            <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">
+              * Conservative และ Upside คงสมมติฐานปริมาณ/ราคา/COGS/OpEx ของตัวเองไว้เสมอ แต่ทั้ง 3 คอลัมน์ใช้ CapEx, ภาษี, discount rate ปัจจุบันร่วมกัน (เป็นสมมติฐานระดับเงินลงทุน ไม่ใช่ระดับฉากทัศน์การขาย) — คอลัมน์ <b>Base</b> จะเปลี่ยนตามค่าที่กรอกใน Simulation ทันที ส่วนอีก 2 คอลัมน์คงสมมติฐานการขายของตัวเองไว้เพื่อเทียบ ·
+              Conservative &amp; Upside always keep their own throughput/price/COGS/OpEx, but all 3 columns share the current CapEx, tax &amp; discount rate (investment-level, not sales-scenario assumptions) — the <b>Base</b> column updates live with your Simulation inputs; the other two stay fixed for comparison.
+            </div>
+            <div className="mt-1.5 text-[11px] leading-[1.5] text-[#9aa499]">* กรณีฐานใช้ 20 กก./ก้อน ซึ่งเหมาะกับฟางอัดก้อนสี่เหลี่ยมเล็กทั่วไป แต่ผลตอบแทนยังอ่อนไหวต่อ <b>น้ำหนักก้อนจริง</b>, <b>ปริมาณหมุนเวียน</b>, และ <b>กำไรต่อตัน</b> มาก · base case uses 20 kg/bale for common small bales, but returns remain sensitive to actual bale weight, throughput, and margin.</div>
           </div>
 
           {/* cash-flow projection */}

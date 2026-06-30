@@ -256,7 +256,10 @@ export const coreFromInputs = (i: SimInputs): ScnCore => ({
 })
 export const runInputs = (i: SimInputs) => runScenario(coreFromInputs(i), i)
 
-// ---- fixed market-reference scenarios (always computed on DEFAULT_INPUTS) ---
+// ---- scenarios: Conservative/Upside keep fixed sales assumptions; Base tracks
+// the active inputs (default, or your Simulation values once edited). All three
+// always run with the active CapEx/tax/discount/ramp/years — those are
+// investment-level assumptions, not sales-scenario assumptions. ---------------
 export interface Scenario extends ScnCore {
   key: 'conservative' | 'base' | 'upside'
   th: string
@@ -267,7 +270,11 @@ export const SCENARIOS: Scenario[] = [
   { key: 'base', th: 'ฐาน', en: 'Base', throughputT: 2000, sellPerT: blendedSell(DEFAULT_INPUTS), cogsPerT: cogsPerTonne(DEFAULT_INPUTS), opex: opexPerYear(DEFAULT_INPUTS) },
   { key: 'upside', th: 'เชิงบวก', en: 'Upside', throughputT: 2800, sellPerT: 1500, cogsPerT: 620, opex: 920000 },
 ]
-export const runAll = () => SCENARIOS.map((s) => ({ scenario: s, result: runScenario(s, DEFAULT_INPUTS) }))
+export const runAll = (i: SimInputs = DEFAULT_INPUTS) =>
+  SCENARIOS.map((s) => {
+    const core: ScnCore = s.key === 'base' ? coreFromInputs(i) : s
+    return { scenario: { ...s, ...core }, result: runScenario(core, i) }
+  })
 
 // ---- market price reference (the figures behind the assumptions) -----------
 export interface PriceRef {
