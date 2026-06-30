@@ -243,7 +243,7 @@ export default function FeasibilityPage() {
                         <NumField fit numW="w-[32px]" label="สัดส่วน / Mix" suffix="%" value={c.mix * 100} step={5} small onChange={(v) => patch((n) => (n.channels[i].mix = v / 100))} />
                         <NumField fit numW="w-[40px]" label="ราคา / Price" suffix="฿/ก้อน" value={c.pricePerTonne / bpt} step={1} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v * bpt))} />
                       </div>
-                      <div className="mt-1 text-[10px] text-[#9aa499]">≈ {f(c.pricePerTonne)} ฿/ต (t) · per bale</div>
+                      <div className="mt-1 text-[10px] text-[#9aa499]">เทียบเท่า / equiv. ≈ {f(c.pricePerTonne)} ฿/ตัน (per tonne)</div>
                     </div>
                   ))}
                 </CtrlGroup>
