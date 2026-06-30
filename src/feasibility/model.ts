@@ -289,9 +289,10 @@ export interface PriceRef {
 export const MARKET_PRICES: PriceRef[] = [
   { th: 'รับซื้อฟางอัดก้อนจากเกษตรกร', en: 'Buy baled straw from farmer', low: 5, high: 12, used: 11, unit: '฿/ก้อน (bale)', ref: 'R1' },
   { th: 'ค่าจ้างอัดฟาง (บริการ)', en: 'Baling service charge', low: 13, high: 15, used: 14, unit: '฿/ก้อน (bale)', ref: 'R1' },
-  { th: 'ขายหน้าโกดัง (ปกติ)', en: 'Warehouse-gate sale (normal)', low: 25, high: 25, used: 25, unit: '฿/ก้อน (bale)', ref: 'R1' },
-  { th: 'ขายหน้าฝน / ขาดแคลน', en: 'Rainy / scarce season', low: 30, high: 35, used: 33, unit: '฿/ก้อน (bale)', ref: 'R1' },
-  { th: 'โรงไฟฟ้าชีวมวล (เทียบเท่า)', en: 'Biomass plant (bale-equiv.)', low: 18, high: 24, used: 21, unit: '฿/ก้อน (bale)', ref: 'R3' },
+  { th: 'ขายหน้าโกดัง (ปกติ · สปอต)', en: 'Warehouse-gate sale (normal · spot)', low: 25, high: 25, used: 25, unit: '฿/ก้อน (bale)', ref: 'R1' },
+  { th: 'ช่องทางขาย① โรงไฟฟ้าชีวมวล', en: 'Sell channel① Biomass power plant', low: 18, high: 24, used: 21, unit: '฿/ก้อน (bale)', ref: 'R3' },
+  { th: 'ช่องทางขาย② อาหารสัตว์ (โค-กระบือ · พรีเมียมหน้าแล้ง)', en: 'Sell channel② Cattle/livestock feed (dry-season premium)', low: 30, high: 35, used: 35, unit: '฿/ก้อน (bale)', ref: 'R1' },
+  { th: 'ช่องทางขาย③ เพาะเห็ด / อื่นๆ (ความต้องการท้องถิ่น)', en: 'Sell channel③ Mushroom growing / other (local demand)', low: 30, high: 35, used: 33, unit: '฿/ก้อน (bale)', ref: 'R4' },
   { th: 'มูลค่าฟางดิบ', en: 'Raw straw value', low: 0.75, high: 1.15, used: 1.0, unit: '฿/กก. (kg)', ref: 'R2' },
   { th: 'ผลผลิตฟางต่อไร่', en: 'Bales per rai', low: 40, high: 60, used: 50, unit: 'ก้อน/ไร่ (bales/rai)', ref: 'R4' },
 ]
