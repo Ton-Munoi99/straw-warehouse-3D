@@ -237,11 +237,13 @@ export default function FeasibilityPage() {
                   {inputs.channels.map((c, i) => (
                     <div key={c.key} className="rounded-[8px] bg-white p-2">
                       <div className="mb-1 text-[11px] font-bold text-ink">{c.th}</div>
-                      <div className="flex gap-2">
+                      <div className="flex items-start gap-2">
                         <NumField label="สัดส่วน / Mix" suffix="%" value={c.mix * 100} step={5} small onChange={(v) => patch((n) => (n.channels[i].mix = v / 100))} />
-                        <NumField label="ราคา / Price" suffix="฿/ก้อน (bale)" value={c.pricePerTonne / bpt} step={1} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v * bpt))} />
+                        <div className="flex-1">
+                          <NumField label="ราคา / Price" suffix="฿/ก้อน (bale)" value={c.pricePerTonne / bpt} step={1} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v * bpt))} />
+                          <div className="mt-0.5 pl-1 text-[10px] text-[#9aa499]">≈ {f(c.pricePerTonne)} ฿/ต (t)</div>
+                        </div>
                       </div>
-                      <div className="mt-1 text-right text-[10px] text-[#9aa499]">≈ {f(c.pricePerTonne)} ฿/ต (t)</div>
                     </div>
                   ))}
                 </CtrlGroup>
@@ -718,7 +720,7 @@ function NumField({ label, suffix, value, onChange, step = 1, small }: { label: 
             const n = parseFloat(e.target.value)
             onChange(Number.isFinite(n) ? n : 0)
           }}
-          className={`num w-full min-w-0 border-none bg-transparent font-bold text-ink outline-none ${small ? 'text-[12px]' : 'text-[13px]'}`}
+          className={`w-full min-w-0 border-none bg-transparent text-left font-bold text-ink outline-none [font-variant-numeric:tabular-nums] ${small ? 'text-[12px]' : 'text-[13px]'}`}
         />
         {suffix && <span className="flex-none text-[9.5px] text-[#9aa499]">{suffix}</span>}
       </span>
