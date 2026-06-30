@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Box, Calculator, Home, Printer, TrendingUp } from 'lucide-react'
+import { Box, Calculator, Download, Home, Printer, TrendingUp } from 'lucide-react'
+import { downloadCSV, type CsvCell } from '../lib/csv'
 import {
   BENCH_MAX,
   BENCH_MIN,
@@ -79,6 +80,27 @@ export default function BOQPage() {
   const c = useComputed()
   const [showMethod, setShowMethod] = useState(false)
 
+  const exportCSV = () => {
+    const rows: CsvCell[][] = []
+    rows.push(['Bill of Quantities / บัญชีแสดงปริมาณงานและราคา', 'BOQ-SW-01'])
+    META.forEach((m) => rows.push([m.label, m.value]))
+    rows.push([])
+    rows.push(['No.', 'รายการ (TH)', 'Description (EN)', 'หน่วย / Unit', 'จำนวน / Qty', 'ราคา/หน่วย / Rate', 'รวมเงิน / Amount (THB)', 'อ้างอิง / Ref'])
+    c.divs.forEach((d) => {
+      rows.push([d.code, d.title])
+      d.items.forEach((it) => rows.push([it.no, it.th, it.en, it.unit, it.qty, it.rate, Math.round(it.amount), it.ref]))
+      rows.push(['', `รวมหมวด ${d.code} / Subtotal`, '', '', '', '', Math.round(d.subtotal)])
+    })
+    rows.push([])
+    rows.push(['', 'รวมค่างานก่อสร้าง / Direct cost', '', '', '', '', Math.round(c.direct)])
+    rows.push(['', `ค่าดำเนินการ & กำไร / OH & Profit (${(OH_RATE * 100).toFixed(0)}%)`, '', '', '', '', Math.round(c.oh)])
+    rows.push(['', `เผื่อเหลือเผื่อขาด / Contingency (${(CONT_RATE * 100).toFixed(0)}%)`, '', '', '', '', Math.round(c.cont)])
+    rows.push(['', `ภาษีมูลค่าเพิ่ม / VAT (${(VAT_RATE * 100).toFixed(0)}%)`, '', '', '', '', Math.round(c.vat)])
+    rows.push(['', 'รวมทั้งสิ้น / Grand Total', '', '', '', '', Math.round(c.total)])
+    rows.push(['', 'ต้นทุนต่อ ตร.ม. / Cost per m²', '', '', '', '', Math.round(c.perSqm)])
+    downloadCSV('BOQ-SW-01.csv', rows)
+  }
+
   return (
     <>
       {/* print/pdf styles */}
@@ -115,6 +137,13 @@ export default function BOQPage() {
           >
             <Calculator size={16} strokeWidth={1.9} />
             วิธีคำนวณ / Method
+          </button>
+          <button
+            onClick={exportCSV}
+            className="flex items-center gap-2 rounded-[11px] border border-[#2f6b3f] bg-white px-[16px] py-[11px] text-[13px] font-bold text-forest shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90"
+          >
+            <Download size={16} strokeWidth={1.9} />
+            Excel / CSV
           </button>
           <button
             onClick={() => window.print()}
