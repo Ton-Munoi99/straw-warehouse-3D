@@ -14,7 +14,7 @@ import {
   Warehouse,
   X,
 } from 'lucide-react'
-import { downloadCSV, type CsvCell } from '../lib/csv'
+import { downloadCSV, downloadXLSX, type CsvCell } from '../lib/csv'
 import {
   DEFAULT_INPUTS,
   LOCATIONS,
@@ -98,57 +98,74 @@ export default function FeasibilityPage() {
       return n
     })
 
-  const exportCSV = () => {
+  const buildExport = () => {
     const R = Math.round
-    const rows: CsvCell[][] = []
-    rows.push(['Rice Straw Aggregation Hub — Feasibility / ROI'])
-    rows.push(['Mode / โหมด', simMode ? 'Simulation (your inputs) / ค่าที่กรอกเอง' : 'Base case / กรณีฐาน'])
-    rows.push([])
-    rows.push(['Key Metrics / ตัวชี้วัด'])
-    rows.push(['Payback / ระยะคืนทุน (years)', result.paybackYears ? result.paybackYears.toFixed(1) : '>10'])
-    rows.push(['IRR (%)', ((result.irr ?? 0) * 100).toFixed(1)])
-    rows.push([`NPV @ ${discPct}% (THB)`, R(result.npv)])
-    rows.push(['EBITDA steady (THB/yr)', R(result.steadyEbitda)])
-    rows.push(['EBITDA margin (%)', result.ebitdaMarginPct.toFixed(1)])
-    rows.push(['ROI (%/yr)', result.simpleRoiPct.toFixed(1)])
-    rows.push([])
-    rows.push(['Assumptions / สมมติฐาน'])
-    rows.push(['Throughput / ปริมาณ (t/yr)', active.throughputT])
-    rows.push(['Bale weight / น้ำหนักก้อน (kg)', active.baleKg])
-    rows.push(['Discount rate / คิดลด (%)', (active.discountRate * 100).toFixed(1)])
-    rows.push(['Tax rate / ภาษี (%)', (active.taxRate * 100).toFixed(0)])
-    rows.push(['Working capital / ทุนหมุนเวียน (THB)', active.workingCapital])
-    rows.push([])
-    rows.push(['Sell Channels / ช่องทางขาย', 'Mix (%)', 'Price (THB/bale)', 'Price (THB/tonne)', 'Ref'])
-    active.channels.forEach((c) => rows.push([`${c.th} / ${c.en}`, R(c.mix * 100), R(c.pricePerTonne / bpt), c.pricePerTonne, c.ref]))
-    rows.push(['Blended sell / ราคาขายเฉลี่ย', R(mixSum * 100), perBale(sell), R(sell)])
-    rows.push([])
-    rows.push(['COGS / ต้นทุนวัตถุดิบ', 'THB/tonne'])
-    active.cogsLines.forEach((l) => rows.push([`${l.th} / ${l.en}`, l.perTonne]))
-    rows.push(['Total COGS / รวม', cogs])
-    rows.push(['Gross margin / กำไรขั้นต้น', gm])
-    rows.push([])
-    rows.push(['CapEx / เงินลงทุน', 'THB'])
-    active.capexLines.forEach((l) => rows.push([`${l.th} / ${l.en}`, l.amount]))
-    rows.push(['Working capital / ทุนหมุนเวียน', active.workingCapital])
-    rows.push(['Total outlay / รวมเงินลงทุน', totalCapex(active) + active.workingCapital])
-    rows.push([])
-    rows.push(['OpEx / ค่าดำเนินการ', 'THB/yr'])
-    active.opexLines.forEach((l) => rows.push([`${l.th} / ${l.en}`, l.perYear]))
-    rows.push(['Total OpEx / รวม', opexPerYear(active)])
-    rows.push([])
-    rows.push(['Cash Flow / กระแสเงินสด', 'Year', 'Throughput (t)', 'Revenue', 'EBITDA', 'Net cash flow', 'Cumulative'])
-    rows.push(['', 0, '', '', '', -R(result.initialOutlay), -R(result.initialOutlay)])
-    result.rows.forEach((r) => rows.push(['', r.year, R(r.throughput), R(r.revenue), R(r.ebitda), R(r.netCashFlow), R(r.cumulative)]))
-    rows.push([])
-    rows.push(['Scenarios / ฉากทัศน์', ...refs.map((r) => `${r.scenario.th} / ${r.scenario.en}`)])
-    rows.push(['Throughput (t/yr)', ...refs.map((r) => r.scenario.throughputT)])
-    rows.push(['Gross margin (THB/t)', ...refs.map((r) => R(r.result.grossMarginPerT))])
-    rows.push(['EBITDA (THB/yr)', ...refs.map((r) => R(r.result.steadyEbitda))])
-    rows.push(['Payback (yrs)', ...refs.map((r) => (r.result.paybackYears ? r.result.paybackYears.toFixed(1) : '>10'))])
-    rows.push(['IRR (%)', ...refs.map((r) => ((r.result.irr ?? 0) * 100).toFixed(1))])
-    rows.push(['NPV (THB)', ...refs.map((r) => R(r.result.npv))])
-    downloadCSV(simMode ? 'Feasibility-ROI-simulation.csv' : 'Feasibility-ROI-base.csv', rows)
+    const summary: CsvCell[][] = []
+    summary.push(['Rice Straw Aggregation Hub — Feasibility / ROI'])
+    summary.push(['Mode / โหมด', simMode ? 'Simulation (your inputs) / ค่าที่กรอกเอง' : 'Base case / กรณีฐาน'])
+    summary.push([])
+    summary.push(['Key Metrics / ตัวชี้วัด'])
+    summary.push(['Payback / ระยะคืนทุน (years)', result.paybackYears ? result.paybackYears.toFixed(1) : '>10'])
+    summary.push(['IRR (%)', ((result.irr ?? 0) * 100).toFixed(1)])
+    summary.push([`NPV @ ${discPct}% (THB)`, R(result.npv)])
+    summary.push(['EBITDA steady (THB/yr)', R(result.steadyEbitda)])
+    summary.push(['EBITDA margin (%)', result.ebitdaMarginPct.toFixed(1)])
+    summary.push(['ROI (%/yr)', result.simpleRoiPct.toFixed(1)])
+    summary.push([])
+    summary.push(['Assumptions / สมมติฐาน'])
+    summary.push(['Throughput / ปริมาณ (t/yr)', active.throughputT])
+    summary.push(['Bale weight / น้ำหนักก้อน (kg)', active.baleKg])
+    summary.push(['Discount rate / คิดลด (%)', (active.discountRate * 100).toFixed(1)])
+    summary.push(['Tax rate / ภาษี (%)', (active.taxRate * 100).toFixed(0)])
+    summary.push(['Working capital / ทุนหมุนเวียน (THB)', active.workingCapital])
+    summary.push([])
+    summary.push(['Sell Channels / ช่องทางขาย', 'Mix (%)', 'Price (THB/bale)', 'Price (THB/tonne)', 'Ref'])
+    active.channels.forEach((c) => summary.push([`${c.th} / ${c.en}`, R(c.mix * 100), R(c.pricePerTonne / bpt), c.pricePerTonne, c.ref]))
+    summary.push(['Blended sell / ราคาขายเฉลี่ย', R(mixSum * 100), perBale(sell), R(sell)])
+    summary.push([])
+    summary.push(['COGS / ต้นทุนวัตถุดิบ', 'THB/tonne'])
+    active.cogsLines.forEach((l) => summary.push([`${l.th} / ${l.en}`, l.perTonne]))
+    summary.push(['Total COGS / รวม', cogs])
+    summary.push(['Gross margin / กำไรขั้นต้น', gm])
+    summary.push([])
+    summary.push(['CapEx / เงินลงทุน', 'THB'])
+    active.capexLines.forEach((l) => summary.push([`${l.th} / ${l.en}`, l.amount]))
+    summary.push(['Working capital / ทุนหมุนเวียน', active.workingCapital])
+    summary.push(['Total outlay / รวมเงินลงทุน', totalCapex(active) + active.workingCapital])
+    summary.push([])
+    summary.push(['OpEx / ค่าดำเนินการ', 'THB/yr'])
+    active.opexLines.forEach((l) => summary.push([`${l.th} / ${l.en}`, l.perYear]))
+    summary.push(['Total OpEx / รวม', opexPerYear(active)])
+
+    const cashflow: CsvCell[][] = []
+    cashflow.push(['Year / ปี', 'Throughput (t)', 'Revenue', 'EBITDA', 'Net cash flow', 'Cumulative'])
+    cashflow.push([0, '', '', '', -R(result.initialOutlay), -R(result.initialOutlay)])
+    result.rows.forEach((r) => cashflow.push([r.year, R(r.throughput), R(r.revenue), R(r.ebitda), R(r.netCashFlow), R(r.cumulative)]))
+
+    const scenarios: CsvCell[][] = []
+    scenarios.push(['Metric / ตัวชี้วัด', ...refs.map((r) => `${r.scenario.th} / ${r.scenario.en}`)])
+    scenarios.push(['Throughput (t/yr)', ...refs.map((r) => r.scenario.throughputT)])
+    scenarios.push(['Gross margin (THB/t)', ...refs.map((r) => R(r.result.grossMarginPerT))])
+    scenarios.push(['EBITDA (THB/yr)', ...refs.map((r) => R(r.result.steadyEbitda))])
+    scenarios.push(['Payback (yrs)', ...refs.map((r) => (r.result.paybackYears ? r.result.paybackYears.toFixed(1) : '>10'))])
+    scenarios.push(['IRR (%)', ...refs.map((r) => ((r.result.irr ?? 0) * 100).toFixed(1))])
+    scenarios.push(['NPV (THB)', ...refs.map((r) => R(r.result.npv))])
+
+    return { summary, cashflow, scenarios }
+  }
+  const exportCSV = () => {
+    const { summary, cashflow, scenarios } = buildExport()
+    downloadCSV(simMode ? 'Feasibility-ROI-simulation.csv' : 'Feasibility-ROI-base.csv', [
+      ...summary, [], ['Cash Flow / กระแสเงินสด'], ...cashflow, [], ['Scenarios / ฉากทัศน์'], ...scenarios,
+    ])
+  }
+  const exportXLSX = () => {
+    const { summary, cashflow, scenarios } = buildExport()
+    downloadXLSX(simMode ? 'Feasibility-ROI-simulation.xlsx' : 'Feasibility-ROI-base.xlsx', [
+      { name: 'Summary', rows: summary },
+      { name: 'Cash Flow', rows: cashflow },
+      { name: 'Scenarios', rows: scenarios },
+    ])
   }
 
   return (
@@ -186,8 +203,11 @@ export default function FeasibilityPage() {
               <SlidersHorizontal size={16} strokeWidth={1.9} /> Simulation
             </button>
           )}
-          <button onClick={exportCSV} className="flex items-center gap-2 rounded-[11px] border border-[#2f6b3f] bg-white px-4 py-[11px] text-[13px] font-bold text-forest shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
-            <Download size={16} strokeWidth={1.9} /> Excel / CSV
+          <button onClick={exportXLSX} className="flex items-center gap-2 rounded-[11px] border border-[#2f6b3f] bg-white px-4 py-[11px] text-[13px] font-bold text-forest shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
+            <FileSpreadsheet size={16} strokeWidth={1.9} /> Excel
+          </button>
+          <button onClick={exportCSV} className="flex items-center gap-2 rounded-[11px] border border-[#9aa499] bg-white px-4 py-[11px] text-[13px] font-bold text-[#54625a] shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
+            <Download size={16} strokeWidth={1.9} /> CSV
           </button>
           <button onClick={() => window.print()} className="flex items-center gap-2 rounded-[11px] border-none bg-forest px-[18px] py-[11px] text-[13px] font-bold text-white shadow-[0_6px_18px_rgba(20,40,25,0.22)]">
             <Printer size={16} strokeWidth={1.9} /> Print

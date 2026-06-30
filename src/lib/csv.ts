@@ -23,3 +23,24 @@ export function downloadCSV(filename: string, rows: CsvCell[][]) {
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
 }
+
+// Real .xlsx via SheetJS, loaded on demand (dynamic import) so the ~xlsx
+// bundle never weighs down the initial page load. Each entry in `sheets`
+// becomes a worksheet; column widths auto-fit to content.
+export async function downloadXLSX(filename: string, sheets: { name: string; rows: CsvCell[][] }[]) {
+  const XLSX = await import('xlsx')
+  const wb = XLSX.utils.book_new()
+  for (const s of sheets) {
+    const ws = XLSX.utils.aoa_to_sheet(s.rows as unknown[][])
+    const widths: { wch: number }[] = []
+    for (const row of s.rows) {
+      row.forEach((cell, i) => {
+        const len = cell == null ? 0 : String(cell).length
+        widths[i] = { wch: Math.min(Math.max(widths[i]?.wch ?? 8, len + 2), 60) }
+      })
+    }
+    ws['!cols'] = widths
+    XLSX.utils.book_append_sheet(wb, ws, s.name.slice(0, 31))
+  }
+  XLSX.writeFile(wb, filename)
+}

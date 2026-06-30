@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Box, Calculator, Download, Home, Printer, TrendingUp } from 'lucide-react'
-import { downloadCSV, type CsvCell } from '../lib/csv'
+import { Box, Calculator, Download, FileSpreadsheet as SheetIcon, Home, Printer, TrendingUp } from 'lucide-react'
+import { downloadCSV, downloadXLSX, type CsvCell } from '../lib/csv'
 import {
   BENCH_MAX,
   BENCH_MIN,
@@ -80,7 +80,7 @@ export default function BOQPage() {
   const c = useComputed()
   const [showMethod, setShowMethod] = useState(false)
 
-  const exportCSV = () => {
+  const buildRows = (): CsvCell[][] => {
     const rows: CsvCell[][] = []
     rows.push(['Bill of Quantities / บัญชีแสดงปริมาณงานและราคา', 'BOQ-SW-01'])
     META.forEach((m) => rows.push([m.label, m.value]))
@@ -98,8 +98,10 @@ export default function BOQPage() {
     rows.push(['', `ภาษีมูลค่าเพิ่ม / VAT (${(VAT_RATE * 100).toFixed(0)}%)`, '', '', '', '', Math.round(c.vat)])
     rows.push(['', 'รวมทั้งสิ้น / Grand Total', '', '', '', '', Math.round(c.total)])
     rows.push(['', 'ต้นทุนต่อ ตร.ม. / Cost per m²', '', '', '', '', Math.round(c.perSqm)])
-    downloadCSV('BOQ-SW-01.csv', rows)
+    return rows
   }
+  const exportCSV = () => downloadCSV('BOQ-SW-01.csv', buildRows())
+  const exportXLSX = () => downloadXLSX('BOQ-SW-01.xlsx', [{ name: 'BOQ', rows: buildRows() }])
 
   return (
     <>
@@ -139,11 +141,18 @@ export default function BOQPage() {
             วิธีคำนวณ / Method
           </button>
           <button
-            onClick={exportCSV}
+            onClick={exportXLSX}
             className="flex items-center gap-2 rounded-[11px] border border-[#2f6b3f] bg-white px-[16px] py-[11px] text-[13px] font-bold text-forest shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90"
           >
+            <SheetIcon size={16} strokeWidth={1.9} />
+            Excel
+          </button>
+          <button
+            onClick={exportCSV}
+            className="flex items-center gap-2 rounded-[11px] border border-[#9aa499] bg-white px-[16px] py-[11px] text-[13px] font-bold text-[#54625a] shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90"
+          >
             <Download size={16} strokeWidth={1.9} />
-            Excel / CSV
+            CSV
           </button>
           <button
             onClick={() => window.print()}
