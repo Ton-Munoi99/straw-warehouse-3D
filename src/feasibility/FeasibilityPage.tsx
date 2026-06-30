@@ -100,6 +100,8 @@ export default function FeasibilityPage() {
     <>
       <style>{`
         .num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+        .simnum::-webkit-outer-spin-button, .simnum::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .simnum { -moz-appearance: textfield; appearance: textfield; }
         @media print {
           body { background: #fff !important; }
           .no-print { display: none !important; }
@@ -237,15 +239,11 @@ export default function FeasibilityPage() {
                   {inputs.channels.map((c, i) => (
                     <div key={c.key} className="rounded-[8px] bg-white p-2">
                       <div className="mb-1 text-[11px] font-bold text-ink">{c.th}</div>
-                      <div className="flex items-start gap-2">
-                        <div className="w-[58px] flex-none">
-                          <NumField label="สัดส่วน / Mix" suffix="%" value={c.mix * 100} step={5} small onChange={(v) => patch((n) => (n.channels[i].mix = v / 100))} />
-                        </div>
-                        <div className="flex-1">
-                          <NumField label="ราคา / Price" suffix="฿/ก้อน" value={c.pricePerTonne / bpt} step={1} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v * bpt))} />
-                          <div className="mt-0.5 pl-1 text-[10px] text-[#9aa499]">≈ {f(c.pricePerTonne)} ฿/ต (t) · per bale</div>
-                        </div>
+                      <div className="flex items-start gap-3">
+                        <NumField fit numW="w-[32px]" label="สัดส่วน / Mix" suffix="%" value={c.mix * 100} step={5} small onChange={(v) => patch((n) => (n.channels[i].mix = v / 100))} />
+                        <NumField fit numW="w-[40px]" label="ราคา / Price" suffix="฿/ก้อน" value={c.pricePerTonne / bpt} step={1} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v * bpt))} />
                       </div>
+                      <div className="mt-1 text-[10px] text-[#9aa499]">≈ {f(c.pricePerTonne)} ฿/ต (t) · per bale</div>
                     </div>
                   ))}
                 </CtrlGroup>
@@ -697,7 +695,7 @@ function CtrlGroup({ title, children }: { title: string; children: React.ReactNo
   )
 }
 
-function NumField({ label, suffix, value, onChange, step = 1, small }: { label: string; suffix?: string; value: number; onChange: (v: number) => void; step?: number; small?: boolean }) {
+function NumField({ label, suffix, value, onChange, step = 1, small, fit, numW }: { label: string; suffix?: string; value: number; onChange: (v: number) => void; step?: number; small?: boolean; fit?: boolean; numW?: string }) {
   const fmt = (v: number) => (Number.isFinite(v) ? String(Math.round(v * 100) / 100) : '')
   const [text, setText] = useState(() => fmt(value))
   const [focused, setFocused] = useState(false)
@@ -707,9 +705,9 @@ function NumField({ label, suffix, value, onChange, step = 1, small }: { label: 
     if (!focused) setText(fmt(value))
   }, [value, focused])
   return (
-    <label className="block flex-1">
-      <span className="block text-[10.5px] font-semibold leading-tight text-[#54625a]">{label}</span>
-      <span className="mt-0.5 flex items-center gap-1 rounded-[7px] border border-[#e1ddd0] bg-white px-2 py-1 focus-within:border-straw">
+    <label className={fit ? 'inline-block' : 'block flex-1'}>
+      <span className={`block text-[10.5px] font-semibold leading-tight text-[#54625a] ${fit ? 'whitespace-nowrap' : ''}`}>{label}</span>
+      <span className={`mt-0.5 flex items-center gap-1 rounded-[7px] border border-[#e1ddd0] bg-white px-2 py-1 focus-within:border-straw ${fit ? 'w-fit' : ''}`}>
         <input
           type="number"
           inputMode="decimal"
@@ -722,7 +720,7 @@ function NumField({ label, suffix, value, onChange, step = 1, small }: { label: 
             const n = parseFloat(e.target.value)
             onChange(Number.isFinite(n) ? n : 0)
           }}
-          className={`w-full min-w-0 border-none bg-transparent text-left font-bold text-ink outline-none [font-variant-numeric:tabular-nums] ${small ? 'text-[12px]' : 'text-[13px]'}`}
+          className={`simnum border-none bg-transparent text-left font-bold text-ink outline-none [font-variant-numeric:tabular-nums] ${numW ?? 'w-full min-w-0'} ${small ? 'text-[12px]' : 'text-[13px]'}`}
         />
         {suffix && <span className="flex-none whitespace-nowrap text-[9px] text-[#9aa499]">{suffix}</span>}
       </span>
