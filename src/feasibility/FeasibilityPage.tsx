@@ -239,9 +239,9 @@ export default function FeasibilityPage() {
                       <div className="mb-1 text-[11px] font-bold text-ink">{c.th}</div>
                       <div className="flex gap-2">
                         <NumField label="สัดส่วน / Mix" suffix="%" value={c.mix * 100} step={5} small onChange={(v) => patch((n) => (n.channels[i].mix = v / 100))} />
-                        <NumField label="ราคา / Price" suffix="฿/ต (t)" value={c.pricePerTonne} step={50} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v))} />
+                        <NumField label="ราคา / Price" suffix="฿/ก้อน (bale)" value={c.pricePerTonne / bpt} step={1} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v * bpt))} />
                       </div>
-                      <div className="mt-1 text-right text-[10px] text-[#9aa499]">≈ {perBale(c.pricePerTonne)} ฿/ก้อน (bale)</div>
+                      <div className="mt-1 text-right text-[10px] text-[#9aa499]">≈ {f(c.pricePerTonne)} ฿/ต (t)</div>
                     </div>
                   ))}
                 </CtrlGroup>
