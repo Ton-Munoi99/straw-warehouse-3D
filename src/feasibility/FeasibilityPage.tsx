@@ -30,6 +30,7 @@ import {
   opexPerYear,
   runAll,
   runInputs,
+  runScenario,
   totalCapex,
 } from './model'
 
@@ -499,7 +500,8 @@ export default function FeasibilityPage() {
           {/* sensitivity */}
           <div className="mx-4 sm:mx-9 mt-7">
             <SectionTitle kicker="การวิเคราะห์ความอ่อนไหว / Sensitivity">ระยะคืนทุน (ปี): ปริมาณ × กำไรต่อตัน / Payback (yrs): Volume × Margin</SectionTitle>
-            <SensitivityGrid opex={opexPerYear(active)} outlay={totalCapex(active) + active.workingCapital} />
+            <SensitivityGrid inputs={active} cogs={cogs} />
+            <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">* คำนวณด้วยโมเดลเต็ม (รวมการเดินเครื่องช่วงต้น ปี 1–2, ค่าเสื่อม และภาษี) จึงตรงกับระยะคืนทุนด้านบน — ช่องที่ใกล้สมมติฐานปัจจุบัน ({f(active.throughputT)} ตัน · {f(gm)} ฿/ต) มีกรอบเน้น · Computed with the full model (ramp-up, depreciation &amp; tax) so it matches the headline payback; the cell nearest your current assumptions is outlined.</div>
           </div>
 
           {/* references */}
@@ -741,13 +743,19 @@ function ScenRow({ label, unit, vals, highlight }: { label: string; unit: string
   )
 }
 
-function SensitivityGrid({ opex, outlay }: { opex: number; outlay: number }) {
+function SensitivityGrid({ inputs, cogs }: { inputs: SimInputs; cogs: number }) {
   const throughputs = [1200, 1600, 2000, 2400, 2800]
   const margins = [600, 700, 800, 900]
+  // nearest grid cell to the current assumptions (for the highlight outline)
+  const nearest = (arr: number[], v: number) =>
+    arr.reduce((best, x) => (Math.abs(x - v) < Math.abs(best - v) ? x : best), arr[0])
+  const curT = nearest(throughputs, inputs.throughputT)
+  const curM = nearest(margins, blendedSell(inputs) - cogs)
   const cell = (t: number, m: number) => {
-    const ebitda = m * t - opex
-    if (ebitda <= 0) return { txt: '—', bg: '#f7e7e3', fg: '#c25b46' }
-    const pb = outlay / ebitda
+    // full model: margin m ⇒ sell = cogs + m; keep all other (capex/opex/tax/ramp) from inputs
+    const r = runScenario({ throughputT: t, sellPerT: cogs + m, cogsPerT: cogs, opex: opexPerYear(inputs) }, inputs)
+    if (!r.paybackYears) return { txt: '>10', bg: '#f7e7e3', fg: '#c25b46' }
+    const pb = r.paybackYears
     let bg = '#e7f1e8', fg = '#2f6b3f'
     if (pb > 8) { bg = '#f7e7e3'; fg = '#c25b46' }
     else if (pb > 5) { bg = '#fbf2e0'; fg = '#a9772a' }
@@ -765,7 +773,7 @@ function SensitivityGrid({ opex, outlay }: { opex: number; outlay: number }) {
         {throughputs.map((t) => (
           <tr key={t}>
             <td className="num p-[8px] font-bold text-[#26342c]">{f(t)} ตัน · t</td>
-            {margins.map((m) => { const c = cell(t, m); return (<td key={m} className="num p-[8px] font-extrabold" style={{ background: c.bg, color: c.fg }}>{c.txt}</td>) })}
+            {margins.map((m) => { const c = cell(t, m); const here = t === curT && m === curM; return (<td key={m} className="num p-[8px] font-extrabold" style={{ background: c.bg, color: c.fg, outline: here ? '2px solid #26342c' : undefined, outlineOffset: here ? '-2px' : undefined }}>{c.txt}</td>) })}
           </tr>
         ))}
       </tbody>
