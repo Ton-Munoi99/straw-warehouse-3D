@@ -238,10 +238,12 @@ export default function FeasibilityPage() {
                     <div key={c.key} className="rounded-[8px] bg-white p-2">
                       <div className="mb-1 text-[11px] font-bold text-ink">{c.th}</div>
                       <div className="flex items-start gap-2">
-                        <NumField label="สัดส่วน / Mix" suffix="%" value={c.mix * 100} step={5} small onChange={(v) => patch((n) => (n.channels[i].mix = v / 100))} />
+                        <div className="w-[58px] flex-none">
+                          <NumField label="สัดส่วน / Mix" suffix="%" value={c.mix * 100} step={5} small onChange={(v) => patch((n) => (n.channels[i].mix = v / 100))} />
+                        </div>
                         <div className="flex-1">
-                          <NumField label="ราคา / Price" suffix="฿/ก้อน (bale)" value={c.pricePerTonne / bpt} step={1} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v * bpt))} />
-                          <div className="mt-0.5 pl-1 text-[10px] text-[#9aa499]">≈ {f(c.pricePerTonne)} ฿/ต (t)</div>
+                          <NumField label="ราคา / Price" suffix="฿/ก้อน" value={c.pricePerTonne / bpt} step={1} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v * bpt))} />
+                          <div className="mt-0.5 pl-1 text-[10px] text-[#9aa499]">≈ {f(c.pricePerTonne)} ฿/ต (t) · per bale</div>
                         </div>
                       </div>
                     </div>
@@ -722,7 +724,7 @@ function NumField({ label, suffix, value, onChange, step = 1, small }: { label: 
           }}
           className={`w-full min-w-0 border-none bg-transparent text-left font-bold text-ink outline-none [font-variant-numeric:tabular-nums] ${small ? 'text-[12px]' : 'text-[13px]'}`}
         />
-        {suffix && <span className="flex-none text-[9.5px] text-[#9aa499]">{suffix}</span>}
+        {suffix && <span className="flex-none whitespace-nowrap text-[9px] text-[#9aa499]">{suffix}</span>}
       </span>
     </label>
   )
