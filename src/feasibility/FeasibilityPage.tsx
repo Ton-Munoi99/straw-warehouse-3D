@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Box,
@@ -239,8 +239,9 @@ export default function FeasibilityPage() {
                       <div className="mb-1 text-[11px] font-bold text-ink">{c.th}</div>
                       <div className="flex gap-2">
                         <NumField label="สัดส่วน / Mix" suffix="%" value={c.mix * 100} step={5} small onChange={(v) => patch((n) => (n.channels[i].mix = v / 100))} />
-                        <NumField label="ราคา / Price" suffix={`฿/ต (t) ≈${perBale(c.pricePerTonne)}/ก้อน (bale)`} value={c.pricePerTonne} step={50} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v))} />
+                        <NumField label="ราคา / Price" suffix="฿/ต (t)" value={c.pricePerTonne} step={50} small onChange={(v) => patch((n) => (n.channels[i].pricePerTonne = v))} />
                       </div>
+                      <div className="mt-1 text-right text-[10px] text-[#9aa499]">≈ {perBale(c.pricePerTonne)} ฿/ก้อน (bale)</div>
                     </div>
                   ))}
                 </CtrlGroup>
@@ -693,16 +694,31 @@ function CtrlGroup({ title, children }: { title: string; children: React.ReactNo
 }
 
 function NumField({ label, suffix, value, onChange, step = 1, small }: { label: string; suffix?: string; value: number; onChange: (v: number) => void; step?: number; small?: boolean }) {
+  const fmt = (v: number) => (Number.isFinite(v) ? String(Math.round(v * 100) / 100) : '')
+  const [text, setText] = useState(() => fmt(value))
+  const [focused, setFocused] = useState(false)
+  // keep the field in sync with external changes (e.g. Reset) — but never while
+  // the user is actively typing, so clearing the box doesn't snap back to 0.
+  useEffect(() => {
+    if (!focused) setText(fmt(value))
+  }, [value, focused])
   return (
     <label className="block flex-1">
       <span className="block text-[10.5px] font-semibold leading-tight text-[#54625a]">{label}</span>
       <span className="mt-0.5 flex items-center gap-1 rounded-[7px] border border-[#e1ddd0] bg-white px-2 py-1 focus-within:border-straw">
         <input
           type="number"
-          value={Number.isFinite(value) ? Math.round(value * 100) / 100 : 0}
+          inputMode="decimal"
+          value={text}
           step={step}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          className={`num w-full border-none bg-transparent font-bold text-ink outline-none ${small ? 'text-[12px]' : 'text-[13px]'}`}
+          onFocus={() => setFocused(true)}
+          onBlur={() => { setFocused(false); setText(fmt(value)) }}
+          onChange={(e) => {
+            setText(e.target.value)
+            const n = parseFloat(e.target.value)
+            onChange(Number.isFinite(n) ? n : 0)
+          }}
+          className={`num w-full min-w-0 border-none bg-transparent font-bold text-ink outline-none ${small ? 'text-[12px]' : 'text-[13px]'}`}
         />
         {suffix && <span className="flex-none text-[9.5px] text-[#9aa499]">{suffix}</span>}
       </span>
