@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import {
   Box,
   Calculator,
-  Download,
   FileSpreadsheet,
   MapPin,
   Printer,
@@ -14,7 +13,7 @@ import {
   Warehouse,
   X,
 } from 'lucide-react'
-import { downloadCSV, downloadXLSX, type CsvCell } from '../lib/csv'
+import { downloadXLSX, type CsvCell } from '../lib/csv'
 import {
   DEFAULT_INPUTS,
   LOCATIONS,
@@ -153,12 +152,6 @@ export default function FeasibilityPage() {
 
     return { summary, cashflow, scenarios }
   }
-  const exportCSV = () => {
-    const { summary, cashflow, scenarios } = buildExport()
-    downloadCSV(simMode ? 'Feasibility-ROI-simulation.csv' : 'Feasibility-ROI-base.csv', [
-      ...summary, [], ['Cash Flow / กระแสเงินสด'], ...cashflow, [], ['Scenarios / ฉากทัศน์'], ...scenarios,
-    ])
-  }
   const exportXLSX = () => {
     const { summary, cashflow, scenarios } = buildExport()
     downloadXLSX(simMode ? 'Feasibility-ROI-simulation.xlsx' : 'Feasibility-ROI-base.xlsx', [
@@ -205,9 +198,6 @@ export default function FeasibilityPage() {
           )}
           <button onClick={exportXLSX} className="flex items-center gap-2 rounded-[11px] border border-[#2f6b3f] bg-white px-4 py-[11px] text-[13px] font-bold text-forest shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
             <FileSpreadsheet size={16} strokeWidth={1.9} /> Excel
-          </button>
-          <button onClick={exportCSV} className="flex items-center gap-2 rounded-[11px] border border-[#9aa499] bg-white px-4 py-[11px] text-[13px] font-bold text-[#54625a] shadow-[0_6px_18px_rgba(20,40,25,0.12)] hover:opacity-90">
-            <Download size={16} strokeWidth={1.9} /> CSV
           </button>
           <button onClick={() => window.print()} className="flex items-center gap-2 rounded-[11px] border-none bg-forest px-[18px] py-[11px] text-[13px] font-bold text-white shadow-[0_6px_18px_rgba(20,40,25,0.22)]">
             <Printer size={16} strokeWidth={1.9} /> Print
