@@ -32,6 +32,7 @@ export interface SceneState {
   activity: boolean
   dims: boolean
   layers: number // bale layers drawn (0 … STORAGE.maxLayers)
+  recording: boolean // capturing one full 360° orbit to a video file
 }
 
 export interface CameraController {
@@ -154,13 +155,22 @@ function B({
 }
 
 // ---- camera rig: presets tween + dolly zoom + autorotate ----
+// Records exactly one full orbit: azimuth is accumulated per frame, so the clip ends at
+// 360° even if the frame rate dips. MP4 where the browser can encode it, else WebM.
+const RECORD_TYPES = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm']
+
 function Rig({
   controllerRef,
   rotate,
+  recording,
+  onRecorded,
 }: {
   controllerRef: React.MutableRefObject<CameraController | null>
   rotate: boolean
+  recording: boolean
+  onRecorded: (clip: Blob | null) => void
 }) {
+  const gl = useThree((s) => s.gl)
   const camera = useThree((s) => s.camera)
   const size = useThree((s) => s.size)
   useEffect(() => {
@@ -192,9 +202,52 @@ function Rig({
     }
   }, [controls, camera, controllerRef])
 
+  const rec = useRef<{ mr: MediaRecorder; last: number; turned: number } | null>(null)
+  useEffect(() => {
+    if (!recording || !controls) return
+    const type = typeof MediaRecorder === 'undefined' ? undefined : RECORD_TYPES.find((t) => MediaRecorder.isTypeSupported(t))
+    if (!type) {
+      onRecorded(null)
+      return
+    }
+    tween.current.active = false
+    const stream = gl.domElement.captureStream(30)
+    const mr = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 8_000_000 })
+    const chunks: Blob[] = []
+    let cancelled = false
+    mr.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data) }
+    mr.onstop = () => {
+      stream.getTracks().forEach((t) => t.stop())
+      onRecorded(cancelled ? null : new Blob(chunks, { type: type.split(';')[0] }))
+    }
+    mr.start(250)
+    rec.current = { mr, last: controls.getAzimuthalAngle(), turned: 0 }
+    return () => {
+      // recording switched off before the orbit finished → discard the partial clip
+      rec.current = null
+      if (mr.state !== 'inactive') {
+        cancelled = true
+        mr.stop()
+      }
+    }
+  }, [recording, controls, gl, onRecorded])
+
   useFrame(() => {
     if (!controls) return
-    controls.autoRotate = rotate
+    controls.autoRotate = rotate || recording
+    const r = rec.current
+    if (r) {
+      const a = controls.getAzimuthalAngle()
+      let d = a - r.last
+      if (d > Math.PI) d -= 2 * Math.PI
+      if (d < -Math.PI) d += 2 * Math.PI
+      r.turned += Math.abs(d)
+      r.last = a
+      if (r.turned >= 2 * Math.PI) {
+        rec.current = null
+        r.mr.stop()
+      }
+    }
     if (tween.current.active) {
       camera.position.lerp(tween.current.pos, 0.07)
       controls.target.lerp(tween.current.look, 0.07)
@@ -212,7 +265,7 @@ function Rig({
       minDistance={8}
       maxDistance={95}
       onStart={() => { tween.current.active = false }}
-      autoRotateSpeed={0.9}
+      autoRotateSpeed={recording ? 4 : 0.9}
     />
   )
 }
@@ -999,15 +1052,17 @@ export default function Scene({
   state,
   controllerRef,
   onSelectZone,
+  onRecorded,
 }: {
   state: SceneState
   controllerRef: React.MutableRefObject<CameraController | null>
   onSelectZone: (key: string) => void
+  onRecorded: (clip: Blob | null) => void
 }) {
   const mats = useMaterials()
   return (
     <>
-      <Rig controllerRef={controllerRef} rotate={state.rotate} />
+      <Rig controllerRef={controllerRef} rotate={state.rotate} recording={state.recording} onRecorded={onRecorded} />
       <Weather weather={state.weather} time={state.time} />
       <Site mats={mats} />
       <Structure mats={mats} />

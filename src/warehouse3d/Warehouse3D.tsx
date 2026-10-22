@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ACESFilmicToneMapping, PCFSoftShadowMap } from 'three'
 import { Canvas } from '@react-three/fiber'
@@ -16,6 +16,7 @@ import {
   Ruler,
   Tag,
   TrendingUp,
+  Video,
   Truck as TruckIcon,
   ZoomIn,
   ZoomOut,
@@ -73,6 +74,7 @@ export default function Warehouse3D() {
     activity: true,
     dims: false,
     layers: 10,
+    recording: false,
   })
   const controller = useRef<CameraController | null>(null)
   const stageRef = useRef<HTMLDivElement>(null)
@@ -88,6 +90,27 @@ export default function Warehouse3D() {
       a.click()
       setTimeout(() => URL.revokeObjectURL(a.href), 1000)
     }, 'image/png')
+  }
+
+  // ---- 360° video: Scene records one full orbit, then hands back the clip ----
+  const [recNote, setRecNote] = useState<string | null>(null)
+  const onRecorded = useCallback((clip: Blob | null) => {
+    setState((s) => ({ ...s, recording: false }))
+    if (!clip) {
+      setRecNote(typeof MediaRecorder === 'undefined' ? 'This browser cannot record video.' : null)
+      return
+    }
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(clip)
+    a.download = `straw-warehouse-360.${clip.type.includes('mp4') ? 'mp4' : 'webm'}`
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+    setRecNote(`Saved ${a.download} (${(clip.size / 1048576).toFixed(1)} MB)`)
+  }, [])
+  const toggleRecording = () => {
+    setTour(null)
+    setRecNote(null)
+    setState((s) => ({ ...s, rotate: false, recording: !s.recording }))
   }
 
   // ---- guided tour: step through tourShots, one every TOUR_MS ----
@@ -214,7 +237,7 @@ export default function Warehouse3D() {
             gl={{ antialias: true, toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.05, preserveDrawingBuffer: true }}
             camera={{ fov: 42, near: 0.1, far: 1000, position: [30, 22, 32] }}
           >
-            <Scene state={state} controllerRef={controller} onSelectZone={selectZone} />
+            <Scene state={state} controllerRef={controller} onSelectZone={selectZone} onRecorded={onRecorded} />
           </Canvas>
 
           <button
@@ -225,6 +248,12 @@ export default function Warehouse3D() {
             <Camera size={15} strokeWidth={1.9} />
             <span>ถ่ายภาพ / PNG</span>
           </button>
+
+          {state.recording && (
+            <div className="absolute left-1/2 top-3 z-[4] flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#c25b46] px-3 py-1.5 text-[12px] font-bold text-white shadow-md sm:top-5">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-white" /> REC · 360°
+            </div>
+          )}
 
           {tour != null && (
             <div className="absolute inset-x-3 bottom-3 z-[4] rounded-[12px] border border-hairline bg-white/[0.94] px-4 py-3 shadow-md backdrop-blur sm:inset-x-auto sm:bottom-4 sm:left-1/2 sm:w-[min(560px,calc(100%-40px))] sm:-translate-x-1/2">
@@ -317,6 +346,19 @@ export default function Warehouse3D() {
               <Footprints size={16} strokeWidth={1.9} />
               {tour != null ? 'Stop guided tour' : 'Guided tour'}
             </button>
+            <button
+              onClick={toggleRecording}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-[10px] border px-2 py-[11px] text-[13px] font-bold"
+              style={{
+                borderColor: state.recording ? '#c25b46' : '#e1ddd0',
+                background: state.recording ? '#c25b46' : '#fff',
+                color: state.recording ? '#fff' : '#33403a',
+              }}
+            >
+              <Video size={16} strokeWidth={1.9} />
+              {state.recording ? 'Recording… (click to cancel)' : 'Record 360° video'}
+            </button>
+            {recNote && <div className="mt-1.5 text-[11px] text-[#7c8a80]">{recNote}</div>}
           </section>
 
           {/* Controls */}
