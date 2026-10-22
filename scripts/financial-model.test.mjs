@@ -1,25 +1,24 @@
 import assert from 'node:assert/strict'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import test from 'node:test'
 import ts from 'typescript'
 
+// Transpile model.ts plus the one module it imports (boq/data.ts) into a temp tree that
+// mirrors src/, adding the .mjs extension Node needs on relative imports.
 async function loadModel() {
-  const sourcePath = new URL('../src/feasibility/model.ts', import.meta.url)
-  const source = await readFile(sourcePath, 'utf8')
-  const compiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.ES2020,
-      target: ts.ScriptTarget.ES2020,
-    },
-  }).outputText
-
-  const outDir = join(tmpdir(), 'straw-warehouse-tests')
-  await mkdir(outDir, { recursive: true })
-  const outPath = join(outDir, `model-${Date.now()}-${Math.random().toString(16).slice(2)}.mjs`)
-  await writeFile(outPath, compiled)
-  return import(`file://${outPath.replace(/\\/g, '/')}`)
+  const outDir = join(tmpdir(), 'straw-warehouse-tests', `${Date.now()}-${Math.random().toString(16).slice(2)}`)
+  for (const rel of ['feasibility/model', 'boq/data']) {
+    const source = await readFile(new URL(`../src/${rel}.ts`, import.meta.url), 'utf8')
+    const compiled = ts.transpileModule(source, {
+      compilerOptions: { module: ts.ModuleKind.ES2020, target: ts.ScriptTarget.ES2020 },
+    }).outputText.replace(/from '(\.\.?\/[^']+)'/g, "from '$1.mjs'")
+    const outPath = join(outDir, `${rel}.mjs`)
+    await mkdir(dirname(outPath), { recursive: true })
+    await writeFile(outPath, compiled)
+  }
+  return import(`file://${join(outDir, 'feasibility/model.mjs').replace(/\\/g, '/')}`)
 }
 
 test('default feasibility assumptions use a 20 kg small-bale base case with positive returns', async () => {
@@ -90,4 +89,19 @@ test('storage capacity matches the 3D stack layout and flags the stock-turn gap'
   assert.ok(Math.abs(model.storageCapacityT(inputs) - (2156 * 20) / 1000) < 1e-9)
   // 2,000 t/yr through a ~43 t store ≈ 46 full turns a year (≈ 8-day dwell)
   assert.equal(Math.round(model.stockTurnsPerYear(inputs)), 46)
+})
+
+test('capacity options: only the contradictory base case pays back; break-evens are sane', async () => {
+  const model = await loadModel()
+  const o = model.capacityOptions(model.DEFAULT_INPUTS)
+  const npv = Object.fromEntries(o.rows.map((r) => [r.key, r.npv]))
+  assert.ok(npv.base > 0)
+  assert.ok(npv.noPremium < 0 && npv.bigger < 0 && npv.smaller < 0)
+  // bigger option holds a month of sales → 12 turns/yr; smaller option sells 12 × capacity
+  assert.equal(Math.round(o.rows.find((r) => r.key === 'bigger').turns), 12)
+  assert.equal(Math.round(o.rows.find((r) => r.key === 'smaller').throughputT), Math.round(o.capacityT * 12))
+  // extra month of storage must stay under ~฿1.67M (~฿3,240/m²) to keep NPV ≥ 0
+  assert.ok(Math.abs(o.maxExtraCapex - 1672204) < 2000)
+  assert.equal(Math.round(o.maxPerM2 / 10) * 10, 3240)
+  assert.equal(Math.round(o.breakevenT / 10) * 10, 1730)
 })

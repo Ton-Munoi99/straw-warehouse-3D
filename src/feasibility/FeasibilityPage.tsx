@@ -33,6 +33,7 @@ import {
   runDebt,
   runInputs,
   runScenario,
+  capacityOptions,
   stockTurnsPerYear,
   storageBales,
   storageCapacityT,
@@ -57,6 +58,7 @@ export default function FeasibilityPage() {
   const bptDisplay = bpt.toFixed(1)
   const capacityT = storageCapacityT(active)
   const turns = stockTurnsPerYear(active)
+  const capOpts = useMemo(() => capacityOptions(active), [active])
   const perBale = (perT: number) => (perT / bpt).toFixed(1)
 
   const sell = blendedSell(active)
@@ -299,20 +301,12 @@ export default function FeasibilityPage() {
                 20 kg/bale for common small bales; verify actual bale weight and test 15-30 kg/bale before committing.
               </div>
             )}
-            {/* capacity check — warehouse size (same STORAGE numbers as the 3D stack) vs sales volume */}
-            <div className={`mt-3 rounded-[10px] border px-4 py-2.5 text-[11.5px] leading-[1.55] ${turns > 12 ? 'border-[#e3b15d] bg-[#fff7e8] text-[#8a651d]' : 'border-[#bdd7bf] bg-[#f2f8f2] text-forest'}`}>
-              <div className="font-semibold">
-                {turns > 12 ? '⚠ ' : ''}ความจุโกดัง / Storage capacity <b>{f(capacityT)} ตัน (t)</b> ({f(storageBales())} ก้อน / bales, ซ้อนสูงสุด / max stack ≈ 5.1 ม. / m) ·
-                ปริมาณขาย / throughput <b>{f(active.throughputT)} ตัน/ปี (t/yr)</b> → หมุนสต๊อก / stock turns <b>≈ {turns.toFixed(0)} รอบ/ปี (/yr)</b> ·
-                ฟางอยู่ในโกดังเฉลี่ย / average dwell <b>≈ {(365 / turns).toFixed(0)} วัน (days)</b>
-              </div>
+            {/* capacity check — one line; the options are explained in #capacity-options */}
+            <div className={`mt-3 rounded-[10px] border px-4 py-2.5 text-[12px] leading-[1.55] ${turns > 12 ? 'border-[#e3b15d] bg-[#fff7e8] text-[#8a651d]' : 'border-[#bdd7bf] bg-[#f2f8f2] text-forest'}`}>
+              <b>{turns > 12 ? '⚠ ' : '✓ '}โกดังจุ {f(capacityT)} ตัน แต่แผนขาย {f(active.throughputT)} ตัน/ปี → ฟางอยู่ในโกดังแค่ ~{(365 / turns).toFixed(0)} วัน</b>
+              {' '}· Warehouse holds {f(capacityT)} t vs {f(active.throughputT)} t/yr planned → straw stays only ~{(365 / turns).toFixed(0)} days.
               {turns > 12 && (
-                <div className="mt-1">
-                  โกดังขนาดนี้จึงทำงานแบบ “จุดพักสินค้า” (รับเข้า-ส่งออกภายในไม่กี่วัน) ไม่ใช่โกดังเก็บข้ามฤดู — ถ้าจะเก็บสต๊อกไว้ขายช่วงหน้าแล้งเพื่อราคาพรีเมียม
-                  เช่น เก็บ 3 เดือนของยอดขาย ≈ {f(active.throughputT / 4)} ตัน ต้องใช้พื้นที่ราว {Math.ceil(active.throughputT / 4 / capacityT)} เท่าของโกดังนี้ หรือต้องลดปริมาณขายที่ตั้งไว้ ·
-                  At this size the warehouse works as a flow-through hub (in and out within days), not seasonal storage — holding 3 months of sales (≈ {f(active.throughputT / 4)} t) for
-                  dry-season premium prices would need about {Math.ceil(active.throughputT / 4 / capacityT)}× this floor space, or a lower throughput.
-                </div>
+                <a href="#capacity-options" className="ml-1.5 font-bold text-[#3f7fae] underline underline-offset-2">ดูทางเลือก / See options ↓</a>
               )}
             </div>
           </div>
@@ -572,6 +566,55 @@ export default function FeasibilityPage() {
             </div>
             <div className="mt-1.5 text-[11px] leading-[1.5] text-[#9aa499]">* กรณีฐานใช้ 20 กก./ก้อน ซึ่งเหมาะกับฟางอัดก้อนสี่เหลี่ยมเล็กทั่วไป แต่ผลตอบแทนยังอ่อนไหวต่อ <b>น้ำหนักก้อนจริง</b>, <b>ปริมาณหมุนเวียน</b>, และ <b>กำไรต่อตัน</b> มาก · base case uses 20 kg/bale for common small bales, but returns remain sensitive to actual bale weight, throughput, and margin.</div>
           </div>
+
+          {/* capacity options — the base case vs plans where storage and prices agree */}
+          {turns > 12 && (
+            <div id="capacity-options" className="mx-4 mt-7 scroll-mt-20 sm:mx-9">
+              <SectionTitle kicker="โกดังกับแผนขาย / Warehouse vs Sales Plan">ทางเลือกเมื่อโกดังเล็กกว่าแผนขาย / Options When the Warehouse Is Too Small</SectionTitle>
+              <div className="mb-3 text-[12.5px] leading-[1.6] text-[#54625a]">
+                แผนปัจจุบันคุ้มทุนเพราะคิดราคาขายแบบ<b>เก็บไว้ขายหน้าแล้ง</b> แต่โกดังจุได้แค่ ~{(365 / turns).toFixed(0)} วันของยอดขาย ฟางจึงไม่ได้อยู่ถึงหน้าแล้งจริง — ถ้าปรับให้สองเรื่องนี้ตรงกัน ผลเป็นแบบนี้ ·
+                <span className="text-[#7c8a80]"> The current plan pays back only because it books dry-season prices, yet the warehouse holds just ~{(365 / turns).toFixed(0)} days of sales. Make the two agree and you get:</span>
+              </div>
+              <div className="-mx-1 overflow-x-auto px-1"><table className="w-full min-w-[560px] border-collapse text-[12.5px]">
+                <thead>
+                  <tr className="bg-[#26342c] text-white">
+                    <th className="p-[9px_10px] text-left font-bold">แนวทาง / Plan</th>
+                    <th className="num p-[9px_10px] font-bold">ขาย / Sales (t/yr)</th>
+                    <th className="num p-[9px_10px] font-bold">เงินลงทุน / CapEx</th>
+                    <th className="num p-[9px_10px] font-bold">NPV</th>
+                    <th className="p-[9px_10px] text-center font-bold">คุ้มทุน? / Pays back?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {capOpts.rows.map((r) => (
+                    <tr key={r.key} className={`border-b border-[#f0ede3] ${r.key === 'base' ? 'bg-[#f6f4ec]' : ''}`}>
+                      <td className="p-[9px_10px]"><div className="font-semibold text-ink">{r.th}</div><div className="text-[11px] text-[#9aa499]">{r.en}</div></td>
+                      <td className="num p-[9px_10px] text-[#54625a]">{f(r.throughputT)}</td>
+                      <td className="num p-[9px_10px] text-[#54625a]">{fM(r.capex)}</td>
+                      <td className={`num p-[9px_10px] font-extrabold ${r.npv >= 0 ? 'text-forest' : 'text-[#c25b46]'}`}>{r.npv >= 0 ? '+' : ''}{fM(r.npv)}</td>
+                      <td className="p-[9px_10px] text-center">
+                        <span className={`rounded px-2 py-0.5 text-[11px] font-bold ${r.npv >= 0 ? 'bg-[#e7f1e8] text-forest' : 'bg-[#f7e7e3] text-[#c25b46]'}`}>{r.npv >= 0 ? '✓ คุ้ม / Yes' : '✗ ไม่คุ้ม / No'}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table></div>
+              <div className="mt-4 text-[12.5px] font-extrabold text-[#26342c]">ทางที่ทำให้ตัวเลขเป็นจริงได้ / What could make it work</div>
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[12px] border border-[#e6e2d6] bg-[#fafaf6] p-4 text-[12px] leading-[1.6] text-[#54625a]">
+                  <div className="mb-1 font-extrabold text-ink">① ที่เก็บแบบถูก (ลานคลุมผ้าใบ / เพิงหลังคา) · Cheap extra storage</div>
+                  เก็บเพิ่มอีก ~{f(capOpts.extraT)} ตัน (~{f(capOpts.extraM2)} ตร.ม.) ให้พอขาย 1 เดือน โดยยังได้ราคาหน้าแล้ง — ต้องลงทุน<b>ไม่เกิน {fM(capOpts.maxExtraCapex)}</b>
+                  {capOpts.maxPerM2 != null && <> หรือ <b>≈ ฿{f(capOpts.maxPerM2)}/ตร.ม.</b> (โกดังเหล็กตอนนี้ ฿{f(capOpts.warehousePerM2)}/ตร.ม.)</>} → ขอใบเสนอราคามาเทียบ ·
+                  <span className="text-[#7c8a80]"> Store ~{f(capOpts.extraT)} t more for one month of sales at ≤ {fM(capOpts.maxExtraCapex)}{capOpts.maxPerM2 != null && <> (≈ ฿{f(capOpts.maxPerM2)}/m² vs ฿{f(capOpts.warehousePerM2)}/m² for this steel shed)</>} — get quotes.</span>
+                </div>
+                <div className="rounded-[12px] border border-[#e6e2d6] bg-[#fafaf6] p-4 text-[12px] leading-[1.6] text-[#54625a]">
+                  <div className="mb-1 font-extrabold text-ink">② สัญญาขายล่วงหน้า · Forward offtake contract</div>
+                  คงแบบจุดพักสินค้า แต่ให้ผู้ซื้อ (ฟาร์มโค / โรงไฟฟ้า) ตกลงราคาใกล้ราคาหน้าแล้งตลอดปี แลกกับส่งฟางต่อเนื่อง — และต้องขายได้<b>อย่างน้อย ~{capOpts.breakevenT != null ? f(capOpts.breakevenT) : '—'} ตัน/ปี</b> จึงคุ้มทุน ·
+                  <span className="text-[#7c8a80]"> Keep the fast hub but lock near-premium prices year-round with a buyer in exchange for steady supply — and sell at least ~{capOpts.breakevenT != null ? f(capOpts.breakevenT) : '—'} t/yr to break even.</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* cash-flow projection */}
           <div className="mx-4 sm:mx-9 mt-7">

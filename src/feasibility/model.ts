@@ -1,3 +1,5 @@
+import { FOOTPRINT_SQM } from '../boq/data'
+
 // ============================================================================
 // Rice Straw Aggregation Hub — Feasibility / Financial Model (input-driven)
 // ----------------------------------------------------------------------------
@@ -275,6 +277,83 @@ export const coreFromInputs = (i: SimInputs): ScnCore => ({
   opex: opexPerYear(i),
 })
 export const runInputs = (i: SimInputs) => runScenario(coreFromInputs(i), i)
+
+// ---- capacity options: what the plan looks like once storage and prices agree ----
+// The base case sells 2,000 t/yr through a ~43 t store yet books dry-season premium
+// prices. Each option below removes that contradiction one way, so the page can show
+// honestly which plans still pay back. Everything is recomputed from the given inputs.
+const GATE_PRICE_PER_BALE = 25 // normal warehouse-gate price (MARKET_PRICES, R1) — no dry-season premium
+const STORE_MONTHS = 1 // "seasonal" option: hold one month of sales
+
+export interface CapacityOption {
+  key: 'base' | 'noPremium' | 'bigger' | 'smaller'
+  th: string
+  en: string
+  throughputT: number
+  turns: number
+  capex: number
+  npv: number
+  irr: number | null
+}
+
+function bisect(f: (x: number) => boolean, lo: number, hi: number) {
+  // largest x in [lo, hi] for which f stays true (f must flip once)
+  for (let k = 0; k < 60; k++) {
+    const mid = (lo + hi) / 2
+    if (f(mid)) lo = mid
+    else hi = mid
+  }
+  return lo
+}
+
+export function capacityOptions(i: SimInputs) {
+  const cap = storageCapacityT(i)
+  const bpt = balesPerTonne(i.baleKg)
+  const option = (key: CapacityOption['key'], th: string, en: string, mut: (n: SimInputs) => void, storeT = cap): CapacityOption => {
+    const n = cloneInputs(i)
+    mut(n)
+    const r = runInputs(n)
+    return { key, th, en, throughputT: n.throughputT, turns: n.throughputT / storeT, capex: totalCapex(n), npv: r.npv, irr: r.irr }
+  }
+  const monthT = (i.throughputT / 12) * STORE_MONTHS
+  const scale = Math.max(1, monthT / cap)
+  const rows = [
+    option('base', 'แผนปัจจุบัน (กรณีฐาน)', 'Current plan (base case)', () => {}),
+    option('noPremium', 'ขายผ่านเร็ว แต่ไม่ได้ราคาหน้าแล้ง', 'Fast pass-through, no dry-season premium', (n) => {
+      n.channels.forEach((c) => { if (c.key !== 'biomass') c.pricePerTonne = Math.min(c.pricePerTonne, GATE_PRICE_PER_BALE * bpt) })
+    }),
+    option('bigger', `ขยายโกดังให้เก็บสต๊อกได้ ${STORE_MONTHS} เดือน (×${scale.toFixed(1)})`, `Bigger warehouse — hold ${STORE_MONTHS} month of stock (×${scale.toFixed(1)})`, (n) => {
+      n.capexLines.find((l) => l.key === n.buildingKey)!.amount *= scale
+    }, cap * scale),
+    option('smaller', 'ลดยอดขายให้พอดีโกดัง (หมุนเดือนละรอบ)', 'Sell only what this warehouse holds (monthly turns)', (n) => {
+      n.throughputT = Math.round(cap * 12)
+    }),
+  ]
+
+  // how cheap the extra month of storage must be to keep NPV ≥ 0 (premium prices kept)
+  const extraT = Math.max(0, monthT - cap)
+  const extraM2 = (extraT / cap) * FOOTPRINT_SQM
+  const npvWithExtra = (x: number) => {
+    const n = cloneInputs(i)
+    n.capexLines.find((l) => l.key === n.buildingKey)!.amount += x
+    return runInputs(n).npv
+  }
+  const maxExtraCapex = npvWithExtra(0) > 0 ? bisect((x) => npvWithExtra(x) > 0, 0, 50e6) : 0
+  // throughput needed for NPV ≥ 0 at today's prices and costs
+  const npvAt = (t: number) => { const n = cloneInputs(i); n.throughputT = t; return runInputs(n).npv }
+  const breakevenT = npvAt(i.throughputT * 10) > 0 ? i.throughputT * 10 - bisect((x) => npvAt(i.throughputT * 10 - x) > 0, 0, i.throughputT * 10) : null
+
+  return {
+    capacityT: cap,
+    rows,
+    extraT,
+    extraM2,
+    maxExtraCapex,
+    maxPerM2: extraM2 > 0 ? maxExtraCapex / extraM2 : null,
+    warehousePerM2: buildingCapex(i) / FOOTPRINT_SQM,
+    breakevenT,
+  }
+}
 
 // ---- debt financing (bank view) ---------------------------------------------
 // The loan funds `loanFrac` of CapEx. Interest-only during the grace years, then equal

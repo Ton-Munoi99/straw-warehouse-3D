@@ -9,6 +9,14 @@ Format based on Keep a Changelog; versions follow Semantic Versioning; dates are
 เผยแพร่ที่ / Deployed at [straw-warehouse-3d.netlify.app](https://straw-warehouse-3d.netlify.app) ·
 โค้ด / Repo: [Ton-Munoi99/straw-warehouse-3D](https://github.com/Ton-Munoi99/straw-warehouse-3D)
 
+## [1.3.0] — 2026-10-22
+
+### เพิ่ม / Added
+- **ทางเลือกเมื่อโกดังเล็กกว่าแผนขาย** ในหน้า ROI — ตารางเทียบแผนปัจจุบันกับ 3 แนวทางที่สมเหตุสมผล (ขายผ่านเร็วแต่ไม่ได้ราคาหน้าแล้ง / ขยายโกดังเก็บได้ 1 เดือน / ลดยอดขายให้พอดีโกดัง) พร้อมป้ายคุ้ม/ไม่คุ้ม และ 2 ทางที่ทำให้ตัวเลขเป็นจริงได้ (ที่เก็บแบบถูกไม่เกิน ~฿3,240/ตร.ม. หรือสัญญาขายล่วงหน้า + ยอดขายขั้นต่ำ ~1,730 ตัน/ปี) คำนวณสดจากค่าที่กรอก · **Capacity options** on the ROI page — the current plan vs three consistent alternatives with a pays-back badge, plus two ways to make it work (cheap storage ≤ ~฿3,240/m², or a forward offtake contract with ≥ ~1,730 t/yr), all recomputed live.
+
+### เปลี่ยน / Changed
+- กล่องเตือนความจุด้านบนเหลือบรรทัดเดียว พร้อมลิงก์ไปยังตารางทางเลือก · The capacity warning under the headline metrics is now a single line linking to the options.
+
 ## [1.2.1] — 2026-10-22
 
 ### เปลี่ยน / Changed
