@@ -1,4 +1,3 @@
-import * as THREE from 'three'
 
 export type Vec3 = [number, number, number]
 
@@ -99,11 +98,6 @@ export const EAVE = 7.0
 export const RIDGE = 9.6
 export const COL_XS = [-9, -5.4, -1.8, 1.8, 5.4, 9]
 export const COL_ZS = [-5, 5]
-
-export const SKY = {
-  sunny: new THREE.Color('#dce6ec'), // fog = horizon haze of the physical sky
-  rainy: new THREE.Color('#97a4ad'),
-}
 
 // dimension annotations shown when Dimensions is on (heights measured from the floor)
 export const dimLabels: { t: string; p: Vec3 }[] = [

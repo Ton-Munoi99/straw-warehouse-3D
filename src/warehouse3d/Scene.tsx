@@ -12,13 +12,14 @@ import {
   EAVE,
   FLOOR_TOP,
   RIDGE,
-  SKY,
   Vec3,
   View,
   Zone,
   dimLabels,
   zones,
 } from './data'
+
+export type TimeOfDay = 'morning' | 'noon' | 'evening'
 
 export interface SceneState {
   rotate: boolean
@@ -27,6 +28,7 @@ export interface SceneState {
   doorsOpen: boolean
   wallsOpen: boolean
   weather: 'sunny' | 'rainy'
+  time: TimeOfDay
   activity: boolean
   dims: boolean
   layers: number // bale layers drawn (0 … STORAGE.maxLayers)
@@ -216,12 +218,39 @@ function Rig({
 }
 
 // ---- weather: gradient sky (background + image-based light), fog, sun + rain ----
-const SUN: Vec3 = [36, 46, 20]
-// sky colours are pre-darkened: the post-process ACES pass tone-maps the background too
-// (three's own renderer leaves sRGB backgrounds un-tone-mapped), which lifts and greys blues
-const SKY_GRADIENT = {
-  sunny: { zenith: '#2a62ad', mid: '#5b8fcb', earth: '#b8ae8c' },
-  rainy: { zenith: '#6f7d87', mid: '#8d9aa3', earth: '#7d7a6c' },
+// One lighting set per time of day; rain overrides the time. Sky colours are pre-darkened
+// because the post-process ACES pass tone-maps the background too (three's own renderer
+// leaves sRGB backgrounds un-tone-mapped), which lifts and greys them. `haze` is both the
+// horizon colour and the fog colour, so the fogged ground edge melts into the sky.
+// ponytail: hand-tuned presets, not a sun-path model — add one if a date/hour picker is wanted.
+type Lighting = {
+  sun: Vec3; sunColor: string; sunI: number
+  zenith: string; mid: string; haze: string; earth: string
+  hemi: string; hemiI: number; amb: number; env: number; fogNear: number; fogFar: number
+}
+const LIGHTING: Record<TimeOfDay | 'rainy', Lighting> = {
+  morning: {
+    sun: [-38, 17, 26], sunColor: '#ffdcb0', sunI: 2.4,
+    zenith: '#2f66ae', mid: '#86acd6', haze: '#e3e1d8', earth: '#b8ae8c',
+    hemi: '#d6e6f5', hemiI: 0.35, amb: 0.05, env: 0.95, fogNear: 70, fogFar: 240,
+  },
+  noon: {
+    sun: [36, 46, 20], sunColor: '#ffe9c7', sunI: 2.8,
+    zenith: '#2a62ad', mid: '#5b8fcb', haze: '#dce6ec', earth: '#b8ae8c',
+    hemi: '#cfe8ff', hemiI: 0.35, amb: 0.05, env: 1, fogNear: 70, fogFar: 240,
+  },
+  evening: {
+    // not grazing along x: the roof ribs run downslope, so a low sun from ±x lights one rib
+    // face and not the other → sub-pixel stripes → moiré on the roof. Keep a +z component.
+    sun: [38, 12, 24], sunColor: '#ffaa62', sunI: 2.5,
+    zenith: '#2a477f', mid: '#a7867f', haze: '#efb98c', earth: '#9c8a6e',
+    hemi: '#f2c9a0', hemiI: 0.3, amb: 0.05, env: 0.8, fogNear: 60, fogFar: 220,
+  },
+  rainy: {
+    sun: [36, 46, 20], sunColor: '#c2cad1', sunI: 0.6,
+    zenith: '#6f7d87', mid: '#8d9aa3', haze: '#97a4ad', earth: '#7d7a6c',
+    hemi: '#aab6bf', hemiI: 0.5, amb: 0.25, env: 0.6, fogNear: 40, fogFar: 150,
+  },
 }
 
 // ponytail: a 2px-wide LDR canvas gradient as an equirect map — cheaper and far easier
@@ -247,7 +276,7 @@ function skyTexture(zenith: string, mid: string, horizon: string, below: string)
   return t
 }
 
-function Weather({ weather }: { weather: 'sunny' | 'rainy' }) {
+function Weather({ weather, time }: { weather: 'sunny' | 'rainy'; time: TimeOfDay }) {
   const scene = useThree((s) => s.scene)
   const sun = useRef<THREE.DirectionalLight>(null!)
   const hemi = useRef<THREE.HemisphereLight>(null!)
@@ -265,35 +294,34 @@ function Weather({ weather }: { weather: 'sunny' | 'rainy' }) {
   }, [])
 
   useEffect(() => {
-    const rainy = weather === 'rainy'
-    const s = SKY_GRADIENT[weather]
-    const haze = '#' + (rainy ? SKY.rainy : SKY.sunny).getHexString()
-    const bg = skyTexture(s.zenith, s.mid, haze, haze)
-    const env = skyTexture(s.zenith, s.mid, haze, s.earth)
+    const L = LIGHTING[weather === 'rainy' ? 'rainy' : time]
+    const bg = skyTexture(L.zenith, L.mid, L.haze, L.haze)
+    const env = skyTexture(L.zenith, L.mid, L.haze, L.earth)
     scene.background = bg
     scene.environment = env
-    scene.environmentIntensity = rainy ? 0.6 : 1
-    if (!scene.fog) scene.fog = new THREE.Fog('#d2e8f2', 80, 200)
+    scene.environmentIntensity = L.env
+    if (!scene.fog) scene.fog = new THREE.Fog(L.haze, L.fogNear, L.fogFar)
     const fog = scene.fog as THREE.Fog
-    fog.color.copy(rainy ? SKY.rainy : SKY.sunny)
-    fog.near = rainy ? 40 : 70
-    fog.far = rainy ? 150 : 240
-    // ponytail: the sky environment now supplies most fill light, so hemi/ambient
-    // stay low — raising them again is what made the scene look washed out.
+    fog.color.set(L.haze)
+    fog.near = L.fogNear
+    fog.far = L.fogFar
+    // ponytail: the sky environment supplies most fill light, so hemi/ambient stay low —
+    // raising them again is what made the scene look washed out.
     if (sun.current) {
-      sun.current.intensity = rainy ? 0.6 : 2.8
-      sun.current.color.set(rainy ? '#c2cad1' : '#ffe9c7')
+      sun.current.position.set(...L.sun)
+      sun.current.intensity = L.sunI
+      sun.current.color.set(L.sunColor)
     }
     if (hemi.current) {
-      hemi.current.intensity = rainy ? 0.5 : 0.35
-      hemi.current.color.set(rainy ? '#aab6bf' : '#cfe8ff')
+      hemi.current.intensity = L.hemiI
+      hemi.current.color.set(L.hemi)
     }
-    if (amb.current) amb.current.intensity = rainy ? 0.25 : 0.05
+    if (amb.current) amb.current.intensity = L.amb
     return () => {
       bg.dispose()
       env.dispose()
     }
-  }, [weather, scene])
+  }, [weather, time, scene])
 
   useFrame((_, delta) => {
     if (weather !== 'rainy' || !rain.current) return
@@ -314,7 +342,7 @@ function Weather({ weather }: { weather: 'sunny' | 'rainy' }) {
         ref={sun}
         color="#fff1d6"
         intensity={1.2}
-        position={SUN}
+        position={LIGHTING.noon.sun}
         castShadow
         shadow-mapSize-width={4096}
         shadow-mapSize-height={4096}
@@ -980,7 +1008,7 @@ export default function Scene({
   return (
     <>
       <Rig controllerRef={controllerRef} rotate={state.rotate} />
-      <Weather weather={state.weather} />
+      <Weather weather={state.weather} time={state.time} />
       <Site mats={mats} />
       <Structure mats={mats} />
       <Roof mats={mats} />

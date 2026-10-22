@@ -20,7 +20,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react'
-import Scene, { CameraController, SceneState } from './Scene'
+import Scene, { CameraController, SceneState, TimeOfDay } from './Scene'
 import { ViewName, tourShots, views, zones } from './data'
 import { DEFAULT_INPUTS, STORAGE, storageBales, storageCapacityT } from '../feasibility/model'
 
@@ -69,6 +69,7 @@ export default function Warehouse3D() {
     doorsOpen: true,
     wallsOpen: true,
     weather: 'sunny',
+    time: 'noon',
     activity: true,
     dims: false,
     layers: 10,
@@ -389,6 +390,27 @@ export default function Warehouse3D() {
                   setState((s) => ({ ...s, weather: s.weather === 'rainy' ? 'sunny' : 'rainy' }))
                 }
               />
+              <div className="grid grid-cols-3 gap-1.5" role="group" aria-label="Time of day">
+                {(['morning', 'noon', 'evening'] as TimeOfDay[]).map((t) => {
+                  const on = state.time === t
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => setState((s) => ({ ...s, time: t }))}
+                      aria-pressed={on}
+                      title={state.weather === 'rainy' ? 'Switch weather to Sunny to see the light change' : undefined}
+                      className="rounded-[9px] border px-1 py-[9px] text-[12px] font-semibold capitalize"
+                      style={{
+                        borderColor: on ? '#c8902f' : '#e1ddd0',
+                        background: on ? '#fbf2e0' : '#fff',
+                        color: on ? '#a9772a' : '#33403a',
+                      }}
+                    >
+                      {t}
+                    </button>
+                  )
+                })}
+              </div>
               <CloseBtn
                 on={state.activity}
                 color="#c8902f"
