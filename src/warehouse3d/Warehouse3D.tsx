@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ACESFilmicToneMapping, PCFSoftShadowMap } from 'three'
 import { Canvas } from '@react-three/fiber'
 import {
   Check,
@@ -141,11 +142,15 @@ export default function Warehouse3D() {
           className="relative min-h-[48vh] min-w-0 flex-1 overflow-hidden md:min-h-0"
           style={{ background: 'linear-gradient(#cfe6f1,#dfeede)' }}
         >
+          <div className="pointer-events-none absolute left-5 top-5 z-[3] rounded-xl border border-white/70 bg-white/85 px-4 py-3 shadow-sm backdrop-blur">
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#7c806e]">FIELD / 01 · WAREHOUSE STUDY</div>
+            <div className="mt-1 text-sm font-bold text-[#344536]">Rice straw collection hub</div>
+          </div>
           <Canvas
-            shadows
+            shadows={{ type: PCFSoftShadowMap }}
             dpr={[1, 2]}
-            gl={{ antialias: true }}
-            camera={{ fov: 45, near: 0.1, far: 1000, position: [26, 15, 24] }}
+            gl={{ antialias: true, toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
+            camera={{ fov: 42, near: 0.1, far: 1000, position: [30, 22, 32] }}
           >
             <Scene state={state} controllerRef={controller} onSelectZone={selectZone} />
           </Canvas>
@@ -153,16 +158,16 @@ export default function Warehouse3D() {
           <div className="absolute bottom-3 left-3 z-[3] flex items-center gap-2 rounded-[10px] border border-hairline bg-white/[0.86] px-[11px] py-1.5 text-[11px] font-medium text-[#5a6b5f] backdrop-blur sm:bottom-4 sm:left-[18px] sm:px-[13px] sm:py-2 sm:text-xs">
             <RefreshCw size={15} color="#2f6b3f" strokeWidth={1.8} />
             <span className="sm:hidden">Drag · zoom · tap a tag</span>
-            <span className="hidden sm:inline">Drag to orbit · Scroll to zoom · Click a tag for details</span>
+            <span className="hidden sm:inline">Drag to orbit · Scroll to zoom · Select a numbered zone</span>
           </div>
 
-          <div className="absolute bottom-3 right-3 z-[3] text-[10px] font-medium text-[#5a6b5f] sm:bottom-4 sm:right-4 sm:text-[11px]">
+          <div className="absolute bottom-3 right-3 z-[3] hidden sm:block text-[10px] font-medium text-[#5a6b5f] sm:bottom-4 sm:right-4 sm:text-[11px]">
             Design by <span className="font-bold text-forest">Sponlapat / BD</span>
           </div>
         </div>
 
         {/* CONTROL PANEL */}
-        <aside className="scrl flex w-full flex-none flex-col gap-[18px] overflow-y-auto border-t border-hairline bg-white p-[18px] md:w-[336px] md:border-l md:border-t-0">
+        <aside className="scrl flex w-full flex-none flex-col gap-[18px] overflow-y-auto border-t border-hairline bg-white p-[18px] md:w-[310px] md:border-l md:border-t-0">
           {/* Camera Views */}
           <section>
             <SectionTitle>Camera Views</SectionTitle>
@@ -293,7 +298,7 @@ export default function Warehouse3D() {
           <section>
             <SectionTitle>Key Zones</SectionTitle>
             <div className="flex flex-col gap-1.5">
-              {zones.map((z) => {
+              {zones.map((z, index) => {
                 const active = state.selected === z.key
                 return (
                   <button
@@ -306,9 +311,9 @@ export default function Warehouse3D() {
                     }}
                   >
                     <span
-                      className="flex-none rounded-full"
-                      style={{ width: 11, height: 11, background: z.color }}
-                    />
+                      className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white"
+                      style={{ background: z.color }}
+                    >{String(index + 1).padStart(2, '0')}</span>
                     <span className="text-[13px] font-semibold">{z.label}</span>
                   </button>
                 )

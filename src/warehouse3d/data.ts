@@ -15,21 +15,21 @@ export const zones: Zone[] = [
     key: 'storage',
     label: 'Straw Bale Storage Zone',
     color: '#c8902f',
-    pos: [-4, 3.6, 0],
+    pos: [-4, 4.7, 2.5],
     desc: 'Compressed rectangular bales are stacked in neat rows on the raised concrete slab, kept clear of ground moisture and organised for first-in / first-out collection.',
   },
   {
     key: 'loading',
     label: 'Truck Loading / Unloading',
     color: '#2f6b3f',
-    pos: [12.5, 1.7, 0],
+    pos: [17.8, 3.4, 4.3],
     desc: 'A wide front apron lets trucks and tractors park to load and unload bales, with a gentle ramp up to the slab for trolleys and forklifts.',
   },
   {
     key: 'lane',
     label: 'Internal Access Lane',
     color: '#3f7fae',
-    pos: [4, 1.2, 0],
+    pos: [4, 1.2, -1.2],
     desc: 'A clear internal aisle runs through the warehouse so forklifts and small tractors can move bales in and out without disturbing the stacks.',
   },
   {
@@ -70,11 +70,11 @@ export interface View {
 }
 
 export const views: Record<ViewName, View> = {
-  front: { pos: [0, 9, 32], look: [0, 3, 0] },
-  side: { pos: [34, 9, 0], look: [0, 3, 0] },
+  front: { pos: [34, 9, 0], look: [0, 3, 0] },
+  side: { pos: [0, 9, 32], look: [0, 3, 0] },
   top: { pos: [18, 30, 18], look: [0, 0, 0] },
-  interior: { pos: [9, 3, 1], look: [-9, 2.2, 0] },
-  iso: { pos: [26, 15, 24], look: [0, 2, 0] },
+  interior: { pos: [8.5, 2.3, -1.2], look: [-8, 2.2, -1.2] },
+  iso: { pos: [30, 22, 32], look: [0, 2, 0] },
 }
 
 // shared geometry constants (world units = metres)
@@ -87,7 +87,7 @@ export const COL_XS = [-9, -5.4, -1.8, 1.8, 5.4, 9]
 export const COL_ZS = [-5, 5]
 
 export const SKY = {
-  sunny: new THREE.Color('#d2e8f2'),
+  sunny: new THREE.Color('#dce6ec'), // fog = horizon haze of the physical sky
   rainy: new THREE.Color('#97a4ad'),
 }
 

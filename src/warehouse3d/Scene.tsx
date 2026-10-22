@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { Html, OrbitControls } from '@react-three/drei'
+import { Html, OrbitControls, RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { ConstructionDetails, DetailedBales, RiceRows, surfaceTexture } from './Details'
 import {
   COL_XS,
   COL_ZS,
@@ -47,30 +49,36 @@ const mk = (c: string, o: { m?: number; r?: number; side?: THREE.Side; po?: numb
   })
 
 function useMaterials() {
-  return useMemo(() => {
-    const bale = ['#cda23f', '#c79a36', '#d3ab48', '#c4972f', '#d8b257'].map((c) =>
+  const materials = useMemo(() => {
+    const bale = ['#eee0ba', '#e1cfa1', '#e9d5ab', '#dac79a', '#e4d5b0'].map((c) =>
       mk(c, { r: 0.96 }),
     )
-    const foliage = ['#4f7d39', '#5e8f43', '#447033'].map((c) => mk(c, { r: 0.95 }))
+    const foliage = ['#657e55', '#7e9469', '#566e4b'].map((c) => mk(c, { r: 0.95 }))
+    const concrete = surfaceTexture('concrete')
+    const earth = surfaceTexture('earth')
+    const straw = surfaceTexture('straw')
+    const metal = surfaceTexture('metal')
+    const textured = (color: string, map: THREE.Texture, bump: number, m = 0) => new THREE.MeshStandardMaterial({ color, map, bumpMap: map, bumpScale: bump, roughness: .85, metalness: m })
+    bale.forEach(m => { m.map = straw; m.bumpMap = straw; m.bumpScale = .015 })
     return {
-      steel: mk('#828a93', { m: 0.65, r: 0.42 }),
+      steel: mk('#707b79', { m: 0.25, r: 0.55 }),
       steelDark: mk('#5f666e', { m: 0.6, r: 0.5 }),
-      grass: mk('#7ca64d', { r: 0.97 }),
-      apron: mk('#c2bcab', { r: 0.9, po: -1 }), // concrete yard around the warehouse
-      greenPatch: mk('#83a64a', { r: 0.96, po: -3 }), // grass patches for balance
-      slab: mk('#cfc9ba', { r: 0.92 }),
-      ramp: mk('#c4beac', { r: 0.95 }),
+      grass: mk('#9da984', { r: 0.97 }),
+      apron: textured('#eee9dc', concrete, .025), // concrete yard around the warehouse
+      greenPatch: mk('#a7b28b', { r: 0.96, po: -3 }), // grass patches for balance
+      slab: textured('#e8e5db', concrete, .018),
+      ramp: textured('#dedacf', concrete, .02),
       drainCh: mk('#565b52', { r: 0.9, po: -5 }),
-      road: mk('#b89b6f', { r: 0.98, po: -2 }),
+      road: textured('#d8d2c6', earth, .05), // neutral tint — warm sun + earth bounce already push it brown
       canalBank: mk('#bda57b', { r: 0.97 }),
       canalWater: mk('#5fa0c4', { m: 0.25, r: 0.18 }),
-      paddy: mk('#6fa83c', { r: 0.95 }),
-      paddyGreen2: mk('#5f9a34', { r: 0.95 }),
-      paddyGold: mk('#dcc24f', { r: 0.9 }),
-      paddyGold2: mk('#cdb144', { r: 0.91 }),
-      paddyGold3: mk('#e6d06a', { r: 0.9 }),
-      bund: mk('#a98f64', { r: 0.97 }),
-      roofMetal: mk('#c6cace', { m: 0.45, r: 0.5 }),
+      paddy: mk('#94a875', { r: 0.95 }),
+      paddyGreen2: mk('#82996c', { r: 0.95 }),
+      paddyGold: mk('#c8bd83', { r: 0.9 }),
+      paddyGold2: mk('#b9ad78', { r: 0.91 }),
+      paddyGold3: mk('#d7cea0', { r: 0.9 }),
+      bund: mk('#afa38a', { r: 0.97 }),
+      roofMetal: textured('#e0e5e5', metal, .002, .35),
       rib: mk('#aeb3b8', { m: 0.5, r: 0.5 }),
       ridgeCap: mk('#9aa0a6', { m: 0.55, r: 0.4 }),
       gable: mk('#dcd7c9', { r: 0.85, side: THREE.DoubleSide }),
@@ -104,6 +112,15 @@ function useMaterials() {
       foliage,
     }
   }, [])
+  useEffect(() => () => {
+    const textures = new Set<THREE.Texture>()
+    Object.values(materials).flat().forEach(material => {
+      if (material.map) textures.add(material.map)
+      material.dispose()
+    })
+    textures.forEach(texture => texture.dispose())
+  }, [materials])
+  return materials
 }
 
 type Mats = ReturnType<typeof useMaterials>
@@ -140,6 +157,13 @@ function Rig({
   rotate: boolean
 }) {
   const camera = useThree((s) => s.camera)
+  const size = useThree((s) => s.size)
+  useEffect(() => {
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.fov = size.width / size.height < 1.15 ? 56 : 42
+      camera.updateProjectionMatrix()
+    }
+  }, [camera, size.width, size.height])
   const controls = useThree((s) => s.controls) as any
   const tween = useRef({ pos: new THREE.Vector3(), look: new THREE.Vector3(), active: false })
 
@@ -182,97 +206,146 @@ function Rig({
       maxPolarAngle={Math.PI * 0.495}
       minDistance={8}
       maxDistance={95}
+      onStart={() => { tween.current.active = false }}
       autoRotateSpeed={0.9}
     />
   )
 }
 
-// ---- weather: background, fog, light intensities + rain ----
+// ---- weather: gradient sky (background + image-based light), fog, sun + rain ----
+const SUN: Vec3 = [36, 46, 20]
+const SKY_GRADIENT = {
+  sunny: { zenith: '#5d9bd6', mid: '#a9cbe6', earth: '#b8ae8c' },
+  rainy: { zenith: '#6f7d87', mid: '#8d9aa3', earth: '#7d7a6c' },
+}
+
+// ponytail: a 2px-wide LDR canvas gradient as an equirect map — cheaper and far easier
+// to tune than three's HDR Sky shader, which blew out at this scene's exposure.
+// `below` is what shows under the horizon: haze for the visible background (so the
+// fogged ground edge blends in), earth for lighting (warm bounce light from below).
+function skyTexture(zenith: string, mid: string, horizon: string, below: string) {
+  const c = document.createElement('canvas')
+  c.width = 2
+  c.height = 256
+  const g = c.getContext('2d')!
+  const grad = g.createLinearGradient(0, 0, 0, 256)
+  grad.addColorStop(0, zenith)
+  grad.addColorStop(0.32, mid)
+  grad.addColorStop(0.495, horizon)
+  grad.addColorStop(0.52, below)
+  grad.addColorStop(1, below)
+  g.fillStyle = grad
+  g.fillRect(0, 0, 2, 256)
+  const t = new THREE.CanvasTexture(c)
+  t.mapping = THREE.EquirectangularReflectionMapping
+  t.colorSpace = THREE.SRGBColorSpace
+  return t
+}
+
 function Weather({ weather }: { weather: 'sunny' | 'rainy' }) {
   const scene = useThree((s) => s.scene)
   const sun = useRef<THREE.DirectionalLight>(null!)
   const hemi = useRef<THREE.HemisphereLight>(null!)
   const amb = useRef<THREE.AmbientLight>(null!)
-  const rain = useRef<THREE.Points>(null!)
+  const rain = useRef<THREE.LineSegments>(null!)
 
   const rainPos = useMemo(() => {
     const RN = 1800
-    const p = new Float32Array(RN * 3)
+    const p = new Float32Array(RN * 6)
     for (let i = 0; i < RN; i++) {
-      p[i * 3] = (Math.random() - 0.5) * 72
-      p[i * 3 + 1] = Math.random() * 34
-      p[i * 3 + 2] = (Math.random() - 0.5) * 72
+      const x = (Math.random() - .5) * 72, y = Math.random() * 34, z = (Math.random() - .5) * 72
+      p.set([x, y, z, x + .05, y + .5, z], i * 6)
     }
     return p
   }, [])
 
   useEffect(() => {
     const rainy = weather === 'rainy'
-    scene.background = rainy ? SKY.rainy : SKY.sunny
+    const s = SKY_GRADIENT[weather]
+    const haze = '#' + (rainy ? SKY.rainy : SKY.sunny).getHexString()
+    const bg = skyTexture(s.zenith, s.mid, haze, haze)
+    const env = skyTexture(s.zenith, s.mid, haze, s.earth)
+    scene.background = bg
+    scene.environment = env
+    scene.environmentIntensity = rainy ? 0.6 : 1
     if (!scene.fog) scene.fog = new THREE.Fog('#d2e8f2', 80, 200)
     const fog = scene.fog as THREE.Fog
     fog.color.copy(rainy ? SKY.rainy : SKY.sunny)
-    fog.near = rainy ? 42 : 80
-    fog.far = rainy ? 150 : 200
+    fog.near = rainy ? 40 : 70
+    fog.far = rainy ? 150 : 240
+    // ponytail: the sky environment now supplies most fill light, so hemi/ambient
+    // stay low — raising them again is what made the scene look washed out.
     if (sun.current) {
-      sun.current.intensity = rainy ? 0.35 : 1.2
-      sun.current.color.set(rainy ? '#c2cad1' : '#fff1d6')
+      sun.current.intensity = rainy ? 0.6 : 2.8
+      sun.current.color.set(rainy ? '#c2cad1' : '#ffe9c7')
     }
     if (hemi.current) {
-      hemi.current.intensity = rainy ? 0.42 : 0.6
+      hemi.current.intensity = rainy ? 0.5 : 0.35
       hemi.current.color.set(rainy ? '#aab6bf' : '#cfe8ff')
     }
-    if (amb.current) amb.current.intensity = rainy ? 0.32 : 0.22
+    if (amb.current) amb.current.intensity = rainy ? 0.25 : 0.05
+    return () => {
+      bg.dispose()
+      env.dispose()
+    }
   }, [weather, scene])
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (weather !== 'rainy' || !rain.current) return
     const p = rainPos
-    for (let i = 1; i < p.length; i += 3) {
-      p[i] -= 0.6
+    for (let i = 1; i < p.length; i += 6) {
+      p[i] -= Math.min(delta, .1) * 15
       if (p[i] < 0) p[i] = 34
+      p[i + 3] = p[i] + .5
     }
     rain.current.geometry.attributes.position.needsUpdate = true
   })
 
   return (
     <>
-      <hemisphereLight ref={hemi} args={['#cfe8ff', '#6f7048', 0.6]} />
+      <hemisphereLight ref={hemi} args={['#cfe8ff', '#c1baa3', 0.6]} />
       <ambientLight ref={amb} intensity={0.22} />
       <directionalLight
         ref={sun}
         color="#fff1d6"
         intensity={1.2}
-        position={[36, 46, 20]}
+        position={SUN}
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-camera-left={-50}
-        shadow-camera-right={50}
-        shadow-camera-top={50}
-        shadow-camera-bottom={-50}
+        shadow-mapSize-width={4096}
+        shadow-mapSize-height={4096}
+        shadow-camera-left={-32}
+        shadow-camera-right={32}
+        shadow-camera-top={32}
+        shadow-camera-bottom={-32}
         shadow-camera-near={1}
         shadow-camera-far={170}
-        shadow-bias={-0.0004}
+        shadow-bias={-0.00015}
+        shadow-normalBias={0.035}
+        shadow-radius={3}
       />
-      <points ref={rain} visible={weather === 'rainy'}>
+      <lineSegments ref={rain} visible={weather === 'rainy'}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[rainPos, 3]} />
         </bufferGeometry>
-        <pointsMaterial
-          color="#9fb4c4"
-          size={0.17}
+        <lineBasicMaterial
+          color="#bfd0db"
           transparent
           opacity={0.55}
           depthWrite={false}
         />
-      </points>
+      </lineSegments>
     </>
   )
 }
 
 // ---- ground & surrounding site ----
 function Site({ mats }: { mats: Mats }) {
+  const rampGeometry = useMemo(() => {
+    const shape = new THREE.Shape()
+    shape.moveTo(9.7, .10); shape.lineTo(14.1, .10); shape.lineTo(14.1, .12); shape.lineTo(9.7, FLOOR_TOP); shape.closePath()
+    return new THREE.ExtrudeGeometry(shape, { depth: 5, bevelEnabled: false })
+  }, [])
+  useEffect(() => () => rampGeometry.dispose(), [rampGeometry])
   const pmat: Record<string, Mat> = {
     g1: mats.paddyGold,
     g2: mats.paddyGold2,
@@ -340,7 +413,7 @@ function Site({ mats }: { mats: Mats }) {
       {/* raised concrete slab — top y = 0.60 */}
       <B size={[19.4, 0.6, 11]} pos={[0, 0.3, 0]} mat={mats.slab} />
       {/* front loading ramp */}
-      <B size={[4.4, 0.35, 5]} pos={[11.6, 0.3, 0]} rot={[0, 0, Math.atan2(0.55, 4.4)]} mat={mats.ramp} />
+      <mesh geometry={rampGeometry} position={[0, 0, -2.5]} material={mats.ramp} receiveShadow />
       {/* drainage channels (raised dark covers) — top y = 0.16 */}
       {(
         [
@@ -356,8 +429,9 @@ function Site({ mats }: { mats: Mats }) {
       <B size={[9, 0.06, 52]} pos={[20, 0.09, 12]} mat={mats.road} cast={false} />
       <B size={[9, 0.06, 40]} pos={[17, 0.09, 9.5]} rot={[0, Math.PI / 2, 0]} mat={mats.road} cast={false} />
       {/* irrigation canal */}
-      <B size={[90, 0.5, 3.2]} pos={[0, 0.1, 16.5]} mat={mats.canalBank} cast={false} />
+      {[15.15, 17.85].map(z => <B key={z} size={[90, .3, .6]} pos={[0, .15, z]} mat={mats.canalBank} cast={false} />)}
       <B size={[90, 0.4, 2]} pos={[0, 0.0, 16.5]} mat={mats.canalWater} cast={false} />
+      <RiceRows tiles={paddies.tiles} />
       {/* surrounding rice paddies — golden fields */}
       {paddies.tiles.map((t, i) => (
         <B key={`p${i}`} size={t.size} pos={t.pos} mat={pmat[t.mat]} cast={false} recv={false} />
@@ -378,35 +452,37 @@ function Structure({ mats }: { mats: Mats }) {
       {COL_XS.map((x) =>
         COL_ZS.map((z) => (
           <group key={`c${x}_${z}`}>
-            <B size={[0.32, EAVE - FLOOR_TOP, 0.32]} pos={[x, FLOOR_TOP + (EAVE - FLOOR_TOP) / 2, z]} mat={mats.steel} />
-            <B size={[0.6, 0.1, 0.6]} pos={[x, FLOOR_TOP + 0.05, z]} mat={mats.steelDark} />
+            {/* H-200 profile from the current BOQ; flange/web thickness illustrative. */}
+            <B size={[.008, EAVE - FLOOR_TOP, .2]} pos={[x, (EAVE + FLOOR_TOP) / 2, z]} mat={mats.steel} />
+            {[-.094, .094].map(offset => <B key={offset} size={[.2, EAVE - FLOOR_TOP, .012]} pos={[x, (EAVE + FLOOR_TOP) / 2, z + offset]} mat={mats.steel} />)}
+            <B size={[0.38, 0.025, 0.38]} pos={[x, FLOOR_TOP + 0.05, z]} mat={mats.steelDark} />
           </group>
         )),
       )}
       {/* eave beams along X */}
       {COL_ZS.map((z) => (
-        <B key={`eb${z}`} size={[19.5, 0.3, 0.3]} pos={[0, EAVE, z]} mat={mats.steel} />
+        <B key={`eb${z}`} size={[19.5, 0.3, 0.3]} pos={[0, EAVE - .25, z]} mat={mats.steel} />
       ))}
       {/* tie beams along Z */}
       {COL_XS.map((x) => (
-        <B key={`tb${x}`} size={[0.26, 0.26, 10]} pos={[x, EAVE, 0]} mat={mats.steel} />
+        <B key={`tb${x}`} size={[0.26, 0.26, 10]} pos={[x, EAVE - .18, 0]} mat={mats.steel} />
       ))}
       {/* trusses per frame line */}
       {COL_XS.map((x) => (
         <group key={`tr${x}`}>
-          <B size={[0.2, 0.2, 10]} pos={[x, EAVE, 0]} mat={mats.steelDark} />
-          <B size={[0.16, RIDGE - EAVE, 0.16]} pos={[x, EAVE + (RIDGE - EAVE) / 2, 0]} mat={mats.steelDark} />
+          <B size={[0.2, 0.2, 10]} pos={[x, EAVE - .18, 0]} mat={mats.steelDark} />
+          <B size={[0.16, RIDGE - EAVE - .15, 0.16]} pos={[x, EAVE + (RIDGE - EAVE - .15) / 2, 0]} mat={mats.steelDark} />
           {[-1, 1].map((s) => (
             <B
               key={s}
               size={[0.2, 0.18, chordLen]}
-              pos={[x, (EAVE + RIDGE) / 2, s * 2.5]}
+              pos={[x, (EAVE + RIDGE) / 2 - .14, s * 2.5]}
               rot={[s * ang, 0, 0]}
               mat={mats.steel}
             />
           ))}
           {[-2.5, 2.5].map((z) => {
-            const yTop = EAVE + (1 - Math.abs(z) / 5) * (RIDGE - EAVE)
+            const yTop = EAVE + (1 - Math.abs(z) / 5) * (RIDGE - EAVE) - .14
             return (
               <B
                 key={`w${z}`}
@@ -423,10 +499,10 @@ function Structure({ mats }: { mats: Mats }) {
         [-1, 1].map((s) => {
           const z = s * (1 - t) * 5
           const y = EAVE + t * (RIDGE - EAVE)
-          return <B key={`pu${t}_${s}`} size={[19.6, 0.1, 0.1]} pos={[0, y, z]} mat={mats.steelDark} />
+          return <B key={`pu${t}_${s}`} size={[19.6, 0.1, 0.1]} pos={[0, y - .14, z]} mat={mats.steelDark} />
         }),
       )}
-      <B size={[19.6, 0.12, 0.12]} pos={[0, RIDGE, 0]} mat={mats.steelDark} />
+      <B size={[19.6, 0.12, 0.12]} pos={[0, RIDGE - .14, 0]} mat={mats.steelDark} />
     </group>
   )
 }
@@ -456,16 +532,16 @@ function Roof({ mats }: { mats: Mats }) {
       {[-1, 1].map((s) => (
         <group key={`slope${s}`}>
           <B
-            size={[roofLenX, 0.16, slopeLen]}
+            size={[roofLenX, 0.035, slopeLen]}
             pos={[0, yMidPanel, s * (runZ / 2)]}
             rot={[s * ang, 0, 0]}
             mat={mats.roofMetal}
           />
-          {Array.from({ length: 19 }, (_, k) => k - 9).map((i) => (
+          {Array.from({ length: 85 }, (_, k) => k - 42).map((i) => (
             <B
               key={i}
-              size={[0.05, 0.04, slopeLen]}
-              pos={[i * 1.15, yMidPanel + 0.1, s * (runZ / 2)]}
+              size={[0.026, 0.024, slopeLen]}
+              pos={[i * .247, yMidPanel + 0.029, s * (runZ / 2)]}
               rot={[s * ang, 0, 0]}
               mat={mats.rib}
               cast={false}
@@ -474,14 +550,14 @@ function Roof({ mats }: { mats: Mats }) {
         </group>
       ))}
       {/* ridge cap */}
-      <B size={[roofLenX + 0.1, 0.26, 0.55]} pos={[0, RIDGE + 0.16, 0]} mat={mats.ridgeCap} />
+      <B size={[roofLenX + 0.1, 0.08, 0.38]} pos={[0, RIDGE + 0.055, 0]} mat={mats.ridgeCap} />
       {/* gable end triangles */}
       {[-1, 1].map((sx) => (
         <mesh key={`g${sx}`} geometry={gableGeo} material={mats.gable} position={[sx * 9, 0, 0]} castShadow receiveShadow />
       ))}
       {/* gutters */}
       {[-1, 1].map((s) => (
-        <B key={`gut${s}`} size={[18.6, 0.18, 0.22]} pos={[0, EAVE - 0.18, s * (5 + ohZ - 0.1)]} mat={mats.gutter} />
+        <B key={`gut${s}`} size={[roofLenX, 0.18, 0.22]} pos={[0, EAVE - ohZ * (RIDGE - EAVE) / 5 - 0.12, s * (5 + ohZ - 0.1)]} mat={mats.gutter} />
       ))}
       {/* downpipes */}
       {(
@@ -492,7 +568,7 @@ function Roof({ mats }: { mats: Mats }) {
           [9.1, -5.9],
         ] as const
       ).map(([x, z], i) => (
-        <B key={`dp${i}`} size={[0.16, EAVE, 0.16]} pos={[x, EAVE / 2, z]} mat={mats.downpipe} />
+        <B key={`dp${i}`} size={[0.11, EAVE - .7, 0.11]} pos={[x, (EAVE - .7) / 2, z]} mat={mats.downpipe} />
       ))}
     </group>
   )
@@ -526,12 +602,12 @@ function Doors({ mats, open }: { mats: Mats; open: boolean }) {
     <group>
       {config.map((c, i) => (
         <group key={i} ref={(el) => (leaves.current[i] = el)} position={[9, 0, c.hz]}>
-          <B size={[0.12, doorH, 4.7]} pos={[0, c.cy, c.cz]} mat={mats.panel} />
+          <B size={[0.018, doorH, 4.7]} pos={[0, c.cy, c.cz]} mat={mats.panel} />
           {[doorY0 + 0.16, doorY0 + doorH - 0.16].map((ry, k) => (
             <B key={k} size={[0.16, 0.2, 4.8]} pos={[0, ry, c.cz]} mat={mats.frame} />
           ))}
-          {[-1.6, -0.55, 0.55, 1.6].map((o, k) => (
-            <B key={`r${k}`} size={[0.15, doorH - 0.5, 0.07]} pos={[0, c.cy, c.cz + o]} mat={mats.doorRib} />
+          {Array.from({ length: 24 }, (_, k) => -2.2 + k * .19).map((o, k) => (
+            <B key={`r${k}`} size={[0.035, doorH - 0.5, 0.026]} pos={[0, c.cy, c.cz + o]} mat={mats.doorRib} />
           ))}
           <B size={[0.14, 0.45, 3.4]} pos={[0, doorY0 + doorH - 0.65, c.cz]} mat={mats.win} />
         </group>
@@ -566,9 +642,9 @@ function SideWalls({ mats, open }: { mats: Mats; open: boolean }) {
       {panels.map((p, i) => (
         <group key={i}>
           <group ref={(el) => (grps.current[i] = el)} position={[p.bx, doorY0 + wallH, p.sz * 5]}>
-            <B size={[3.3, wallH, 0.08]} pos={[0, -wallH / 2, 0]} mat={mats.panel} />
-            {[-2, -1, 0, 1, 2].map((k) => (
-              <B key={k} size={[3.3, 0.1, 0.05]} pos={[0, -wallH / 2 + k * 1.2, 0.04]} mat={mats.doorRib} />
+            <B size={[3.3, wallH, 0.016]} pos={[0, -wallH / 2, 0]} mat={mats.panel} />
+            {Array.from({ length: 36 }, (_, k) => k).map((k) => (
+              <B key={k} size={[3.3, 0.015, 0.026]} pos={[0, -.08 - k * .165, .016]} mat={mats.doorRib} />
             ))}
           </group>
           {/* roll drum at the eave (static) */}
@@ -581,49 +657,6 @@ function SideWalls({ mats, open }: { mats: Mats; open: boolean }) {
   )
 }
 
-// ---- straw bales ----
-function Bales({ mats }: { mats: Mats }) {
-  const slabY = FLOOR_TOP
-  const bales = useMemo(() => {
-    const out: { pos: Vec3; mat: number }[] = []
-    let n = 0
-    const push = (x: number, y: number, z: number) => {
-      out.push({ pos: [x, y, z], mat: n % 5 })
-      n++
-    }
-    // main storage block — taller clear height now allows 5 staggered layers
-    for (let L = 0; L < 5; L++) {
-      const yy = slabY + 0.43 + L * 0.86
-      const off = L % 2 ? 0.45 : 0
-      for (let cx = 0; cx < 4; cx++) {
-        for (let rz = 0; rz < 7; rz++) {
-          const x = -8.3 + cx * 2.05 + off
-          const z = -3.4 + rz * 1.02
-          if (x > -1.5) continue
-          push(x, yy, z)
-        }
-      }
-    }
-    // secondary 3-high stack on the +z side, clear of the forklift lane (z=-1.5)
-    for (let L = 0; L < 3; L++) {
-      for (let rz = 0; rz < 4; rz++) push(-0.5, slabY + 0.43 + L * 0.86, 1.3 + rz * 1.02)
-    }
-    // staged on the loading apron, just inside the door
-    push(10.2, 0.5, -2.6)
-    push(10.2, 0.5, -3.6)
-    push(10.2, 1.36, -3.1)
-    return out
-  }, [slabY])
-
-  return (
-    <group>
-      {bales.map((b, i) => (
-        <B key={i} size={[1.9, 0.85, 0.95]} pos={b.pos} mat={mats.bale[b.mat]} />
-      ))}
-    </group>
-  )
-}
-
 // reusable wheel with hub cap
 function Wheel({ pos, r = 0.55, mats }: { pos: Vec3; r?: number; mats: Mats }) {
   return (
@@ -631,7 +664,7 @@ function Wheel({ pos, r = 0.55, mats }: { pos: Vec3; r?: number; mats: Mats }) {
       <mesh rotation={[Math.PI / 2, 0, 0]} material={mats.wheel} castShadow>
         <cylinderGeometry args={[r, r, 0.4, 18]} />
       </mesh>
-      <mesh position={[0, Math.sign(pos[2] || 1) * 0.21, 0]} rotation={[Math.PI / 2, 0, 0]} material={mats.hub}>
+      <mesh position={[0, 0, Math.sign(pos[2] || 1) * 0.21]} rotation={[Math.PI / 2, 0, 0]} material={mats.hub}>
         <cylinderGeometry args={[r * 0.42, r * 0.42, 0.06, 12]} />
       </mesh>
     </group>
@@ -642,14 +675,14 @@ function Wheel({ pos, r = 0.55, mats }: { pos: Vec3; r?: number; mats: Mats }) {
 function Truck({ mats }: { mats: Mats }) {
   // local frame: cab toward −x (forward), flatbed behind toward +x
   return (
-    <group position={[14, 0, 2.4]} rotation={[0, 0, 0]}>
+    <group position={[17.8, .12, 4.3]} rotation={[0, 0, 0]}>
       {/* chassis frame */}
       <B size={[7.2, 0.32, 1.9]} pos={[-0.3, 0.78, 0]} mat={mats.truckChassis} />
       {/* cab */}
-      <B size={[2.0, 1.55, 2.45]} pos={[-2.7, 1.78, 0]} mat={mats.truckCab} />
-      <B size={[1.05, 0.85, 2.35]} pos={[-3.85, 1.35, 0]} mat={mats.truckCab} />
+      <RoundedBox args={[2, 1.55, 2.45]} radius={.09} smoothness={3} position={[-2.7, 1.78, 0]} material={mats.truckCab} castShadow receiveShadow />
+      <RoundedBox args={[1.05, .85, 2.35]} radius={.08} smoothness={3} position={[-3.85, 1.35, 0]} material={mats.truckCab} castShadow receiveShadow />
       {/* windshield + side windows */}
-      <B size={[0.09, 0.7, 2.0]} pos={[-3.25, 2.05, 0]} mat={mats.win} />
+      <B size={[0.09, 0.7, 2.0]} pos={[-3.71, 2.05, 0]} mat={mats.win} />
       {[-1.24, 1.24].map((z) => (
         <B key={z} size={[1.3, 0.6, 0.06]} pos={[-2.7, 2.0, z]} mat={mats.win} />
       ))}
@@ -678,13 +711,10 @@ function Truck({ mats }: { mats: Mats }) {
           <B key={`${x}_${z}`} size={[0.12, 0.7, 0.12]} pos={[x, 1.5, z]} mat={mats.truckChassis} />
         )),
       )}
-      {/* bales loaded on the bed (delivery) */}
-      {[-0.3, 1.4].map((bx, ix) =>
-        [-0.65, 0.65].map((bz, iz) => (
-          <B key={`${bx}_${bz}`} size={[1.7, 0.8, 0.95]} pos={[bx, 1.62, bz]} mat={mats.bale[(ix + iz + 2) % 5]} />
-        )),
-      )}
-      <B size={[1.7, 0.8, 0.95]} pos={[0.55, 2.42, 0]} mat={mats.bale[1]} />
+      {/* Small bales, resting on the bed rather than floating above it. */}
+      {[0, 1, 2, 3].flatMap(layer => [0, 1, 2, 3].flatMap(col => [-.96, -.48, 0, .48, .96].map(z => (
+        <B key={`${layer}${col}${z}`} size={[1, .36, .45]} pos={[-.57 + col * 1.04, 1.38 + layer * .365, z]} mat={mats.bale[(layer + col) % 5]} />
+      ))))}
       {/* axles: front + rear dual */}
       {([[-3.0, -1.25], [-3.0, 1.25], [1.0, -1.3], [1.0, 1.3], [2.5, -1.3], [2.5, 1.3]] as const).map(([wx, wz], i) => (
         <Wheel key={i} pos={[wx, 0.55, wz]} mats={mats} />
@@ -695,32 +725,29 @@ function Truck({ mats }: { mats: Mats }) {
 
 // ---- simple low-poly person ----
 function Person({ pos, rot = 0, shirt, mats, hat = false }: { pos: Vec3; rot?: number; shirt: Mat; mats: Mats; hat?: boolean }) {
-  return (
-    <group position={pos} rotation={[0, rot, 0]}>
-      <B size={[0.18, 0.7, 0.22]} pos={[-0.12, 0.35, 0]} mat={mats.pants} />
-      <B size={[0.18, 0.7, 0.22]} pos={[0.12, 0.35, 0]} mat={mats.pants} />
-      <B size={[0.5, 0.7, 0.28]} pos={[0, 1.05, 0]} mat={shirt} />
-      <B size={[0.14, 0.6, 0.16]} pos={[-0.32, 1.05, 0]} mat={shirt} />
-      <B size={[0.14, 0.6, 0.16]} pos={[0.32, 1.05, 0]} mat={shirt} />
-      <mesh position={[0, 1.58, 0]} material={mats.skin} castShadow>
-        <sphereGeometry args={[0.16, 12, 12]} />
-      </mesh>
-      {hat && (
-        <mesh position={[0, 1.72, 0]} material={mats.hat} castShadow>
-          <coneGeometry args={[0.3, 0.2, 14]} />
-        </mesh>
-      )}
-    </group>
-  )
+  return <group position={pos} rotation={[0, rot, 0]}>
+    {[-1, 1].map(side => <group key={side}>
+      <mesh position={[side * .105, .46, 0]} material={mats.pants} castShadow><capsuleGeometry args={[.075, .67, 5, 10]} /></mesh>
+      <B size={[.145, .09, .28]} pos={[side * .105, .045, .035]} mat={mats.wheel} />
+      <mesh position={[side * .255, 1.06, 0]} rotation={[0, 0, side * .12]} material={shirt} castShadow><capsuleGeometry args={[.06, .42, 5, 10]} /></mesh>
+      <mesh position={[side * .29, .78, 0]} material={mats.skin}><sphereGeometry args={[.055, 12, 8]} /></mesh>
+    </group>)}
+    <mesh position={[0, 1.13, 0]} scale={[1, 1, .58]} material={shirt} castShadow><capsuleGeometry args={[.2, .24, 6, 14]} /></mesh>
+    <mesh position={[0, 1.52, 0]} scale={[.82, 1.12, .9]} material={mats.skin} castShadow><sphereGeometry args={[.13, 18, 12]} /></mesh>
+    {hat && <group position={[0, 1.65, 0]}>
+      <mesh material={mats.hat} castShadow><sphereGeometry args={[.145, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2]} /></mesh>
+      <mesh material={mats.hat}><cylinderGeometry args={[.18, .18, .025, 20]} /></mesh>
+    </group>}
+  </group>
 }
 
 // ---- onlookers watching the operation ----
 function People({ mats }: { mats: Mats }) {
   return (
     <group>
-      <Person pos={[13.5, 0, -4.5]} rot={-Math.PI / 2 - 0.3} shirt={mats.shirtA} mats={mats} hat />
-      <Person pos={[14.4, 0, -3.6]} rot={-Math.PI / 2 - 0.5} shirt={mats.shirtD} mats={mats} />
-      <Person pos={[12.8, 0, -6.2]} rot={-Math.PI / 2 + 0.2} shirt={mats.shirtB} mats={mats} hat />
+      <Person pos={[15.6, .12, -4.5]} rot={-Math.PI / 2 - 0.3} shirt={mats.shirtA} mats={mats} hat />
+      <Person pos={[16.4, .12, -3.6]} rot={-Math.PI / 2 - 0.5} shirt={mats.shirtD} mats={mats} />
+      <Person pos={[16, .12, -5.9]} rot={-Math.PI / 2 + 0.2} shirt={mats.shirtB} mats={mats} hat />
       <Person pos={[-3, 0, -7.5]} rot={0.35} shirt={mats.shirtC} mats={mats} hat />
       <Person pos={[-1.4, 0, -8] as Vec3} rot={0.1} shirt={mats.shirtA} mats={mats} />
     </group>
@@ -735,76 +762,49 @@ const FK_Z = -1.5 // internal lane
 function Forklift({ mats, active }: { mats: Mats; active: boolean }) {
   const grp = useRef<THREE.Group>(null!)
   const carried = useRef<THREE.Group>(null!)
-  const placed = useRef<THREE.Mesh>(null!)
   const phase = useRef(0)
-
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!active || !grp.current) return
-    phase.current += 0.0032
+    phase.current += Math.min(delta, .1) / 28
     const t = phase.current % 1
-    const lerp = (a: number, b: number, k: number) => a + (b - a) * Math.min(1, Math.max(0, k))
-
-    let x = FK_PICK
-    let loaded = false
-    if (t < 0.08) {
-      x = FK_PICK
-      loaded = true // grabbed a bale
-    } else if (t < 0.42) {
-      x = lerp(FK_PICK, FK_DROP, (t - 0.08) / 0.34)
-      loaded = true
-    } else if (t < 0.5) {
-      x = FK_DROP
-      loaded = false // set down
-    } else if (t < 0.84) {
-      x = lerp(FK_DROP, FK_PICK, (t - 0.5) / 0.34)
-      loaded = false // returning empty
-    } else {
-      x = FK_PICK
-      loaded = false
-    }
-    grp.current.position.x = x
-    grp.current.rotation.y = t < 0.46 ? Math.PI : 0 // face travel direction (forks first)
-    if (carried.current) carried.current.visible = loaded
-    // the just-placed bale appears at the drop after set-down, hides as the next is carried in
-    if (placed.current) placed.current.visible = t >= 0.46 && t < 0.92
+    const movingIn = t < .5
+    const progress = movingIn ? Math.min(1, t / .42) : 1 - Math.min(1, (t - .5) / .42)
+    grp.current.position.x = THREE.MathUtils.lerp(6.5, -5.2, progress)
+    // Reverse along the aisle without an impossible 180-degree turn in place.
+    grp.current.rotation.y = Math.PI
+    carried.current.visible = t < .46
   })
-
-  return (
-    <group>
-      <group ref={grp} position={[FK_PICK, FLOOR_TOP, FK_Z]} rotation={[0, Math.PI, 0]}>
-        {/* counterweight body */}
-        <B size={[1.5, 1.0, 1.2]} pos={[-0.15, 0.85, 0]} mat={mats.forkBody} />
-        <B size={[1.0, 0.5, 1.0]} pos={[-0.4, 1.5, 0]} mat={mats.forkBody} />
-        {/* seat */}
-        <B size={[0.5, 0.5, 0.7]} pos={[-0.1, 1.45, 0]} mat={mats.forkSeat} />
-        {/* ROPS overhead guard */}
-        {([[0.35, 0.5], [0.35, -0.5], [-0.55, 0.5], [-0.55, -0.5]] as const).map(([px, pz], i) => (
-          <B key={i} size={[0.08, 1.4, 0.08]} pos={[px, 2.1, pz]} mat={mats.steelDark} />
-        ))}
-        <B size={[1.1, 0.08, 1.2]} pos={[-0.1, 2.8, 0]} mat={mats.steelDark} />
-        {/* driver */}
-        <Person pos={[-0.1, 1.55, 0]} rot={Math.PI} shirt={mats.shirtB} mats={mats} hat />
-        {/* mast + forks */}
-        <B size={[0.18, 2.4, 1.0]} pos={[0.75, 1.5, 0]} mat={mats.steelDark} />
-        <B size={[1.0, 0.12, 0.28]} pos={[1.3, 0.35, 0.32]} mat={mats.steelDark} />
-        <B size={[1.0, 0.12, 0.28]} pos={[1.3, 0.35, -0.32]} mat={mats.steelDark} />
-        {/* carried bale (toggles with load state) */}
-        <group ref={carried}>
-          <B size={[1.7, 0.8, 0.9]} pos={[1.45, 0.85, 0]} mat={mats.bale[2]} />
-        </group>
-        {/* wheels */}
-        {([[-0.5, 0.55], [-0.5, -0.55], [0.75, 0.5], [0.75, -0.5]] as const).map(([wx, wz], i) => (
-          <mesh key={i} position={[wx, 0.4, wz]} rotation={[Math.PI / 2, 0, 0]} material={mats.wheel} castShadow>
-            <cylinderGeometry args={[0.4, 0.4, 0.35, 14]} />
-          </mesh>
-        ))}
-      </group>
-      {/* freshly-placed bale left at the storage edge */}
-      <mesh ref={placed} position={[FK_DROP, FLOOR_TOP + 0.45, FK_Z]} material={mats.bale[3]} castShadow receiveShadow>
-        <boxGeometry args={[1.7, 0.85, 0.9]} />
-      </mesh>
+  return <group ref={grp} position={[6.5, FLOOR_TOP, -1.2]} rotation={[0, Math.PI, 0]}>
+    {/* Generic 2.5 t vehicle: 2.62 m to fork face, 1.15 m wide, 2.11 m guard. */}
+    <B size={[2.35, .43, 1.02]} pos={[-.15, .48, 0]} mat={mats.forkBody} />
+    <B size={[.65, .6, 1.02]} pos={[-.95, .8, 0]} mat={mats.forkBody} />
+    <B size={[.55, .12, .48]} pos={[-.35, 1.02, 0]} mat={mats.forkSeat} />
+    <B size={[.12, .45, .48]} pos={[-.6, 1.22, 0]} mat={mats.forkSeat} />
+    {[-.67, .53].flatMap(x => [-.48, .48].map(z => <B key={`${x}${z}`} size={[.045, 1.2, .045]} pos={[x, 1.48, z]} mat={mats.steelDark} />))}
+    <B size={[1.3, .055, 1.08]} pos={[-.07, 2.0825, 0]} mat={mats.steelDark} />
+    {[-.3, 0, .3].map(z => <B key={z} size={[1.22, .025, .025]} pos={[-.07, 2.05, z]} mat={mats.steelDark} />)}
+    {[-.39, .39].map(z => <B key={z} size={[.11, 1.95, .09]} pos={[1.22, 1.08, z]} mat={mats.steelDark} />)}
+    {[.4, .85, 1.4, 1.95].map(y => <B key={y} size={[.08, .045, .85]} pos={[1.2, y, 0]} mat={mats.steelDark} />)}
+    {[-.29, .29].map(z => <B key={z} size={[1.07, .04, .1]} pos={[1.79, .24, z]} mat={mats.steelDark} />)}
+    {[-.94, .85].flatMap(x => [-.47, .47].map(z => <group key={`${x}${z}`} position={[x, .3, z]}>
+      <mesh rotation={[Math.PI / 2, 0, 0]} material={mats.wheel} castShadow><cylinderGeometry args={[.3, .3, .21, 28]} /></mesh>
+      <mesh position={[0, 0, Math.sign(z) * .112]} rotation={[Math.PI / 2, 0, 0]} material={mats.hub}><cylinderGeometry args={[.13, .13, .016, 16]} /></mesh>
+    </group>))}
+    {/* Seated driver fits below the 2.11 m overhead guard. */}
+    <mesh position={[-.3, 1.35, 0]} scale={[.8, 1, .75]} material={mats.shirtB} castShadow><capsuleGeometry args={[.18, .2, 5, 12]} /></mesh>
+    <mesh position={[-.3, 1.76, 0]} material={mats.skin}><sphereGeometry args={[.12, 16, 12]} /></mesh>
+    {[-.13, .13].map(z => <group key={z}>
+      <B size={[.43, .14, .14]} pos={[-.05, 1.02, z]} mat={mats.pants} />
+      <B size={[.14, .43, .14]} pos={[.13, .83, z]} mat={mats.pants} />
+      <B size={[.3, .08, .08]} pos={[-.04, 1.37, z * 1.4]} mat={mats.shirtB} />
+    </group>)}
+    <mesh position={[.25, 1.4, 0]} rotation={[0, 0, .6]} material={mats.wheel}><torusGeometry args={[.14, .022, 8, 20]} /></mesh>
+    <mesh position={[-.55, 2.17, 0]}><cylinderGeometry args={[.055, .055, .11, 16]} /><meshStandardMaterial color="#eba429" emissive="#b06413" emissiveIntensity={.3} /></mesh>
+    <group ref={carried} position={[1.7, .32, 0]}>
+      <B size={[1.05, .12, 1.05]} pos={[0, 0, 0]} mat={mats.truckBed} />
+      {[0, 1, 2].flatMap(layer => [-.24, .24].map(z => <B key={`${layer}${z}`} size={[1, .36, .45]} pos={[0, .24 + layer * .36, z]} mat={mats.bale[layer]} />))}
     </group>
-  )
+  </group>
 }
 
 // ---- trees ----
@@ -820,6 +820,23 @@ function Trees({ mats }: { mats: Mats }) {
     [40, 12, 1.2],
     [24, 18, 1],
   ]
+  const leafGeo = useMemo(() => {
+    // icosahedron faces don't share vertices → flat, faceted normals. Weld them so the
+    // canopy shades as a soft rounded mass instead of low-poly facets.
+    const ico = new THREE.IcosahedronGeometry(1, 3)
+    ico.deleteAttribute('normal')
+    ico.deleteAttribute('uv')
+    const g = mergeVertices(ico)
+    ico.dispose()
+    const a = g.attributes.position
+    for (let i = 0; i < a.count; i++) {
+      const x = a.getX(i), y = a.getY(i), z = a.getZ(i)
+      const r = 1 + .11 * Math.sin(x * 19 + y * 13) * Math.cos(z * 17 + y * 9)
+      a.setXYZ(i, x * r, y * r, z * r)
+    }
+    g.computeVertexNormals(); return g
+  }, [])
+  useEffect(() => () => leafGeo.dispose(), [leafGeo])
   const blobs: [number, number, number, number][] = [
     [0, 3.0, 0, 1.5],
     [0.9, 3.6, 0.4, 1.0],
@@ -834,8 +851,7 @@ function Trees({ mats }: { mats: Mats }) {
             <cylinderGeometry args={[0.25 * s, 0.35 * s, 2.6 * s, 8]} />
           </mesh>
           {blobs.map(([fx, fy, fz, fr], k) => (
-            <mesh key={k} position={[fx * s, fy * s, fz * s]} material={mats.foliage[k % 3]} castShadow>
-              <icosahedronGeometry args={[fr * s, 0]} />
+            <mesh key={k} position={[fx * s, fy * s, fz * s]} scale={[fr * s, fr * s, fr * s]} geometry={leafGeo} material={mats.foliage[k % 3]} castShadow>
             </mesh>
           ))}
         </group>
@@ -899,37 +915,21 @@ function Dimensions({ visible }: { visible: boolean }) {
 }
 
 // ---- projected zone label pills ----
-function ZoneLabels({ onSelect }: { onSelect: (key: string) => void }) {
+function ZoneLabels({ onSelect, selected }: { onSelect: (key: string) => void; selected: string | null }) {
   return (
     <>
-      {zones.map((z: Zone) => (
-        <Html key={z.key} position={z.pos} center style={{ pointerEvents: 'none' }}>
-          <div style={{ transform: 'translateY(-100%)' }}>
-            <button
-              onClick={() => onSelect(z.key)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 7,
-                padding: '6px 11px',
-                background: 'rgba(255,255,255,0.94)',
-                border: `1px solid ${z.color}`,
-                borderRadius: 20,
-                boxShadow: '0 4px 14px rgba(20,40,25,0.16)',
-                whiteSpace: 'nowrap',
-                fontWeight: 700,
-                fontSize: 12,
-                color: '#26342c',
-                cursor: 'pointer',
-                pointerEvents: 'auto',
-                font: "700 12px 'Plus Jakarta Sans'",
-              }}
-            >
-              <span style={{ width: 9, height: 9, borderRadius: '50%', background: z.color, flex: 'none' }} />
-              {z.label}
-            </button>
-            <div style={{ width: 1, height: 14, background: z.color, margin: '0 auto', opacity: 0.7 }} />
-          </div>
+      {zones.map((z: Zone, index) => (
+        <Html key={z.key} position={z.pos} center zIndexRange={[2, 1]} style={{ pointerEvents: 'none' }}>
+          <button
+            className={`zone-marker${selected === z.key ? ' is-selected' : ''}`}
+            aria-label={z.label}
+            aria-pressed={selected === z.key}
+            title={z.label}
+            onClick={() => onSelect(z.key)}
+            style={{ '--zone-color': z.color } as React.CSSProperties}
+          >
+            {String(index + 1).padStart(2, '0')}
+          </button>
         </Html>
       ))}
     </>
@@ -955,13 +955,14 @@ export default function Scene({
       <Roof mats={mats} />
       <Doors mats={mats} open={state.doorsOpen} />
       <SideWalls mats={mats} open={state.wallsOpen} />
-      <Bales mats={mats} />
+      <DetailedBales />
+      <ConstructionDetails />
       <Truck mats={mats} />
-      <Forklift mats={mats} active={state.activity} />
+      <Forklift mats={mats} active={state.activity && state.doorsOpen} />
       <People mats={mats} />
       <Trees mats={mats} />
       <Dimensions visible={state.dims} />
-      {state.labels && <ZoneLabels onSelect={onSelectZone} />}
+      {state.labels && <ZoneLabels onSelect={onSelectZone} selected={state.selected} />}
     </>
   )
 }

@@ -26,3 +26,26 @@ body {
   background: #cfc9ba;
   border-radius: 4px;
 }
+
+/* Compact annotations leave the model visible at every viewing angle. */
+.zone-marker {
+  width: 29px;
+  height: 29px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: var(--zone-color);
+  color: white;
+  font: 700 10px 'Plus Jakarta Sans', sans-serif;
+  box-shadow: 0 3px 12px #273d3433;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 160ms, box-shadow 160ms;
+}
+.zone-marker:hover, .zone-marker:focus-visible, .zone-marker.is-selected {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px #ffffffb3, 0 4px 16px #273d3440;
+  outline: none;
+}
+@media (max-width: 767px) {
+  .zone-marker { width: 24px; height: 24px; font-size: 9px; }
+}
