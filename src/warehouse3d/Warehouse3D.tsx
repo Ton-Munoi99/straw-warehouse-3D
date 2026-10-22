@@ -21,7 +21,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react'
-import Scene, { CameraController, SceneState, TimeOfDay } from './Scene'
+import Scene, { CAMERA_MOVE_MS, CameraController, SceneState, TimeOfDay } from './Scene'
 import { ViewName, tourShots, views, zones } from './data'
 import { DEFAULT_INPUTS, STORAGE, storageBales, storageCapacityT } from '../feasibility/model'
 
@@ -113,15 +113,22 @@ export default function Warehouse3D() {
     setState((s) => ({ ...s, rotate: false, recording: !s.recording }))
   }
 
-  // ---- guided tour: step through tourShots, one every TOUR_MS ----
-  const TOUR_MS = 6500
+  // ---- guided tour: fly to each stop, hold TOUR_DWELL_MS once arrived, then move on;
+  // after the last stop the camera flies back to the overview and the tour ends ----
+  const TOUR_DWELL_MS = 2600
   const [tour, setTour] = useState<number | null>(null)
+  const finishTour = () => {
+    controller.current?.setView(views.iso)
+    setTour(null)
+    setState((s) => ({ ...s, selected: null }))
+  }
+  const nextStop = (t: number) => (t + 1 < tourShots.length ? setTour(t + 1) : finishTour())
   useEffect(() => {
     if (tour == null) return
     const shot = tourShots[tour]
     controller.current?.setView(shot.view)
     setState((s) => ({ ...s, rotate: false, selected: shot.zone }))
-    const id = setTimeout(() => setTour((t) => (t != null && t + 1 < tourShots.length ? t + 1 : null)), TOUR_MS)
+    const id = setTimeout(() => nextStop(tour), CAMERA_MOVE_MS + TOUR_DWELL_MS)
     return () => clearTimeout(id)
   }, [tour])
   const startTour = () => {
@@ -259,16 +266,14 @@ export default function Warehouse3D() {
             <div className="absolute inset-x-3 bottom-3 z-[4] rounded-[12px] border border-hairline bg-white/[0.94] px-4 py-3 shadow-md backdrop-blur sm:inset-x-auto sm:bottom-4 sm:left-1/2 sm:w-[min(560px,calc(100%-40px))] sm:-translate-x-1/2">
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: tourZone?.color ?? '#2f6b3f' }} />
-                <span className="text-[13px] font-extrabold text-ink">{tourZone?.label ?? (tour === 0 ? 'Overview' : 'Tour complete')}</span>
+                <span className="text-[13px] font-extrabold text-ink">{tourZone?.label ?? 'Overview'}</span>
                 <span className="ml-auto text-[11px] font-semibold text-[#9aa499]">
                   {tour + 1} / {tourShots.length}
                 </span>
               </div>
               <div className="mt-1 text-[12px] leading-[1.5] text-[#54625a]">
                 {tourZone?.desc ??
-                  (tour === 0
-                    ? `An open-sided rice-straw collection hub — 18 × 10 m, 9 m to the ridge, ${storageBales().toLocaleString('en-US')} bales (≈${Math.round(storageCapacityT(DEFAULT_INPUTS))} t) when fully stacked. Follow a load of straw from the road to the stack.`
-                    : 'That is the full loop: road → loading apron → aisle → stacks, with open sides, a deep roof and perimeter drains keeping the straw dry.')}
+                  `An open-sided rice-straw collection hub — 18 × 10 m, 9 m to the ridge, ${storageBales().toLocaleString('en-US')} bales (≈${Math.round(storageCapacityT(DEFAULT_INPUTS))} t) when fully stacked. Follow a load of straw from the road to the stack.`}
               </div>
               <div className="mt-2 flex items-center gap-1.5">
                 <div className="h-1 flex-1 overflow-hidden rounded bg-[#ece8dc]">
@@ -277,7 +282,7 @@ export default function Warehouse3D() {
                 <button aria-label="Previous stop" disabled={tour === 0} onClick={() => setTour((t) => Math.max(0, (t ?? 0) - 1))} className="rounded-md border border-hairline p-1 text-[#54625a] disabled:opacity-40">
                   <ChevronLeft size={15} />
                 </button>
-                <button aria-label="Next stop" onClick={() => setTour((t) => (t != null && t + 1 < tourShots.length ? t + 1 : null))} className="rounded-md border border-hairline p-1 text-[#54625a]">
+                <button aria-label="Next stop" onClick={() => nextStop(tour)} className="rounded-md border border-hairline p-1 text-[#54625a]">
                   <ChevronRight size={15} />
                 </button>
                 <button onClick={stopTour} className="rounded-md border border-hairline px-2 py-1 text-[11px] font-bold text-[#c25b46]">

@@ -35,6 +35,11 @@ export interface SceneState {
   recording: boolean // capturing one full 360° orbit to a video file
 }
 
+// Every camera move (view buttons + guided tour) takes the same fixed time with an
+// ease-in-out curve — time-based, so it's equally smooth at 30 or 120 fps.
+export const CAMERA_MOVE_MS = 1400
+const easeInOutCubic = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2)
+
 export interface CameraController {
   setView: (v: View) => void
   zoom: (factor: number) => void
@@ -180,15 +185,23 @@ function Rig({
     }
   }, [camera, size.width, size.height])
   const controls = useThree((s) => s.controls) as any
-  const tween = useRef({ pos: new THREE.Vector3(), look: new THREE.Vector3(), active: false })
+  const tween = useRef({
+    fromPos: new THREE.Vector3(), fromLook: new THREE.Vector3(),
+    pos: new THREE.Vector3(), look: new THREE.Vector3(),
+    t0: 0, active: false,
+  })
 
   useEffect(() => {
     if (!controls) return
     controllerRef.current = {
       setView: (v) => {
-        tween.current.pos.set(...v.pos)
-        tween.current.look.set(...v.look)
-        tween.current.active = true
+        const tw = tween.current
+        tw.fromPos.copy(camera.position)
+        tw.fromLook.copy(controls.target)
+        tw.pos.set(...v.pos)
+        tw.look.set(...v.look)
+        tw.t0 = performance.now()
+        tw.active = true
         controls.autoRotate = false
       },
       zoom: (f) => {
@@ -248,10 +261,13 @@ function Rig({
         r.mr.stop()
       }
     }
-    if (tween.current.active) {
-      camera.position.lerp(tween.current.pos, 0.07)
-      controls.target.lerp(tween.current.look, 0.07)
-      if (camera.position.distanceTo(tween.current.pos) < 0.4) tween.current.active = false
+    const tw = tween.current
+    if (tw.active) {
+      const k = Math.min(1, (performance.now() - tw.t0) / CAMERA_MOVE_MS)
+      const e = easeInOutCubic(k)
+      camera.position.lerpVectors(tw.fromPos, tw.pos, e)
+      controls.target.lerpVectors(tw.fromLook, tw.look, e)
+      if (k === 1) tw.active = false
     }
   })
 

@@ -87,7 +87,6 @@ export const tourShots: { zone: string | null; view: View }[] = [
   { zone: 'vent', view: { pos: [-15, 6, 15], look: [-4, 4, 5] } },
   { zone: 'roof', view: { pos: [-21, 18, 19], look: [0, 8, 0] } },
   { zone: 'drain', view: { pos: [13, 4, 15], look: [8, 0.6, 6.4] } },
-  { zone: null, view: views.iso },
 ]
 
 // shared geometry constants (world units = metres)

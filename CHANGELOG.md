@@ -9,6 +9,11 @@ Format based on Keep a Changelog; versions follow Semantic Versioning; dates are
 เผยแพร่ที่ / Deployed at [straw-warehouse-3d.netlify.app](https://straw-warehouse-3d.netlify.app) ·
 โค้ด / Repo: [Ton-Munoi99/straw-warehouse-3D](https://github.com/Ton-Munoi99/straw-warehouse-3D)
 
+## [1.2.1] — 2026-10-22
+
+### เปลี่ยน / Changed
+- ทัวร์นำชมเร็วขึ้นและลื่นขึ้น — จาก ~59 วินาทีเหลือ ~33 วินาที กล้องเคลื่อนแบบค่อยๆ เร่งและค่อยๆ เบรก (1.4 วินาทีต่อการเคลื่อน ไม่ขึ้นกับเฟรมเรต) หยุดดูแต่ละจุด 2.6 วินาทีหลังกล้องจอด และบินกลับภาพรวมตอนจบโดยไม่ต้องรออีกรอบ ปุ่มมุมกล้องก็เคลื่อนแบบเดียวกัน · Guided tour is faster and smoother — ~59 s → ~33 s; every camera move now takes a fixed 1.4 s with ease-in-out (frame-rate independent), each stop holds 2.6 s after arriving, and the tour flies home at the end instead of a second overview stop. View buttons use the same easing.
+
 ## [1.2.0] — 2026-10-22
 
 ### เพิ่ม / Added
