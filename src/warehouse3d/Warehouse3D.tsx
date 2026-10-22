@@ -1,9 +1,12 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ACESFilmicToneMapping, PCFSoftShadowMap } from 'three'
 import { Canvas } from '@react-three/fiber'
 import {
   Camera,
+  ChevronLeft,
+  ChevronRight,
+  Footprints,
   Check,
   CloudSun,
   FileSpreadsheet,
@@ -18,7 +21,7 @@ import {
   ZoomOut,
 } from 'lucide-react'
 import Scene, { CameraController, SceneState } from './Scene'
-import { ViewName, views, zones } from './data'
+import { ViewName, tourShots, views, zones } from './data'
 import { DEFAULT_INPUTS, STORAGE, storageBales, storageCapacityT } from '../feasibility/model'
 
 type View = ViewName
@@ -86,12 +89,37 @@ export default function Warehouse3D() {
     }, 'image/png')
   }
 
+  // ---- guided tour: step through tourShots, one every TOUR_MS ----
+  const TOUR_MS = 6500
+  const [tour, setTour] = useState<number | null>(null)
+  useEffect(() => {
+    if (tour == null) return
+    const shot = tourShots[tour]
+    controller.current?.setView(shot.view)
+    setState((s) => ({ ...s, rotate: false, selected: shot.zone }))
+    const id = setTimeout(() => setTour((t) => (t != null && t + 1 < tourShots.length ? t + 1 : null)), TOUR_MS)
+    return () => clearTimeout(id)
+  }, [tour])
+  const startTour = () => {
+    setView('iso')
+    // open everything so the interior shots can see inside
+    setState((s) => ({ ...s, doorsOpen: true, wallsOpen: true, labels: true }))
+    setTour(0)
+  }
+  const stopTour = () => {
+    setTour(null)
+    setState((s) => ({ ...s, selected: null }))
+  }
+  const tourZone = tour != null ? zones.find((z) => z.key === tourShots[tour].zone) : undefined
+
   const selectView = (name: View) => {
+    setTour(null)
     setView(name)
     setState((s) => ({ ...s, rotate: false }))
     controller.current?.setView(views[name])
   }
   const toggleRotate = () => {
+    setTour(null)
     setView('iso')
     setState((s) => ({ ...s, rotate: !s.rotate }))
   }
@@ -197,7 +225,39 @@ export default function Warehouse3D() {
             <span>ถ่ายภาพ / PNG</span>
           </button>
 
-          <div className="absolute bottom-3 left-3 z-[3] flex items-center gap-2 rounded-[10px] border border-hairline bg-white/[0.86] px-[11px] py-1.5 text-[11px] font-medium text-[#5a6b5f] backdrop-blur sm:bottom-4 sm:left-[18px] sm:px-[13px] sm:py-2 sm:text-xs">
+          {tour != null && (
+            <div className="absolute inset-x-3 bottom-3 z-[4] rounded-[12px] border border-hairline bg-white/[0.94] px-4 py-3 shadow-md backdrop-blur sm:inset-x-auto sm:bottom-4 sm:left-1/2 sm:w-[min(560px,calc(100%-40px))] sm:-translate-x-1/2">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: tourZone?.color ?? '#2f6b3f' }} />
+                <span className="text-[13px] font-extrabold text-ink">{tourZone?.label ?? (tour === 0 ? 'Overview' : 'Tour complete')}</span>
+                <span className="ml-auto text-[11px] font-semibold text-[#9aa499]">
+                  {tour + 1} / {tourShots.length}
+                </span>
+              </div>
+              <div className="mt-1 text-[12px] leading-[1.5] text-[#54625a]">
+                {tourZone?.desc ??
+                  (tour === 0
+                    ? `An open-sided rice-straw collection hub — 18 × 10 m, 9 m to the ridge, ${storageBales().toLocaleString('en-US')} bales (≈${Math.round(storageCapacityT(DEFAULT_INPUTS))} t) when fully stacked. Follow a load of straw from the road to the stack.`
+                    : 'That is the full loop: road → loading apron → aisle → stacks, with open sides, a deep roof and perimeter drains keeping the straw dry.')}
+              </div>
+              <div className="mt-2 flex items-center gap-1.5">
+                <div className="h-1 flex-1 overflow-hidden rounded bg-[#ece8dc]">
+                  <div className="h-full rounded bg-forest transition-all" style={{ width: `${((tour + 1) / tourShots.length) * 100}%` }} />
+                </div>
+                <button aria-label="Previous stop" disabled={tour === 0} onClick={() => setTour((t) => Math.max(0, (t ?? 0) - 1))} className="rounded-md border border-hairline p-1 text-[#54625a] disabled:opacity-40">
+                  <ChevronLeft size={15} />
+                </button>
+                <button aria-label="Next stop" onClick={() => setTour((t) => (t != null && t + 1 < tourShots.length ? t + 1 : null))} className="rounded-md border border-hairline p-1 text-[#54625a]">
+                  <ChevronRight size={15} />
+                </button>
+                <button onClick={stopTour} className="rounded-md border border-hairline px-2 py-1 text-[11px] font-bold text-[#c25b46]">
+                  Stop
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className={`absolute bottom-3 left-3 z-[3] ${tour != null ? 'hidden' : 'flex'} items-center gap-2 rounded-[10px] border border-hairline bg-white/[0.86] px-[11px] py-1.5 text-[11px] font-medium text-[#5a6b5f] backdrop-blur sm:bottom-4 sm:left-[18px] sm:px-[13px] sm:py-2 sm:text-xs`}>
             <RefreshCw size={15} color="#2f6b3f" strokeWidth={1.8} />
             <span className="sm:hidden">Drag · zoom · tap a tag</span>
             <span className="hidden sm:inline">Drag to orbit · Scroll to zoom · Select a numbered zone</span>
@@ -243,6 +303,18 @@ export default function Warehouse3D() {
             >
               <RefreshCw size={16} strokeWidth={1.9} />
               {state.rotate ? 'Stop rotation' : 'Rotate 360°'}
+            </button>
+            <button
+              onClick={tour == null ? startTour : stopTour}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-[10px] border px-2 py-[11px] text-[13px] font-bold"
+              style={{
+                borderColor: tour != null ? '#2f6b3f' : '#e1ddd0',
+                background: tour != null ? '#2f6b3f' : '#fff',
+                color: tour != null ? '#fff' : '#33403a',
+              }}
+            >
+              <Footprints size={16} strokeWidth={1.9} />
+              {tour != null ? 'Stop guided tour' : 'Guided tour'}
             </button>
           </section>
 

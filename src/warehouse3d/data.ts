@@ -77,6 +77,20 @@ export const views: Record<ViewName, View> = {
   iso: { pos: [30, 22, 32], look: [0, 2, 0] },
 }
 
+// guided-tour shots, in the order a load of straw moves through the hub
+// (zone: null = overview). Camera positions are hand-placed per zone.
+export const tourShots: { zone: string | null; view: View }[] = [
+  { zone: null, view: views.iso },
+  { zone: 'road', view: { pos: [36, 6, 18], look: [20, 1, 8] } },
+  { zone: 'loading', view: { pos: [27, 5, 13], look: [15, 1.5, 3] } },
+  { zone: 'lane', view: views.interior },
+  { zone: 'storage', view: { pos: [-2, 4.5, 15], look: [-4, 3, 2] } },
+  { zone: 'vent', view: { pos: [-15, 6, 15], look: [-4, 4, 5] } },
+  { zone: 'roof', view: { pos: [-21, 18, 19], look: [0, 8, 0] } },
+  { zone: 'drain', view: { pos: [13, 4, 15], look: [8, 0.6, 6.4] } },
+  { zone: null, view: views.iso },
+]
+
 // shared geometry constants (world units = metres)
 // Building: 18 m long (x) × 10 m deep (z) · slab top (floor) at y=0.6
 // Floor→roof (ridge) = 9.0 m → ridge at y=9.6 · clear height (eave) = 6.4 m → eave at y=7.0
