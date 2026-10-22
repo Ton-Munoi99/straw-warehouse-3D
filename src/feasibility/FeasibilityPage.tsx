@@ -30,12 +30,14 @@ import {
   equipmentCapex,
   opexPerYear,
   runAll,
+  runDebt,
   runInputs,
   runScenario,
   totalCapex,
 } from './model'
 
 const f = (n: number) => Math.round(n).toLocaleString('en-US')
+const pct = (x: number | null) => (x == null ? '—' : `${(x * 100).toFixed(1)}%`)
 const fM = (n: number) => `${n < 0 ? '−' : ''}฿${(Math.abs(n) / 1_000_000).toFixed(2)}M`
 
 export default function FeasibilityPage() {
@@ -47,6 +49,7 @@ export default function FeasibilityPage() {
   const active = simMode ? inputs : DEFAULT_INPUTS
   const result = useMemo(() => runInputs(active), [active])
   const refs = useMemo(() => runAll(active), [active])
+  const debt = useMemo(() => runDebt(active, result), [active, result])
   const bpt = balesPerTonne(active.baleKg)
   const bptDisplay = bpt.toFixed(1)
   const staticCapacityT = (active.baleKg * 2000) / 1000
@@ -150,14 +153,30 @@ export default function FeasibilityPage() {
     scenarios.push(['IRR (%)', ...refs.map((r) => ((r.result.irr ?? 0) * 100).toFixed(1))])
     scenarios.push(['NPV (THB)', ...refs.map((r) => R(r.result.npv))])
 
-    return { summary, cashflow, scenarios }
+    const debtRows: CsvCell[][] = []
+    debtRows.push(['Loan / วงเงินกู้ (THB)', R(debt.loan)])
+    debtRows.push(['Equity / ส่วนทุน (THB)', R(debt.equity)])
+    debtRows.push(['Loan % of CapEx', R(active.loanFrac * 100)])
+    debtRows.push(['Interest rate (%/yr)', (active.loanRate * 100).toFixed(2)])
+    debtRows.push(['Term / grace (yrs)', `${active.loanYears} / ${active.graceYears}`])
+    debtRows.push(['Annual payment (THB)', R(debt.payment)])
+    debtRows.push(['Min DSCR', debt.minDscr == null ? '—' : debt.minDscr.toFixed(2)])
+    debtRows.push(['Avg DSCR', debt.avgDscr == null ? '—' : debt.avgDscr.toFixed(2)])
+    debtRows.push(['Equity IRR (%)', debt.equityIrr == null ? '—' : (debt.equityIrr * 100).toFixed(1)])
+    debtRows.push([])
+    debtRows.push(['Year / ปี', 'Interest', 'Principal', 'Debt service', 'CFADS', 'DSCR', 'Balance', 'Equity cash flow'])
+    debtRows.push([0, '', '', '', '', '', R(debt.loan), -R(debt.equity)])
+    debt.rows.forEach((r) => debtRows.push([r.year, R(r.interest), R(r.principal), R(r.debtService), R(r.cfads), r.dscr == null ? '—' : +r.dscr.toFixed(2), R(r.balanceEnd), R(r.equityCF)]))
+
+    return { summary, cashflow, scenarios, debtRows }
   }
   const exportXLSX = () => {
-    const { summary, cashflow, scenarios } = buildExport()
+    const { summary, cashflow, scenarios, debtRows } = buildExport()
     downloadXLSX(simMode ? 'Feasibility-ROI-simulation.xlsx' : 'Feasibility-ROI-base.xlsx', [
       { name: 'Summary', rows: summary },
       { name: 'Cash Flow', rows: cashflow },
       { name: 'Scenarios', rows: scenarios },
+      { name: 'Debt', rows: debtRows },
     ])
   }
 
@@ -206,7 +225,7 @@ export default function FeasibilityPage() {
 
         <div className="sheet mx-auto max-w-[1040px] overflow-hidden rounded-md bg-white shadow-[0_10px_40px_rgba(20,40,25,0.12)]">
           {/* header */}
-          <div className="flex items-center gap-3 bg-forest-dark px-5 py-5 text-white sm:gap-[18px] sm:px-9 sm:py-[28px]">
+          <div className="flex flex-wrap items-center gap-3 bg-forest-dark px-5 py-5 text-white sm:gap-[18px] sm:px-9 sm:py-[28px]">
             <div className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[11px] bg-white/[0.14]">
               <TrendingUp size={26} color="#9ccfa9" strokeWidth={1.9} />
             </div>
@@ -219,12 +238,12 @@ export default function FeasibilityPage() {
                   </span>
                 )}
               </div>
-              <div className="mt-1 text-[23px] font-extrabold tracking-[-0.01em]">
+              <div className="mt-1 text-[19px] font-extrabold sm:text-[23px] tracking-[-0.01em]">
                 ศูนย์รวบรวม-รับซื้อ-ขายต่อฟางข้าว (Rice Straw Aggregation Hub)
               </div>
             </div>
-            <div className="flex-none text-right">
-              <div className="flex items-center justify-end gap-1.5 text-[11px] font-semibold text-[#9ccfa9]">
+            <div className="w-full pl-[58px] sm:w-auto sm:flex-none sm:pl-0 sm:text-right">
+              <div className="flex items-center gap-1.5 sm:justify-end text-[11px] font-semibold text-[#9ccfa9]">
                 <MapPin size={13} /> ฉะเชิงเทรา / Chachoengsao
               </div>
               <div className="text-[15px] font-bold">2568 / 2025</div>
@@ -340,6 +359,17 @@ export default function FeasibilityPage() {
                       {inputs.capexLines.map((l, i) => (
                         <NumField key={l.key} label={l.th} suffix="฿" value={l.amount} step={50000} onChange={(v) => patch((n) => (n.capexLines[i].amount = v))} />
                       ))}
+                    </div>
+                  </CtrlGroup>
+                </div>
+
+                <div className="col-span-2 lg:col-span-4">
+                  <CtrlGroup title="เงินกู้ / Debt financing">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 lg:grid-cols-4">
+                      <NumField label="กู้กี่ % ของ CapEx / Loan % of CapEx" suffix="%" value={inputs.loanFrac * 100} step={5} onChange={(v) => patch((n) => (n.loanFrac = Math.min(100, Math.max(0, v)) / 100))} />
+                      <NumField label="ดอกเบี้ย / Interest rate" suffix="%/ปี (yr)" value={inputs.loanRate * 100} step={0.25} onChange={(v) => patch((n) => (n.loanRate = Math.max(0, v) / 100))} />
+                      <NumField label="ระยะกู้ / Loan term" suffix="ปี (yrs)" value={inputs.loanYears} step={1} onChange={(v) => patch((n) => (n.loanYears = Math.max(1, Math.round(v))))} />
+                      <NumField label="ปลอดเงินต้น / Grace (interest-only)" suffix="ปี (yrs)" value={inputs.graceYears} step={1} onChange={(v) => patch((n) => (n.graceYears = Math.max(0, Math.round(v))))} />
                     </div>
                   </CtrlGroup>
                 </div>
@@ -568,6 +598,68 @@ export default function FeasibilityPage() {
             </div>
           </div>
 
+          {/* debt financing — the bank's view */}
+          <div className="mx-4 sm:mx-9 mt-7">
+            <SectionTitle kicker="การจัดหาเงินกู้ (มุมมองธนาคาร) / Debt Financing (Bank View)">ความสามารถชำระหนี้ / Debt Service Coverage</SectionTitle>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-3.5">
+              <HeroCard color="#3f7fae" label="วงเงินกู้ / Loan" value={fM(debt.loan)} unit={`${(active.loanFrac * 100).toFixed(0)}% ของ CapEx · ส่วนทุน / equity ${fM(debt.equity)}`} />
+              <HeroCard color="#c8902f" label="ผ่อนต่อปี / Annual payment" value={`฿${f(debt.payment)}`} unit={`${(active.loanRate * 100).toFixed(2)}% · ${active.loanYears} ปี / yrs · ปลอดต้น / grace ${active.graceYears}`} />
+              <HeroCard color={debt.minDscr == null ? '#7c8a80' : debt.minDscr < 1 ? '#c25b46' : debt.minDscr < 1.2 ? '#c8902f' : '#2f6b3f'} label="DSCR ต่ำสุด / Min DSCR" value={debt.minDscr == null ? '—' : `${debt.minDscr.toFixed(2)}×`} unit={`เฉลี่ย / avg ${debt.avgDscr == null ? '—' : debt.avgDscr.toFixed(2) + '×'} · เกณฑ์ธนาคาร / bank target ≥ 1.20×`} />
+              <HeroCard color="#2f6b3f" label="IRR ส่วนทุน / Equity IRR" value={pct(debt.equityIrr)} unit={`เทียบ IRR โครงการ / vs project ${pct(result.irr)}`} />
+            </div>
+            <div className="-mx-1 mt-4 overflow-x-auto px-1"><table className="w-full min-w-[640px] border-collapse text-[12px]">
+              <thead>
+                <tr className="bg-[#26342c] text-white">
+                  <th className="num p-[8px_8px] font-bold">ปี / Yr</th>
+                  <th className="num p-[8px_8px] font-bold">ดอกเบี้ย / Interest</th>
+                  <th className="num p-[8px_8px] font-bold">เงินต้น / Principal</th>
+                  <th className="num p-[8px_8px] font-bold">ภาระหนี้ / Debt service</th>
+                  <th className="num p-[8px_8px] font-bold">CFADS</th>
+                  <th className="num p-[8px_8px] font-bold">DSCR</th>
+                  <th className="num p-[8px_8px] font-bold">คงเหลือ / Balance</th>
+                  <th className="num p-[8px_8px] font-bold">เงินสดส่วนทุน / Equity CF</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-[#f0ede3]">
+                  <td className="num p-[7px_8px] text-[#8a948b]">0</td>
+                  <td className="num p-[7px_8px] text-[#9aa499]" colSpan={5}>รับเงินกู้ / loan drawn ฿{f(debt.loan)}</td>
+                  <td className="num p-[7px_8px] text-[#54625a]">{f(debt.loan)}</td>
+                  <td className="num p-[7px_8px] font-bold text-[#c25b46]">−{f(debt.equity)}</td>
+                </tr>
+                {debt.rows.map((r) => {
+                  const d = r.dscr
+                  const dCls = d == null ? 'text-[#9aa499]' : d < 1 ? 'bg-[#f7e7e3] text-[#c25b46]' : d < 1.2 ? 'bg-[#fbf2e0] text-[#a9772a]' : 'bg-[#e7f1e8] text-forest'
+                  return (
+                    <tr key={r.year} className="border-b border-[#f0ede3]">
+                      <td className="num p-[7px_8px] text-[#8a948b]">{r.year}</td>
+                      <td className="num p-[7px_8px] text-[#54625a]">{f(r.interest)}</td>
+                      <td className="num p-[7px_8px] text-[#54625a]">{f(r.principal)}</td>
+                      <td className="num p-[7px_8px] font-semibold text-ink">{f(r.debtService)}</td>
+                      <td className="num p-[7px_8px] text-[#54625a]">{f(r.cfads)}</td>
+                      <td className={`num p-[7px_8px] font-extrabold ${dCls}`}>{d == null ? '—' : `${d.toFixed(2)}×`}</td>
+                      <td className="num p-[7px_8px] text-[#54625a]">{f(r.balanceEnd)}</td>
+                      <td className={`num p-[7px_8px] font-bold ${r.equityCF >= 0 ? 'text-forest' : 'text-[#c25b46]'}`}>{r.equityCF >= 0 ? '' : '−'}{f(Math.abs(r.equityCF))}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table></div>
+            {(() => {
+              const weak = debt.rows.filter((r) => r.dscr != null && r.dscr < 1.2).map((r) => r.year)
+              return weak.length > 0 ? (
+                <div className="mt-3 rounded-[10px] border border-[#e3b15d] bg-[#fff7e8] px-4 py-2.5 text-[11.5px] font-semibold leading-[1.55] text-[#8a651d]">
+                  ⚠ ปีที่ DSCR ต่ำกว่า 1.20 เท่า: ปีที่ {weak.join(', ')} — ช่วงเดินเครื่องไม่เต็มกำลัง ควรขอระยะปลอดเงินต้นเพิ่ม ลดสัดส่วนกู้ หรือกันทุนหมุนเวียนไว้สำรองชำระหนี้ ·
+                  DSCR is below 1.20× in year {weak.join(', ')} (ramp-up) — negotiate a longer grace period, borrow less, or reserve working capital for debt service.
+                </div>
+              ) : null
+            })()}
+            <div className="mt-2 text-[11px] leading-[1.5] text-[#9aa499]">
+              * CFADS = EBITDA − ภาษีจ่ายจริง (ดอกเบี้ยหักเป็นค่าใช้จ่ายทางภาษีได้) · DSCR = CFADS ÷ (ดอกเบี้ย + เงินต้น) · ธนาคารมักต้องการ DSCR ≥ 1.20–1.25 เท่า · กู้เฉพาะส่วน CapEx ส่วนทุนหมุนเวียนออกเอง · ดอกเบี้ยเป็นสมมติฐานใกล้ MLR ธนาคารพาณิชย์ปี 2568 ปรับได้ใน Simulation ·
+              CFADS = EBITDA − cash tax (interest is tax-deductible) · DSCR = CFADS ÷ (interest + principal) · banks typically require ≥ 1.20–1.25× · the loan funds CapEx only; working capital is equity · the rate is an assumption near 2025 Thai commercial-bank MLR, editable in Simulation.
+            </div>
+          </div>
+
           {/* sensitivity */}
           <div className="mx-4 sm:mx-9 mt-7">
             <SectionTitle kicker="การวิเคราะห์ความอ่อนไหว / Sensitivity">ระยะคืนทุน (ปี): ปริมาณ × กำไรต่อตัน / Payback (yrs): Volume × Margin</SectionTitle>
@@ -665,6 +757,24 @@ export default function FeasibilityPage() {
               { th: '⑬ ระยะคืนทุน / Payback', formula: 'ปีแรกที่กระแสเงินสดสะสม ≥ 0 · first year cumulative cash flow ≥ 0 (interpolated)', calc: result.paybackYears ? `= ${result.paybackYears.toFixed(1)} ปี / yrs` : '> 10 ปี / yrs' },
               { th: '⑭ ROI', formula: 'กำไรสุทธิเฉลี่ยต่อปี ÷ เงินลงทุน CapEx · avg annual net profit ÷ CapEx', calc: `${f(roiAvgNP)} ÷ ${f(result.totalCapex)} × 100 = ${result.simpleRoiPct.toFixed(1)}% ต่อปี / per year`,
                 note: `กำไรสุทธิ (Net profit) แต่ละปี = EBIT − ภาษี = (EBITDA − ค่าเสื่อม ${f(wkDep)}) − tax ${taxPct}%:\n${roiYears.map(r => `ปี ${r.y} (${(r.ramp * 100).toFixed(0)}%): EBITDA ${f(r.ebitda)} → EBIT ${f(r.ebit)} → ภาษี ${f(r.tax)} → NP = ${f(r.np)}`).join(' · ')}\nรวม / Sum = ${f(roiSumNP)} ÷ ${active.years} ปี = เฉลี่ย ${f(roiAvgNP)} ฿/ปี · then ${f(roiAvgNP)} ÷ CapEx ${f(result.totalCapex)} = ${result.simpleRoiPct.toFixed(1)}%` },
+              {
+                th: '⑮ เงินกู้ & ค่างวด / Loan & annual payment', formula: 'วงเงิน = CapEx × สัดส่วนกู้ · ค่างวด = L·k ÷ (1 − (1+k)^−n) · Loan = CapEx × LTV; level annuity payment',
+                calc: `${f(result.totalCapex)} × ${(active.loanFrac * 100).toFixed(0)}% = ${f(debt.loan)} · ${f(debt.loan)} × ${active.loanRate} ÷ (1 − ${(1 + active.loanRate).toFixed(3)}^−${Math.max(1, active.loanYears - active.graceYears)}) = ${f(debt.payment)} ฿/ปี (yr)`,
+                note: `${active.graceYears > 0 ? `${active.graceYears === 1 ? 'ปีที่ 1' : `ปีที่ 1–${active.graceYears}`} จ่ายเฉพาะดอกเบี้ย (${f(debt.loan)} × ${(active.loanRate * 100).toFixed(2)}% = ${f(debt.loan * active.loanRate)}) จากนั้น` : 'ไม่มีช่วงปลอดเงินต้น ·'} ผ่อนงวดเท่ากัน ${Math.max(1, active.loanYears - active.graceYears)} ปี · ส่วนทุน = เงินลงทุนรวม − เงินกู้ = ${f(result.initialOutlay)} − ${f(debt.loan)} = ${f(debt.equity)} · ${active.graceYears > 0 ? `${active.graceYears === 1 ? 'Year 1 is' : `Years 1–${active.graceYears} are`} interest-only, then` : 'No grace period;'} level payments over ${Math.max(1, active.loanYears - active.graceYears)} years. Equity = total outlay − loan.`,
+              },
+              (() => {
+                const r = debt.rows.find((x) => x.principal > 0) ?? debt.rows[0]
+                return {
+                  th: '⑯ DSCR (ความสามารถชำระหนี้ / Debt service coverage)', formula: 'CFADS ÷ (ดอกเบี้ย + เงินต้น) · CFADS = EBITDA − ภาษีจาก (EBIT − ดอกเบี้ย)',
+                  calc: `ปีที่ / Year ${r.year}: ${f(r.cfads)} ÷ ${f(r.debtService)} = ${r.dscr == null ? '—' : r.dscr.toFixed(2) + '×'} · ต่ำสุด / min ${debt.minDscr == null ? '—' : debt.minDscr.toFixed(2) + '×'}`,
+                  note: 'ดอกเบี้ยเป็นค่าใช้จ่ายทางภาษี จึงลดภาษีลง (tax shield) ทำให้ CFADS สูงกว่า OCF ของโครงการเล็กน้อย · ธนาคารดู DSCR ทุกปี ไม่ใช่แค่ค่าเฉลี่ย · Interest is tax-deductible, so CFADS is slightly above the unlevered OCF. Banks test DSCR every year, not just on average.',
+                }
+              })(),
+              {
+                th: '⑰ IRR ส่วนทุน / Equity IRR', formula: 'IRR ของ [−ส่วนทุน, CFADS − ภาระหนี้ (+มูลค่าซากปีสุดท้าย)] · IRR of the equity cash flows',
+                calc: `[−${f(debt.equity)}, ${debt.equityCashflows.slice(1, 4).map((x) => f(x)).join(', ')}, …] → ${pct(debt.equityIrr)} (โครงการ / project ${pct(result.irr)})`,
+                note: 'เมื่อดอกเบี้ยเงินกู้ต่ำกว่าผลตอบแทนโครงการ การกู้จะเพิ่ม IRR ของเจ้าของ (leverage) แต่ความเสี่ยงก็เพิ่มตาม — ถ้ารายได้ต่ำกว่าคาด ภาระหนี้คงที่จะกินเงินสดก่อน · When the loan rate is below the project return, leverage lifts the owner\'s IRR — but fixed debt service also eats cash first if revenue falls short.',
+              },
             ].map((s) => (
               <div key={s.th} className="rounded-[8px] bg-[#f6f4ec] px-3.5 py-2.5">
                 <div className="text-[12.5px] font-extrabold text-forest">{s.th}</div>

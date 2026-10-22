@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ACESFilmicToneMapping, PCFSoftShadowMap } from 'three'
 import { Canvas } from '@react-three/fiber'
 import {
+  Camera,
   Check,
   CloudSun,
   FileSpreadsheet,
@@ -64,6 +65,20 @@ export default function Warehouse3D() {
     dims: false,
   })
   const controller = useRef<CameraController | null>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
+
+  // PNG of the current 3D view (labels are HTML overlays, so they aren't in the image)
+  const snapshot = () => {
+    const canvas = stageRef.current?.querySelector('canvas')
+    canvas?.toBlob((blob) => {
+      if (!blob) return
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `straw-warehouse-3d-${new Date().toISOString().slice(0, 10)}.png`
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+    }, 'image/png')
+  }
 
   const selectView = (name: View) => {
     setView(name)
@@ -149,6 +164,7 @@ export default function Warehouse3D() {
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
         {/* 3D STAGE */}
         <div
+          ref={stageRef}
           className="relative min-h-[48vh] min-w-0 flex-1 overflow-hidden md:min-h-0"
           style={{ background: 'linear-gradient(#cfe6f1,#dfeede)' }}
         >
@@ -159,11 +175,21 @@ export default function Warehouse3D() {
           <Canvas
             shadows={{ type: PCFSoftShadowMap }}
             dpr={[1, 2]}
-            gl={{ antialias: true, toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
+            // preserveDrawingBuffer: keeps the last frame readable for the PNG snapshot button
+            gl={{ antialias: true, toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.05, preserveDrawingBuffer: true }}
             camera={{ fov: 42, near: 0.1, far: 1000, position: [30, 22, 32] }}
           >
             <Scene state={state} controllerRef={controller} onSelectZone={selectZone} />
           </Canvas>
+
+          <button
+            onClick={snapshot}
+            title="บันทึกภาพ 3D เป็น PNG / Save 3D view as PNG"
+            className="absolute right-3 top-3 z-[3] flex items-center gap-1.5 rounded-[10px] border border-hairline bg-white/[0.9] px-3 py-2 text-[12px] font-bold text-forest shadow-sm backdrop-blur hover:bg-white sm:right-5 sm:top-5"
+          >
+            <Camera size={15} strokeWidth={1.9} />
+            <span>ถ่ายภาพ / PNG</span>
+          </button>
 
           <div className="absolute bottom-3 left-3 z-[3] flex items-center gap-2 rounded-[10px] border border-hairline bg-white/[0.86] px-[11px] py-1.5 text-[11px] font-medium text-[#5a6b5f] backdrop-blur sm:bottom-4 sm:left-[18px] sm:px-[13px] sm:py-2 sm:text-xs">
             <RefreshCw size={15} color="#2f6b3f" strokeWidth={1.8} />

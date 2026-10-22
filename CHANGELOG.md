@@ -9,6 +9,20 @@ Format based on Keep a Changelog; versions follow Semantic Versioning; dates are
 เผยแพร่ที่ / Deployed at [straw-warehouse-3d.netlify.app](https://straw-warehouse-3d.netlify.app) ·
 โค้ด / Repo: [Ton-Munoi99/straw-warehouse-3D](https://github.com/Ton-Munoi99/straw-warehouse-3D)
 
+## [1.1.0] — 2026-10-22
+
+### เพิ่ม / Added
+- **โมเดลเงินกู้ (มุมมองธนาคาร)** ในหน้า Feasibility — วงเงินกู้ ค่างวด DSCR รายปี และ IRR ส่วนทุน (levered) พร้อมกล่องเตือนปีที่ DSCR ต่ำกว่า 1.20 เท่า · ปรับสัดส่วนกู้ ดอกเบี้ย ระยะกู้ และระยะปลอดเงินต้นได้ใน Simulation · เพิ่มขั้น ⑮–⑰ ในหน้าต่างวิธีคำนวณ และชีต Debt ในไฟล์ Excel · **Debt financing (bank view)** on the Feasibility page — loan, annual payment, yearly DSCR and levered equity IRR, with a warning for years below 1.20×; loan %, rate, term and grace period are editable in Simulation; methodology steps ⑮–⑰ and a Debt sheet in the Excel export.
+- **ปุ่มถ่ายภาพ 3D** — บันทึกมุมที่หมุนไว้เป็นไฟล์ PNG · **3D snapshot button** — saves the current view as a PNG.
+- **ไฟล์ Concept PDF** เปิดได้จากปุ่ม PDF ในหน้า 3D (`/3d-concept.pdf`) · **Concept PDF** served from the site, linked by a PDF button on the 3D page.
+- ภาพ 3D: เงาตามซอกมุม (ambient occlusion) แสงฟุ้งจุดสว่าง (bloom) และ vignette · 3D post-processing: ambient occlusion, bloom and vignette.
+
+### เปลี่ยน / Changed
+- ภาพ 3D สมจริงขึ้น — ท้องฟ้าไล่สีที่ใช้เป็นแสงสะท้อน (image-based lighting) ด้วย ทำให้หลังคาเหล็กสะท้อนฟ้า คอนทราสต์และเงาชัดขึ้น พุ่มไม้โค้งนุ่ม ลานดินสีธรรมชาติ รวมถึง texture พื้นผิว แถวต้นข้าว และฟอนต์ Noto Sans Thai · More realistic 3D — gradient sky that also lights the scene, so metal reflects the sky; stronger contrast and shadows, smooth tree canopies, natural earth tones, plus surface textures, rice rows and the Noto Sans Thai font.
+
+### แก้ไข / Fixed
+- หัวกระดาษหน้า Feasibility และ BOQ บนมือถือ ข้อความมุมขวา (สถานที่/ปี, เลขที่เอกสาร) ถูกตัดหาย — ตอนนี้ตกลงมาอยู่ใต้ชื่อ · On phones the right-hand header block (location/year, doc no.) was clipped on the Feasibility and BOQ pages; it now wraps below the title.
+
 ## [1.0.0] — 2026-07-01
 
 รุ่นเสถียรพร้อมนำเสนอ · Stable, presentation-ready release.

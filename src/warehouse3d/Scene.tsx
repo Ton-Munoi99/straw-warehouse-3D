@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Html, OrbitControls, RoundedBox } from '@react-three/drei'
+import { Bloom, EffectComposer, N8AO, ToneMapping, Vignette } from '@react-three/postprocessing'
+import { ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { ConstructionDetails, DetailedBales, RiceRows, surfaceTexture } from './Details'
@@ -214,8 +216,10 @@ function Rig({
 
 // ---- weather: gradient sky (background + image-based light), fog, sun + rain ----
 const SUN: Vec3 = [36, 46, 20]
+// sky colours are pre-darkened: the post-process ACES pass tone-maps the background too
+// (three's own renderer leaves sRGB backgrounds un-tone-mapped), which lifts and greys blues
 const SKY_GRADIENT = {
-  sunny: { zenith: '#5d9bd6', mid: '#a9cbe6', earth: '#b8ae8c' },
+  sunny: { zenith: '#2a62ad', mid: '#5b8fcb', earth: '#b8ae8c' },
   rainy: { zenith: '#6f7d87', mid: '#8d9aa3', earth: '#7d7a6c' },
 }
 
@@ -230,8 +234,8 @@ function skyTexture(zenith: string, mid: string, horizon: string, below: string)
   const g = c.getContext('2d')!
   const grad = g.createLinearGradient(0, 0, 0, 256)
   grad.addColorStop(0, zenith)
-  grad.addColorStop(0.32, mid)
-  grad.addColorStop(0.495, horizon)
+  grad.addColorStop(0.38, mid)
+  grad.addColorStop(0.485, horizon)
   grad.addColorStop(0.52, below)
   grad.addColorStop(1, below)
   g.fillStyle = grad
@@ -936,6 +940,21 @@ function ZoneLabels({ onSelect, selected }: { onSelect: (key: string) => void; s
   )
 }
 
+// ---- post-processing: contact shadows in corners (AO), soft highlight glow, vignette ----
+// The composer renders off-screen and switches the renderer to NoToneMapping, so ACES
+// is re-applied here as the last colour step (otherwise highlights clip and colours wash).
+// ponytail: AO runs at half resolution to stay usable on phones; drop `halfRes` for stills.
+function Effects() {
+  return (
+    <EffectComposer multisampling={4}>
+      <N8AO halfRes aoRadius={0.9} distanceFalloff={1} intensity={1.4} quality="medium" />
+      <Bloom mipmapBlur luminanceThreshold={0.95} luminanceSmoothing={0.2} intensity={0.3} />
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+      <Vignette offset={0.32} darkness={0.38} />
+    </EffectComposer>
+  )
+}
+
 export default function Scene({
   state,
   controllerRef,
@@ -963,6 +982,7 @@ export default function Scene({
       <Trees mats={mats} />
       <Dimensions visible={state.dims} />
       {state.labels && <ZoneLabels onSelect={onSelectZone} selected={state.selected} />}
+      <Effects />
     </>
   )
 }

@@ -61,6 +61,11 @@ export interface SimInputs {
   equipmentResidualFrac: number
   rampYear1: number
   rampYear2: number
+  // debt financing (bank view) — affects only the levered/equity metrics
+  loanFrac: number // share of CapEx funded by the loan (working capital stays equity)
+  loanRate: number // annual interest rate
+  loanYears: number // total loan term incl. grace
+  graceYears: number // interest-only years at the start
 }
 
 export const DEFAULT_INPUTS: SimInputs = {
@@ -100,6 +105,12 @@ export const DEFAULT_INPUTS: SimInputs = {
   equipmentResidualFrac: 0.2,
   rampYear1: 0.6,
   rampYear2: 0.8,
+  // assumptions, editable in Simulation: ~60% LTV, rate near Thai commercial-bank MLR
+  // in 2025 (≈6.5–7%), 7-yr term with 1 interest-only year to cover the ramp-up
+  loanFrac: 0.6,
+  loanRate: 0.065,
+  loanYears: 7,
+  graceYears: 1,
 }
 
 export const cloneInputs = (i: SimInputs): SimInputs =>
@@ -255,6 +266,68 @@ export const coreFromInputs = (i: SimInputs): ScnCore => ({
   opex: opexPerYear(i),
 })
 export const runInputs = (i: SimInputs) => runScenario(coreFromInputs(i), i)
+
+// ---- debt financing (bank view) ---------------------------------------------
+// The loan funds `loanFrac` of CapEx. Interest-only during the grace years, then equal
+// annual payments (annuity) over the rest of the term. Interest is tax-deductible, so
+// tax is recomputed on EBIT − interest. DSCR = CFADS ÷ scheduled debt service, where
+// CFADS = EBITDA − cash tax (same simplified cash-flow basis as the project OCF).
+export interface DebtRow {
+  year: number
+  interest: number
+  principal: number
+  debtService: number
+  cfads: number
+  dscr: number | null
+  balanceEnd: number
+  equityCF: number
+}
+export interface DebtResult {
+  loan: number
+  equity: number
+  payment: number
+  rows: DebtRow[]
+  equityCashflows: number[]
+  equityIrr: number | null
+  minDscr: number | null
+  avgDscr: number | null
+}
+
+export function runDebt(i: SimInputs, r: ScenarioResult): DebtResult {
+  const loan = r.totalCapex * i.loanFrac
+  const equity = r.initialOutlay - loan
+  const k = i.loanRate
+  const n = Math.max(1, i.loanYears - i.graceYears)
+  const payment = loan === 0 ? 0 : k > 0 ? (loan * k) / (1 - Math.pow(1 + k, -n)) : loan / n
+  let bal = loan
+  const rows: DebtRow[] = []
+  const equityCashflows = [-equity]
+  for (const y of r.rows) {
+    const interest = bal * k
+    const amortizing = y.year > i.graceYears && y.year <= i.loanYears
+    const principal = amortizing ? Math.min(bal, payment - interest) : 0
+    // a loan that outlives the model horizon is repaid from the exit value
+    const balloon = y.year === i.years ? bal - principal : 0
+    const debtService = interest + principal
+    const tax = Math.max(0, y.ebit - interest) * i.taxRate
+    const cfads = y.ebitda - tax
+    bal -= principal + balloon
+    const equityCF = cfads - debtService - balloon + y.terminal
+    rows.push({
+      year: y.year, interest, principal, debtService, cfads,
+      dscr: debtService > 0 ? cfads / debtService : null,
+      balanceEnd: bal, equityCF,
+    })
+    equityCashflows.push(equityCF)
+  }
+  const dscrs = rows.map((x) => x.dscr).filter((d): d is number => d != null)
+  return {
+    loan, equity, payment, rows, equityCashflows,
+    equityIrr: irr(equityCashflows),
+    minDscr: dscrs.length ? Math.min(...dscrs) : null,
+    avgDscr: dscrs.length ? dscrs.reduce((a, b) => a + b, 0) / dscrs.length : null,
+  }
+}
 
 // ---- scenarios: Conservative/Upside keep fixed sales assumptions; Base tracks
 // the active inputs (default, or your Simulation values once edited). All three

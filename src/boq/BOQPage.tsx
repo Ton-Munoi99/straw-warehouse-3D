@@ -157,7 +157,7 @@ export default function BOQPage() {
 
         <div className="sheet mx-auto max-w-[940px] overflow-hidden rounded-md bg-white shadow-[0_10px_40px_rgba(20,40,25,0.12)]">
           {/* Header band */}
-          <div className="flex items-center gap-[18px] bg-forest px-5 py-5 sm:px-9 sm:py-[26px] text-white">
+          <div className="flex flex-wrap items-center gap-x-[18px] gap-y-2 bg-forest px-5 py-5 sm:px-9 sm:py-[26px] text-white">
             <div className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[11px] bg-white/[0.16]">
               <Home size={26} color="#fff" strokeWidth={1.7} />
             </div>
@@ -165,11 +165,11 @@ export default function BOQPage() {
               <div className="text-xs font-semibold uppercase tracking-[0.1em] opacity-80">
                 Bill of Quantities · บัญชีแสดงปริมาณงานและราคา
               </div>
-              <div className="mt-[3px] text-[23px] font-extrabold tracking-[-0.01em]">
+              <div className="mt-[3px] text-[19px] font-extrabold sm:text-[23px] tracking-[-0.01em]">
                 โรงเก็บฟางอัดก้อน (Rice Straw Storage Warehouse)
               </div>
             </div>
-            <div className="flex-none text-right">
+            <div className="w-full pl-[64px] sm:w-auto sm:flex-none sm:pl-0 sm:text-right">
               <div className="text-[11px] font-semibold opacity-80">เอกสารเลขที่ / Doc No.</div>
               <div className="text-[15px] font-bold">BOQ-SW-01</div>
             </div>
