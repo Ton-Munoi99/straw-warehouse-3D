@@ -7,6 +7,5 @@ dist
 .claude/
 *.tsbuildinfo
 
-# reference files kept locally, not part of the app
-*.pdf
+# local screenshots
 Screenshot*.jpg
