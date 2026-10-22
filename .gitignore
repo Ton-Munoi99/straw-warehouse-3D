@@ -2,3 +2,11 @@ node_modules
 dist
 .playwright-mcp
 *.local
+
+# local tooling & build cache
+.claude/
+*.tsbuildinfo
+
+# reference files kept locally, not part of the app
+*.pdf
+Screenshot*.jpg
