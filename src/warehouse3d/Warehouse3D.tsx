@@ -6,6 +6,7 @@ import {
   Check,
   CloudSun,
   FileSpreadsheet,
+  FileText,
   Home,
   RefreshCw,
   Ruler,
@@ -132,6 +133,15 @@ export default function Warehouse3D() {
             <FileSpreadsheet size={16} strokeWidth={1.9} />
             BOQ
           </Link>
+          <a
+            href="/3d-concept.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-[9px] border border-forest bg-white px-4 py-[9px] text-[13px] font-bold text-forest no-underline transition-opacity hover:opacity-90"
+          >
+            <FileText size={16} strokeWidth={1.9} />
+            PDF
+          </a>
         </div>
       </header>
 
