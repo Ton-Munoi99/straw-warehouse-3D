@@ -943,12 +943,23 @@ function ZoneLabels({ onSelect, selected }: { onSelect: (key: string) => void; s
 // ---- post-processing: contact shadows in corners (AO), soft highlight glow, vignette ----
 // The composer renders off-screen and switches the renderer to NoToneMapping, so ACES
 // is re-applied here as the last colour step (otherwise highlights clip and colours wash).
-// ponytail: AO runs at half resolution to stay usable on phones; drop `halfRes` for stills.
+// On touch devices (phones/tablets) the GPU-heavy AO + bloom are skipped; the composer
+// itself stays so ACES still applies to the sky the same way on every device.
+// ponytail: "coarse pointer" is a proxy for a weaker mobile GPU — switch to a frame-time
+// check if some desktops stutter or some tablets could afford the full set.
+const RICH_EFFECTS = typeof window === 'undefined' || !window.matchMedia('(pointer: coarse)').matches
+
 function Effects() {
-  return (
-    <EffectComposer multisampling={4}>
+  const rich = RICH_EFFECTS
+  return rich ? (
+    <EffectComposer key="rich" multisampling={4}>
       <N8AO halfRes aoRadius={0.9} distanceFalloff={1} intensity={1.4} quality="medium" />
       <Bloom mipmapBlur luminanceThreshold={0.95} luminanceSmoothing={0.2} intensity={0.3} />
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+      <Vignette offset={0.32} darkness={0.38} />
+    </EffectComposer>
+  ) : (
+    <EffectComposer key="lite" multisampling={0}>
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       <Vignette offset={0.32} darkness={0.38} />
     </EffectComposer>
