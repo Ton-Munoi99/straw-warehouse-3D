@@ -4,6 +4,7 @@ import {
   Box,
   Calculator,
   FileSpreadsheet,
+  Link2,
   MapPin,
   Printer,
   RotateCcw,
@@ -34,6 +35,8 @@ import {
   runInputs,
   runScenario,
   capacityOptions,
+  decodeInputs,
+  encodeInputs,
   stockTurnsPerYear,
   storageBales,
   storageCapacityT,
@@ -45,10 +48,31 @@ const pct = (x: number | null) => (x == null ? '—' : `${(x * 100).toFixed(1)}%
 const fM = (n: number) => `${n < 0 ? '−' : ''}฿${(Math.abs(n) / 1_000_000).toFixed(2)}M`
 
 export default function FeasibilityPage() {
-  const [simMode, setSimMode] = useState(false)
+  // a shared link (?s=…) opens straight into Simulation with the sender's numbers;
+  // decodeInputs validates it and returns null for anything malformed
+  const [linkCode] = useState(() => new URLSearchParams(window.location.search).get('s'))
+  const [sharedInputs] = useState(() => (linkCode ? decodeInputs(linkCode) : null))
+  const [simMode, setSimMode] = useState(sharedInputs != null)
   const [showConfirm, setShowConfirm] = useState(false)
   const [showMethod, setShowMethod] = useState(false)
-  const [inputs, setInputs] = useState<SimInputs>(() => cloneInputs(DEFAULT_INPUTS))
+  const [inputs, setInputs] = useState<SimInputs>(() => cloneInputs(sharedInputs ?? DEFAULT_INPUTS))
+  const [shareMsg, setShareMsg] = useState<string | null>(null)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const copyShareLink = async () => {
+    const url = `${window.location.origin}${window.location.pathname}?s=${encodeInputs(inputs)}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setShareUrl(null)
+      setShareMsg('คัดลอกลิงก์แล้ว / Link copied')
+      setTimeout(() => setShareMsg(null), 2500)
+    } catch {
+      setShareUrl(url) // clipboard blocked → show the link to copy by hand
+    }
+  }
+  const exitSim = () => {
+    setSimMode(false)
+    if (window.location.search) window.history.replaceState(null, '', window.location.pathname)
+  }
 
   const active = simMode ? inputs : DEFAULT_INPUTS
   const result = useMemo(() => runInputs(active), [active])
@@ -213,7 +237,7 @@ export default function FeasibilityPage() {
             <Calculator size={16} strokeWidth={1.9} /> วิธีคำนวณ / Method
           </button>
           {simMode ? (
-            <button onClick={() => setSimMode(false)} className="flex items-center gap-2 rounded-[11px] border-none bg-[#c25b46] px-4 py-[11px] text-[13px] font-bold text-white shadow-[0_6px_18px_rgba(20,40,25,0.22)]">
+            <button onClick={exitSim} className="flex items-center gap-2 rounded-[11px] border-none bg-[#c25b46] px-4 py-[11px] text-[13px] font-bold text-white shadow-[0_6px_18px_rgba(20,40,25,0.22)]">
               <X size={16} strokeWidth={1.9} /> ออก / Exit
             </button>
           ) : (
@@ -311,11 +335,17 @@ export default function FeasibilityPage() {
             </div>
           </div>
 
+          {linkCode && !sharedInputs && (
+            <div className="mx-4 mt-4 rounded-[10px] border border-[#e3b15d] bg-[#fff7e8] px-4 py-2.5 text-[12px] font-semibold text-[#8a651d] sm:mx-9">
+              ⚠ ลิงก์ที่แชร์มาไม่ถูกต้องหรือไม่ครบ จึงแสดงกรณีฐานแทน · The shared link is invalid or incomplete, so the base case is shown.
+            </div>
+          )}
+
           {/* simulation control panel */}
           {simMode && (
             <div className="mx-4 sm:mx-9 mt-6 rounded-[16px] border-2 border-straw bg-[#fdfaf3] p-5">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[14px] font-extrabold text-[#a9772a]">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <div className="mr-auto flex items-center gap-2 text-[14px] font-extrabold text-[#a9772a]">
                   <SlidersHorizontal size={18} /> แผงปรับค่าจำลอง / Simulation Controls
                 </div>
                 <button
@@ -324,7 +354,24 @@ export default function FeasibilityPage() {
                 >
                   <RotateCcw size={14} /> คืนค่าเริ่มต้น / Reset
                 </button>
+                <button
+                  onClick={copyShareLink}
+                  className="flex items-center gap-1.5 rounded-[9px] border border-[#3f7fae] bg-white px-3 py-2 text-[12px] font-bold text-[#3f7fae] hover:bg-[#f2f7fb]"
+                >
+                  <Link2 size={14} /> {shareMsg ?? 'แชร์ลิงก์ / Share link'}
+                </button>
               </div>
+              {sharedInputs && (
+                <div className="mb-3 rounded-[8px] bg-[#eef3f8] px-3 py-2 text-[11.5px] font-semibold text-[#3f7fae]">
+                  🔗 เปิดจากลิงก์ที่แชร์ — ตัวเลขทั้งหมดเป็นชุดที่ผู้ส่งตั้งไว้ · Opened from a shared link — all numbers are the sender's.
+                </div>
+              )}
+              {shareUrl && (
+                <div className="mb-3 rounded-[8px] bg-white px-3 py-2 text-[11.5px] text-[#54625a]">
+                  คัดลอกลิงก์นี้ / Copy this link:
+                  <input readOnly value={shareUrl} onFocus={(e) => e.currentTarget.select()} className="mt-1 w-full rounded border border-[#e1ddd0] px-2 py-1 font-mono text-[11px]" />
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
                 {/* volume & finance */}

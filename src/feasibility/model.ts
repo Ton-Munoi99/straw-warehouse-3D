@@ -127,6 +127,49 @@ export const stockTurnsPerYear = (i: SimInputs) => i.throughputT / storageCapaci
 export const cloneInputs = (i: SimInputs): SimInputs =>
   JSON.parse(JSON.stringify(i)) as SimInputs
 
+// ---- shareable Simulation links ------------------------------------------------
+// Only the numbers editable in Simulation go into the URL, in a fixed order, so a link
+// stays short (~150 chars). Decoding treats the string as untrusted input: wrong
+// version/count, non-numbers or out-of-range values → null (the page ignores the link).
+const SHARE_VERSION = 'v1'
+type Field = [get: (i: SimInputs) => number, set: (i: SimInputs, v: number) => void, min: number, max: number, int?: boolean]
+const SHARE_FIELDS: Field[] = [
+  [(i) => i.throughputT, (i, v) => (i.throughputT = v), 0, 1e7],
+  [(i) => i.discountRate, (i, v) => (i.discountRate = v), 0, 1],
+  [(i) => i.taxRate, (i, v) => (i.taxRate = v), 0, 1],
+  [(i) => i.workingCapital, (i, v) => (i.workingCapital = v), 0, 1e9],
+  ...DEFAULT_INPUTS.channels.flatMap((_, k): Field[] => [
+    [(i) => i.channels[k].mix, (i, v) => (i.channels[k].mix = v), 0, 1],
+    [(i) => i.channels[k].pricePerTonne, (i, v) => (i.channels[k].pricePerTonne = v), 0, 1e6],
+  ]),
+  ...DEFAULT_INPUTS.cogsLines.map((_, k): Field => [(i) => i.cogsLines[k].perTonne, (i, v) => (i.cogsLines[k].perTonne = v), 0, 1e6]),
+  ...DEFAULT_INPUTS.opexLines.map((_, k): Field => [(i) => i.opexLines[k].perYear, (i, v) => (i.opexLines[k].perYear = v), 0, 1e9]),
+  ...DEFAULT_INPUTS.capexLines.map((_, k): Field => [(i) => i.capexLines[k].amount, (i, v) => (i.capexLines[k].amount = v), 0, 1e10]),
+  [(i) => i.loanFrac, (i, v) => (i.loanFrac = v), 0, 1],
+  [(i) => i.loanRate, (i, v) => (i.loanRate = v), 0, 1],
+  [(i) => i.loanYears, (i, v) => (i.loanYears = v), 1, 50, true],
+  [(i) => i.graceYears, (i, v) => (i.graceYears = v), 0, 50, true],
+]
+
+export function encodeInputs(i: SimInputs): string {
+  return [SHARE_VERSION, ...SHARE_FIELDS.map(([get]) => +get(i).toPrecision(10))].join('_')
+}
+
+export function decodeInputs(s: string): SimInputs | null {
+  const parts = s.split('_')
+  if (parts[0] !== SHARE_VERSION || parts.length !== SHARE_FIELDS.length + 1) return null
+  const out = cloneInputs(DEFAULT_INPUTS)
+  for (let k = 0; k < SHARE_FIELDS.length; k++) {
+    const [, set, min, max, int] = SHARE_FIELDS[k]
+    const raw = parts[k + 1]
+    if (!/^-?\d+(\.\d+)?(e[-+]?\d+)?$/i.test(raw)) return null
+    const v = Number(raw)
+    if (!Number.isFinite(v) || v < min || v > max || (int && !Number.isInteger(v))) return null
+    set(out, v)
+  }
+  return out
+}
+
 // ---- derived aggregates ----------------------------------------------------
 export const blendedSell = (i: SimInputs) =>
   i.channels.reduce((s, c) => s + c.mix * c.pricePerTonne, 0)

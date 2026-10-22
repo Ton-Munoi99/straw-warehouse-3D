@@ -105,3 +105,22 @@ test('capacity options: only the contradictory base case pays back; break-evens 
   assert.equal(Math.round(o.maxPerM2 / 10) * 10, 3240)
   assert.equal(Math.round(o.breakevenT / 10) * 10, 1730)
 })
+
+test('share links round-trip edited inputs and reject tampered strings', async () => {
+  const model = await loadModel()
+  const edited = model.cloneInputs(model.DEFAULT_INPUTS)
+  edited.throughputT = 1750
+  edited.channels[1].pricePerTonne = 1600
+  edited.loanFrac = 0.4
+  edited.graceYears = 2
+  const code = model.encodeInputs(edited)
+  assert.ok(code.length < 200)
+  assert.deepEqual(model.decodeInputs(code), edited)
+  assert.equal(model.runInputs(model.decodeInputs(code)).npv, model.runInputs(edited).npv)
+  // tampering / junk is ignored, never half-applied
+  assert.equal(model.decodeInputs(code.replace('1750', 'abc')), null)
+  assert.equal(model.decodeInputs(code.replace('_0.4_', '_7_')), null) // loan share > 100%
+  assert.equal(model.decodeInputs(code + '_1'), null)
+  assert.equal(model.decodeInputs('v9_' + code.slice(3)), null)
+  assert.equal(model.decodeInputs('<script>'), null)
+})
