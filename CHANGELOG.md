@@ -9,6 +9,18 @@ Format based on Keep a Changelog; versions follow Semantic Versioning; dates are
 เผยแพร่ที่ / Deployed at [straw-warehouse-3d.netlify.app](https://straw-warehouse-3d.netlify.app) ·
 โค้ด / Repo: [Ton-Munoi99/straw-warehouse-3D](https://github.com/Ton-Munoi99/straw-warehouse-3D)
 
+## [1.2.0] — 2026-10-22
+
+### เพิ่ม / Added
+- **ความจุโกดัง vs ปริมาณขาย** — คำนวณความจุจากผังกองฟางจริงในภาพ 3D (14 × 11 ก้อน ซ้อนได้ 14 ชั้น ≈ 5.1 ม. = 2,156 ก้อน ≈ 43 ตัน) หน้า ROI แสดงจำนวนรอบหมุนสต๊อกต่อปีและจำนวนวันที่ฟางอยู่ในโกดัง พร้อมเตือนเมื่อหมุนเร็วกว่าเดือนละรอบ (กรณีฐาน ~46 รอบ/ปี ≈ 8 วัน คือเป็นจุดพักสินค้า ไม่ใช่โกดังเก็บข้ามฤดู) · **Storage capacity vs throughput** — capacity is computed from the actual 3D stack layout (14 × 11 bales × 14 layers ≈ 5.1 m = 2,156 bales ≈ 43 t); the ROI page shows stock turns per year and average dwell days, warning when stock turns faster than monthly (base case ≈ 46 turns/yr, ≈ 8 days — a flow-through hub rather than seasonal storage).
+- แถบเลื่อน **Storage Fill** ในหน้า 3D ปรับจำนวนชั้นของกองฟาง (0–14) พร้อมบอกจำนวนก้อน ตัน และ % ของความจุ · **Storage Fill** slider on the 3D page (0–14 layers) with bales / tonnes / % of capacity.
+- **ทัวร์นำชมอัตโนมัติ** 9 จุด ตามเส้นทางฟาง (ถนน → จุดขนถ่าย → ทางเดิน → กองฟาง → ผนังเปิด → หลังคา → ทางระบายน้ำ) พร้อมคำบรรยาย ปุ่มย้อน/ถัดไป/หยุด · **Guided tour** — 9 camera stops along the straw's path with captions and prev/next/stop.
+- **ช่วงเวลาของวัน** เช้า / เที่ยง / เย็น — ตำแหน่งแดด สีแสง ท้องฟ้า และหมอกเปลี่ยนตาม (ตอนฝนตกใช้แสงฝนแทน) · **Time of day** — morning / noon / evening lighting presets (rain overrides).
+- **อัดวิดีโอหมุน 360°** เป็นไฟล์ MP4 (หรือ WebM ถ้าเบราว์เซอร์ไม่รองรับ) หยุดเองเมื่อครบหนึ่งรอบพอดี · **Record a 360° video** — MP4 (or WebM) that stops after exactly one full orbit.
+
+### เปลี่ยน / Changed
+- อุปกรณ์จอสัมผัส (มือถือ/แท็บเล็ต) ปิดเอฟเฟกต์ AO และ bloom ที่ใช้การ์ดจอหนัก ภาพยังสีเดียวกับบน desktop · Touch devices skip the GPU-heavy AO and bloom passes while keeping the same colours.
+
 ## [1.1.0] — 2026-10-22
 
 ### เพิ่ม / Added
