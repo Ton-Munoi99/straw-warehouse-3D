@@ -2,6 +2,11 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { COL_XS, COL_ZS, EAVE, FLOOR_TOP, Vec3 } from './data'
+import { STORAGE } from '../feasibility/model'
+
+// stack rows across the building depth: 3 rows north of the aisle, 8 rows south
+const ROWS_Z = [-4.2, -3.7, -3.2, .8, 1.3, 1.8, 2.3, 2.8, 3.3, 3.8, 4.3]
+if (ROWS_Z.length !== STORAGE.rows) throw new Error('ROWS_Z must match STORAGE.rows')
 
 // Repeatable, locally generated material maps; no remote image dependencies.
 export function surfaceTexture(kind: 'straw' | 'concrete' | 'earth' | 'metal') {
@@ -35,10 +40,11 @@ export function Repeated({ geometry, material, positions }: { geometry: THREE.Bu
     ref.current.instanceMatrix.needsUpdate = true
     ref.current.computeBoundingSphere()
   }, [positions])
-  return <instancedMesh ref={ref} args={[geometry, material, positions.length]} castShadow receiveShadow />
+  // instance count is fixed at creation → remount when it changes
+  return <instancedMesh key={positions.length} ref={ref} args={[geometry, material, positions.length]} castShadow receiveShadow />
 }
 
-export function DetailedBales() {
+export function DetailedBales({ layers }: { layers: number }) {
   const assets = useMemo(() => {
     const map = surfaceTexture('straw')
     const material = new THREE.MeshStandardMaterial({ map, bumpMap: map, bumpScale: .012, roughness: .96, color: '#e5d4ad' })
@@ -47,17 +53,18 @@ export function DetailedBales() {
   }, [])
   const positions = useMemo(() => {
     const bales: Vec3[] = [], ties: Vec3[] = []
-    // 1.00 × 0.45 × 0.36 m illustrative small rectangular bale.
-    // Two stacks with a continuous 3 m working aisle, plus a clear door apron.
-    for (let layer = 0; layer < 10; layer++) for (let col = 0; col < 14; col++) {
-      for (const z of [-4.2, -3.7, -3.2, .8, 1.3, 1.8, 2.3, 2.8, 3.3, 3.8, 4.3]) {
+    // 1.00 × 0.45 × 0.36 m small rectangular bale. Two stacks with a continuous working
+    // aisle, plus a clear door apron. Counts come from STORAGE so the ROI page's capacity
+    // figure always matches what is drawn here (ROWS_Z must hold STORAGE.rows entries).
+    for (let layer = 0; layer < layers; layer++) for (let col = 0; col < STORAGE.cols; col++) {
+      for (const z of ROWS_Z) {
         const x = -8 + col * 1.035 + (layer % 2 ? .08 : 0)
-        const y = FLOOR_TOP + .15 + .18 + layer * .366
+        const y = FLOOR_TOP + .15 + .18 + layer * STORAGE.layerM
         bales.push([x, y, z]); ties.push([x - .27, y, z], [x + .27, y, z])
       }
     }
     return { bales, ties }
-  }, [])
+  }, [layers])
   useEffect(() => () => { Object.values(assets).forEach(a => a.dispose()) }, [assets])
   return <group>
     <Repeated geometry={assets.box} material={assets.material} positions={positions.bales} />

@@ -113,6 +113,15 @@ export const DEFAULT_INPUTS: SimInputs = {
   graceYears: 1,
 }
 
+// ---- physical storage capacity (the 3D bale stack is built from these numbers) ----
+// 1.00 × 0.45 × 0.36 m small square bales in two stacks either side of a 3.5 m forklift
+// aisle: 14 bales long × 11 rows, at most 14 layers (≈5.1 m) to keep ~1.3 m clear under
+// the 6.4 m eave.
+export const STORAGE = { cols: 14, rows: 11, maxLayers: 14, layerM: 0.366 }
+export const storageBales = () => STORAGE.cols * STORAGE.rows * STORAGE.maxLayers
+export const storageCapacityT = (i: SimInputs) => (storageBales() * i.baleKg) / 1000
+export const stockTurnsPerYear = (i: SimInputs) => i.throughputT / storageCapacityT(i)
+
 export const cloneInputs = (i: SimInputs): SimInputs =>
   JSON.parse(JSON.stringify(i)) as SimInputs
 

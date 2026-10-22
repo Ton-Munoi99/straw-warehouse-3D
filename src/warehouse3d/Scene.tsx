@@ -29,6 +29,7 @@ export interface SceneState {
   weather: 'sunny' | 'rainy'
   activity: boolean
   dims: boolean
+  layers: number // bale layers drawn (0 … STORAGE.maxLayers)
 }
 
 export interface CameraController {
@@ -985,7 +986,7 @@ export default function Scene({
       <Roof mats={mats} />
       <Doors mats={mats} open={state.doorsOpen} />
       <SideWalls mats={mats} open={state.wallsOpen} />
-      <DetailedBales />
+      <DetailedBales layers={state.layers} />
       <ConstructionDetails />
       <Truck mats={mats} />
       <Forklift mats={mats} active={state.activity && state.doorsOpen} />

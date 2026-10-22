@@ -33,6 +33,9 @@ import {
   runDebt,
   runInputs,
   runScenario,
+  stockTurnsPerYear,
+  storageBales,
+  storageCapacityT,
   totalCapex,
 } from './model'
 
@@ -52,7 +55,8 @@ export default function FeasibilityPage() {
   const debt = useMemo(() => runDebt(active, result), [active, result])
   const bpt = balesPerTonne(active.baleKg)
   const bptDisplay = bpt.toFixed(1)
-  const staticCapacityT = (active.baleKg * 2000) / 1000
+  const capacityT = storageCapacityT(active)
+  const turns = stockTurnsPerYear(active)
   const perBale = (perT: number) => (perT / bpt).toFixed(1)
 
   const sell = blendedSell(active)
@@ -295,6 +299,22 @@ export default function FeasibilityPage() {
                 20 kg/bale for common small bales; verify actual bale weight and test 15-30 kg/bale before committing.
               </div>
             )}
+            {/* capacity check — warehouse size (same STORAGE numbers as the 3D stack) vs sales volume */}
+            <div className={`mt-3 rounded-[10px] border px-4 py-2.5 text-[11.5px] leading-[1.55] ${turns > 12 ? 'border-[#e3b15d] bg-[#fff7e8] text-[#8a651d]' : 'border-[#bdd7bf] bg-[#f2f8f2] text-forest'}`}>
+              <div className="font-semibold">
+                {turns > 12 ? '⚠ ' : ''}ความจุโกดัง / Storage capacity <b>{f(capacityT)} ตัน (t)</b> ({f(storageBales())} ก้อน / bales, ซ้อนสูงสุด / max stack ≈ 5.1 ม. / m) ·
+                ปริมาณขาย / throughput <b>{f(active.throughputT)} ตัน/ปี (t/yr)</b> → หมุนสต๊อก / stock turns <b>≈ {turns.toFixed(0)} รอบ/ปี (/yr)</b> ·
+                ฟางอยู่ในโกดังเฉลี่ย / average dwell <b>≈ {(365 / turns).toFixed(0)} วัน (days)</b>
+              </div>
+              {turns > 12 && (
+                <div className="mt-1">
+                  โกดังขนาดนี้จึงทำงานแบบ “จุดพักสินค้า” (รับเข้า-ส่งออกภายในไม่กี่วัน) ไม่ใช่โกดังเก็บข้ามฤดู — ถ้าจะเก็บสต๊อกไว้ขายช่วงหน้าแล้งเพื่อราคาพรีเมียม
+                  เช่น เก็บ 3 เดือนของยอดขาย ≈ {f(active.throughputT / 4)} ตัน ต้องใช้พื้นที่ราว {Math.ceil(active.throughputT / 4 / capacityT)} เท่าของโกดังนี้ หรือต้องลดปริมาณขายที่ตั้งไว้ ·
+                  At this size the warehouse works as a flow-through hub (in and out within days), not seasonal storage — holding 3 months of sales (≈ {f(active.throughputT / 4)} t) for
+                  dry-season premium prices would need about {Math.ceil(active.throughputT / 4 / capacityT)}× this floor space, or a lower throughput.
+                </div>
+              )}
+            </div>
           </div>
 
           {/* simulation control panel */}
@@ -410,7 +430,7 @@ export default function FeasibilityPage() {
                 ))}
               </tbody>
             </table></div>
-            <div className="mt-2 text-[11px] text-[#9aa499]">1 ก้อน = {active.baleKg} กก. → {bptDisplay} ก้อน/ตัน (ถ้าเก็บ ~2,000 ก้อน ≈ {f(staticCapacityT)} ตัน static capacity; throughput {f(active.throughputT)} ตัน/ปี คือการหมุนสต๊อกหลายรอบ) · 1 bale = {active.baleKg} kg → {bptDisplay} bales/tonne</div>
+            <div className="mt-2 text-[11px] text-[#9aa499]">1 ก้อน = {active.baleKg} กก. → {bptDisplay} ก้อน/ตัน · 1 bale = {active.baleKg} kg → {bptDisplay} bales/tonne</div>
           </div>
 
           {/* location */}

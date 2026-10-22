@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import Scene, { CameraController, SceneState } from './Scene'
 import { ViewName, views, zones } from './data'
+import { DEFAULT_INPUTS, STORAGE, storageBales, storageCapacityT } from '../feasibility/model'
 
 type View = ViewName
 
@@ -41,7 +42,11 @@ const STATS = [
   { label: 'Footprint', value: '18 × 10 m', accent: false },
   { label: 'Clear height', value: '6.4 m eave · 9.0 m roof', accent: false },
   { label: 'Roof', value: 'Gable metal sheet', accent: false },
-  { label: 'Straw capacity', value: '~2,000 bales · ~40 t', accent: true },
+  {
+    label: 'Straw capacity',
+    value: `${storageBales().toLocaleString('en-US')} bales · ${Math.round(storageCapacityT(DEFAULT_INPUTS))} t`,
+    accent: true,
+  },
 ]
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -63,6 +68,7 @@ export default function Warehouse3D() {
     weather: 'sunny',
     activity: true,
     dims: false,
+    layers: 10,
   })
   const controller = useRef<CameraController | null>(null)
   const stageRef = useRef<HTMLDivElement>(null)
@@ -328,6 +334,42 @@ export default function Warehouse3D() {
                 onClick={() => setState((s) => ({ ...s, dims: !s.dims }))}
               />
             </div>
+          </section>
+
+          {/* Storage fill — same STORAGE numbers the ROI page uses for its capacity check */}
+          <section>
+            <SectionTitle>Storage Fill</SectionTitle>
+            {(() => {
+              const perLayer = STORAGE.cols * STORAGE.rows
+              const bales = perLayer * state.layers
+              const t = (bales * DEFAULT_INPUTS.baleKg) / 1000
+              const pct = Math.round((state.layers / STORAGE.maxLayers) * 100)
+              return (
+                <>
+                  <input
+                    type="range"
+                    min={0}
+                    max={STORAGE.maxLayers}
+                    step={1}
+                    value={state.layers}
+                    onChange={(e) => setState((s) => ({ ...s, layers: Number(e.target.value) }))}
+                    aria-label="Bale layers stacked"
+                    className="w-full accent-[#c8902f]"
+                  />
+                  <div className="mt-1 flex items-baseline justify-between text-[12px]">
+                    <span className="font-bold text-ink">
+                      {bales.toLocaleString('en-US')} bales · {t.toFixed(1)} t
+                    </span>
+                    <span className="font-bold text-straw">{pct}%</span>
+                  </div>
+                  <div className="mt-1 text-[11px] leading-[1.45] text-[#9aa499]">
+                    {state.layers} of {STORAGE.maxLayers} layers ({(state.layers * STORAGE.layerM).toFixed(1)} m high) ·
+                    full = {storageBales().toLocaleString('en-US')} bales ≈ {Math.round(storageCapacityT(DEFAULT_INPUTS))} t at{' '}
+                    {DEFAULT_INPUTS.baleKg} kg/bale
+                  </div>
+                </>
+              )
+            })()}
           </section>
 
           {/* Key Zones */}

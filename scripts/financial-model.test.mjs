@@ -81,3 +81,13 @@ test('debt financing: annuity repays the loan, tax shield and leverage behave', 
   assert.ok(Math.abs(noLoan.equityIrr - project.irr) < 1e-4)
   assert.equal(noLoan.minDscr, null)
 })
+
+test('storage capacity matches the 3D stack layout and flags the stock-turn gap', async () => {
+  const model = await loadModel()
+  const inputs = model.DEFAULT_INPUTS
+  // 14 bales long × 11 rows × 14 layers, 20 kg each
+  assert.equal(model.storageBales(), 14 * 11 * 14)
+  assert.ok(Math.abs(model.storageCapacityT(inputs) - (2156 * 20) / 1000) < 1e-9)
+  // 2,000 t/yr through a ~43 t store ≈ 46 full turns a year (≈ 8-day dwell)
+  assert.equal(Math.round(model.stockTurnsPerYear(inputs)), 46)
+})
