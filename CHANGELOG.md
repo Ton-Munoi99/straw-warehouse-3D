@@ -9,6 +9,12 @@ Format based on Keep a Changelog; versions follow Semantic Versioning; dates are
 เผยแพร่ที่ / Deployed at [straw-warehouse-3d.netlify.app](https://straw-warehouse-3d.netlify.app) ·
 โค้ด / Repo: [Ton-Munoi99/straw-warehouse-3D](https://github.com/Ton-Munoi99/straw-warehouse-3D)
 
+## [1.4.0] — 2026-10-26
+
+### Added · เพิ่ม
+- ROI: ปุ่ม **แชร์ลิงก์** ในโหมด Simulation — ลิงก์ `?s=…` เปิดหน้าพร้อมตัวเลขชุดเดียวกับผู้ส่ง ลิงก์เสีย/ถูกแก้จะแจ้งเตือนแล้วแสดงกรณีฐาน · **Share link** in Simulation mode; `?s=…` opens with the sender's inputs, invalid links warn and fall back to the base case.
+- 3D: หน้า 3D เป็นสองภาษา ไทย/อังกฤษ ครบทุกปุ่ม ป้ายโซน คำอธิบาย และทัวร์ · The 3D page is fully bilingual (TH/EN): buttons, zone labels, descriptions and the guided tour.
+
 ## [1.3.0] — 2026-10-22
 
 ### เพิ่ม / Added

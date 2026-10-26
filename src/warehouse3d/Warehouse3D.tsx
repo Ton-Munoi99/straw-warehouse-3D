@@ -28,27 +28,35 @@ import { DEFAULT_INPUTS, STORAGE, storageBales, storageCapacityT } from '../feas
 type View = ViewName
 
 const VIEW_LABELS: Record<'front' | 'side' | 'top' | 'interior', string> = {
-  front: 'Front',
-  side: 'Side',
-  top: 'Top',
-  interior: 'Interior',
+  front: 'ด้านหน้า · Front',
+  side: 'ด้านข้าง · Side',
+  top: 'มุมบน · Top',
+  interior: 'ภายใน · Interior',
 }
 
-const BENEFITS = [
-  'Keeps straw dry through the monsoon season',
-  'Reduces post-harvest storage loss',
-  'Supports fast truck loading & dispatch',
-  'Improves collection-hub logistics efficiency',
-  'Low-cost, durable build for rice-field areas',
+const BENEFITS: [th: string, en: string][] = [
+  ['เก็บฟางให้แห้งตลอดฤดูมรสุม', 'Keeps straw dry through the monsoon season'],
+  ['ลดความสูญเสียของฟางหลังเก็บเกี่ยว', 'Reduces post-harvest storage loss'],
+  ['ขนขึ้นรถและส่งออกได้รวดเร็ว', 'Supports fast truck loading & dispatch'],
+  ['การขนส่งของศูนย์รวบรวมมีประสิทธิภาพขึ้น', 'Improves collection-hub logistics efficiency'],
+  ['สร้างง่าย ทนทาน ต้นทุนต่ำ เหมาะกับพื้นที่นา', 'Low-cost, durable build for rice-field areas'],
 ]
 
+const TIME_LABELS: Record<TimeOfDay, string> = { morning: 'เช้า|Morning', noon: 'เที่ยง|Noon', evening: 'เย็น|Evening' }
+
+// "ไทย|English" → Thai line + small English line (used where a button is too narrow for one line)
+function TwoLine({ text }: { text: string }) {
+  const [th, en] = text.split('|')
+  return en == null ? <span>{th}</span> : <span className="leading-tight"><span className="block">{th}</span><span className="block text-[10.5px] font-medium opacity-75">{en}</span></span>
+}
+
 const STATS = [
-  { label: 'Footprint', value: '18 × 10 m', accent: false },
-  { label: 'Clear height', value: '6.4 m eave · 9.0 m roof', accent: false },
-  { label: 'Roof', value: 'Gable metal sheet', accent: false },
+  { label: 'พื้นที่ / Footprint', value: '18 × 10 m', accent: false },
+  { label: 'ความสูง / Height', value: '6.4 m eave · 9.0 m roof', accent: false },
+  { label: 'หลังคา / Roof', value: 'จั่วเมทัลชีท · Gable metal', accent: false },
   {
-    label: 'Straw capacity',
-    value: `${storageBales().toLocaleString('en-US')} bales · ${Math.round(storageCapacityT(DEFAULT_INPUTS))} t`,
+    label: 'ความจุฟาง / Straw capacity',
+    value: `${storageBales().toLocaleString('en-US')} ก้อน (bales) · ${Math.round(storageCapacityT(DEFAULT_INPUTS))} ตัน (t)`,
     accent: true,
   },
 ]
@@ -97,7 +105,7 @@ export default function Warehouse3D() {
   const onRecorded = useCallback((clip: Blob | null) => {
     setState((s) => ({ ...s, recording: false }))
     if (!clip) {
-      setRecNote(typeof MediaRecorder === 'undefined' ? 'This browser cannot record video.' : null)
+      setRecNote(typeof MediaRecorder === 'undefined' ? 'เบราว์เซอร์นี้อัดวิดีโอไม่ได้ / This browser cannot record video.' : null)
       return
     }
     const a = document.createElement('a')
@@ -105,7 +113,7 @@ export default function Warehouse3D() {
     a.download = `straw-warehouse-360.${clip.type.includes('mp4') ? 'mp4' : 'webm'}`
     a.click()
     setTimeout(() => URL.revokeObjectURL(a.href), 1000)
-    setRecNote(`Saved ${a.download} (${(clip.size / 1048576).toFixed(1)} MB)`)
+    setRecNote(`บันทึกแล้ว / Saved ${a.download} (${(clip.size / 1048576).toFixed(1)} MB)`)
   }, [])
   const toggleRecording = () => {
     setTour(null)
@@ -160,9 +168,13 @@ export default function Warehouse3D() {
 
   const sel = zones.find((z) => z.key === state.selected)
   const cardColor = sel?.color ?? '#2f6b3f'
-  const cardKicker = sel ? 'Selected zone' : 'Overview'
-  const cardTitle = sel ? sel.label : 'Open-sided straw store'
+  const cardKicker = sel ? 'โซนที่เลือก / Selected zone' : 'ภาพรวม / Overview'
+  const cardTitle = sel ? sel.th : 'โรงเก็บฟางผนังเปิดโล่ง'
+  const cardTitleEn = sel ? sel.label : 'Open-sided straw store'
   const cardDesc = sel
+    ? sel.descTh
+    : 'โกดังต้นทุนต่ำที่รวบรวมและเก็บรักษาฟางอัดก้อนข้างแปลงนา ผนังเปิดโล่งช่วยให้ฟางแห้ง พื้นยกระดับกันน้ำท่วม และทางเข้ากว้างให้รถวิ่งได้คล่อง แตะโซนด้านบนหรือป้ายในภาพเพื่อดูรายละเอียด'
+  const cardDescEn = sel
     ? sel.desc
     : 'A practical, low-cost warehouse that collects and protects baled rice straw beside the field. Open sides keep it dry, a raised slab beats flooding, and wide access keeps trucks moving. Tap a zone above or a tag in the scene.'
 
@@ -175,9 +187,9 @@ export default function Warehouse3D() {
             <Home size={22} color="#fff" strokeWidth={1.8} />
           </div>
           <div>
-            <div className="text-base font-extrabold tracking-[-0.01em]">Rice Straw Storage Warehouse</div>
+            <div className="text-base font-extrabold tracking-[-0.01em]">โรงเก็บฟางอัดก้อน · Rice Straw Storage Warehouse</div>
             <div className="text-xs font-medium text-muted">
-              Open-sided collection hub · Rural rice-field site, Thailand
+              ศูนย์รวบรวมฟางผนังเปิดโล่ง ในพื้นที่นาข้าว · Open-sided collection hub · Rural rice-field site, Thailand
             </div>
           </div>
         </div>
@@ -233,9 +245,9 @@ export default function Warehouse3D() {
           className="relative min-h-[48vh] min-w-0 flex-1 overflow-hidden md:min-h-0"
           style={{ background: 'linear-gradient(#cfe6f1,#dfeede)' }}
         >
-          <div className="pointer-events-none absolute left-5 top-5 z-[3] rounded-xl border border-white/70 bg-white/85 px-4 py-3 shadow-sm backdrop-blur">
+          <div className="pointer-events-none absolute left-5 top-5 z-[3] max-w-[calc(100%-180px)] rounded-xl sm:max-w-none border border-white/70 bg-white/85 px-4 py-3 shadow-sm backdrop-blur">
             <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#7c806e]">FIELD / 01 · WAREHOUSE STUDY</div>
-            <div className="mt-1 text-sm font-bold text-[#344536]">Rice straw collection hub</div>
+            <div className="mt-1 text-sm font-bold text-[#344536]">ศูนย์รวบรวมฟางข้าว · Rice straw collection hub</div>
           </div>
           <Canvas
             shadows={{ type: PCFSoftShadowMap }}
@@ -266,14 +278,19 @@ export default function Warehouse3D() {
             <div className="absolute inset-x-3 bottom-3 z-[4] rounded-[12px] border border-hairline bg-white/[0.94] px-4 py-3 shadow-md backdrop-blur sm:inset-x-auto sm:bottom-4 sm:left-1/2 sm:w-[min(560px,calc(100%-40px))] sm:-translate-x-1/2">
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: tourZone?.color ?? '#2f6b3f' }} />
-                <span className="text-[13px] font-extrabold text-ink">{tourZone?.label ?? 'Overview'}</span>
+                <span className="text-[13px] font-extrabold text-ink">{tourZone?.th ?? 'ภาพรวม'}</span>
+                <span className="text-[11px] font-semibold text-[#9aa499]">{tourZone?.label ?? 'Overview'}</span>
                 <span className="ml-auto text-[11px] font-semibold text-[#9aa499]">
                   {tour + 1} / {tourShots.length}
                 </span>
               </div>
               <div className="mt-1 text-[12px] leading-[1.5] text-[#54625a]">
-                {tourZone?.desc ??
-                  `An open-sided rice-straw collection hub — 18 × 10 m, 9 m to the ridge, ${storageBales().toLocaleString('en-US')} bales (≈${Math.round(storageCapacityT(DEFAULT_INPUTS))} t) when fully stacked. Follow a load of straw from the road to the stack.`}
+                {tourZone?.descTh ??
+                  `ศูนย์รวบรวมฟางผนังเปิดโล่ง ขนาด 18 × 10 ม. สูงถึงสันหลังคา 9 ม. ซ้อนฟางเต็มที่ได้ ${storageBales().toLocaleString('en-US')} ก้อน (≈${Math.round(storageCapacityT(DEFAULT_INPUTS))} ตัน) — ตามเส้นทางฟางตั้งแต่ถนนเข้าจนถึงกองเก็บ`}
+                <div className="mt-0.5 text-[11px] leading-[1.45] text-[#9aa499]">
+                  {tourZone?.desc ??
+                    `An open-sided rice-straw collection hub — 18 × 10 m, 9 m to the ridge, ${storageBales().toLocaleString('en-US')} bales (≈${Math.round(storageCapacityT(DEFAULT_INPUTS))} t) when fully stacked. Follow a load of straw from the road to the stack.`}
+                </div>
               </div>
               <div className="mt-2 flex items-center gap-1.5">
                 <div className="h-1 flex-1 overflow-hidden rounded bg-[#ece8dc]">
@@ -286,7 +303,7 @@ export default function Warehouse3D() {
                   <ChevronRight size={15} />
                 </button>
                 <button onClick={stopTour} className="rounded-md border border-hairline px-2 py-1 text-[11px] font-bold text-[#c25b46]">
-                  Stop
+                  หยุด / Stop
                 </button>
               </div>
             </div>
@@ -294,8 +311,8 @@ export default function Warehouse3D() {
 
           <div className={`absolute bottom-3 left-3 z-[3] ${tour != null ? 'hidden' : 'flex'} items-center gap-2 rounded-[10px] border border-hairline bg-white/[0.86] px-[11px] py-1.5 text-[11px] font-medium text-[#5a6b5f] backdrop-blur sm:bottom-4 sm:left-[18px] sm:px-[13px] sm:py-2 sm:text-xs`}>
             <RefreshCw size={15} color="#2f6b3f" strokeWidth={1.8} />
-            <span className="sm:hidden">Drag · zoom · tap a tag</span>
-            <span className="hidden sm:inline">Drag to orbit · Scroll to zoom · Select a numbered zone</span>
+            <span className="sm:hidden">ลากหมุน · ซูม · แตะป้าย</span>
+            <span className="hidden sm:inline">ลากเพื่อหมุน · เลื่อนเพื่อซูม · กดหมายเลขโซน / Drag to orbit · Scroll to zoom · Select a zone</span>
           </div>
 
           <div className="absolute bottom-3 right-3 z-[3] hidden sm:block text-[10px] font-medium text-[#5a6b5f] sm:bottom-4 sm:right-4 sm:text-[11px]">
@@ -307,7 +324,7 @@ export default function Warehouse3D() {
         <aside className="scrl flex w-full flex-none flex-col gap-[18px] overflow-y-auto border-t border-hairline bg-white p-[18px] md:w-[310px] md:border-l md:border-t-0">
           {/* Camera Views */}
           <section>
-            <SectionTitle>Camera Views</SectionTitle>
+            <SectionTitle>มุมกล้อง / Camera Views</SectionTitle>
             <div className="grid grid-cols-2 gap-2">
               {(Object.keys(VIEW_LABELS) as (keyof typeof VIEW_LABELS)[]).map((k) => {
                 const active = view === k && !state.rotate
@@ -337,7 +354,7 @@ export default function Warehouse3D() {
               }}
             >
               <RefreshCw size={16} strokeWidth={1.9} />
-              {state.rotate ? 'Stop rotation' : 'Rotate 360°'}
+              {state.rotate ? 'หยุดหมุน · Stop rotation' : 'หมุน 360° · Rotate 360°'}
             </button>
             <button
               onClick={tour == null ? startTour : stopTour}
@@ -349,7 +366,7 @@ export default function Warehouse3D() {
               }}
             >
               <Footprints size={16} strokeWidth={1.9} />
-              {tour != null ? 'Stop guided tour' : 'Guided tour'}
+              {tour != null ? 'หยุดทัวร์ · Stop tour' : 'ทัวร์นำชม · Guided tour'}
             </button>
             <button
               onClick={toggleRecording}
@@ -361,28 +378,28 @@ export default function Warehouse3D() {
               }}
             >
               <Video size={16} strokeWidth={1.9} />
-              {state.recording ? 'Recording… (click to cancel)' : 'Record 360° video'}
+              {state.recording ? 'กำลังอัด… กดเพื่อยกเลิก · Cancel' : 'อัดวิดีโอ 360° · Record video'}
             </button>
             {recNote && <div className="mt-1.5 text-[11px] text-[#7c8a80]">{recNote}</div>}
           </section>
 
           {/* Controls */}
           <section>
-            <SectionTitle>Controls</SectionTitle>
+            <SectionTitle>ควบคุม / Controls</SectionTitle>
             <div className="flex gap-2">
               <button
                 onClick={() => zoom(1.25)}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-[#e1ddd0] bg-white px-2 py-[11px] text-[13px] font-semibold text-[#33403a]"
               >
                 <ZoomOut size={16} strokeWidth={2} />
-                Zoom out
+                <TwoLine text="ซูมออก|Zoom out" />
               </button>
               <button
                 onClick={() => zoom(0.8)}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-[#e1ddd0] bg-white px-2 py-[11px] text-[13px] font-semibold text-[#33403a]"
               >
                 <ZoomIn size={16} strokeWidth={2} />
-                Zoom in
+                <TwoLine text="ซูมเข้า|Zoom in" />
               </button>
             </div>
             <button
@@ -395,44 +412,44 @@ export default function Warehouse3D() {
               }}
             >
               <Tag size={16} strokeWidth={1.9} />
-              {state.labels ? 'Hide labels' : 'Show labels'}
+              {state.labels ? 'ซ่อนป้าย · Hide labels' : 'แสดงป้าย · Show labels'}
             </button>
           </section>
 
           {/* Doors & Walls */}
           <section>
-            <SectionTitle>Doors &amp; Walls</SectionTitle>
+            <SectionTitle>ประตูและผนัง / Doors &amp; Walls</SectionTitle>
             <div className="grid grid-cols-2 gap-2">
               <CloseBtn
                 on={state.doorsOpen}
                 color="#2f6b3f"
                 icon={<TagDoorIcon />}
-                label={state.doorsOpen ? 'Doors: Open' : 'Doors: Closed'}
+                label={state.doorsOpen ? 'ประตู: เปิด|Doors: Open' : 'ประตู: ปิด|Doors: Closed'}
                 onClick={() => setState((s) => ({ ...s, doorsOpen: !s.doorsOpen }))}
               />
               <CloseBtn
                 on={state.wallsOpen}
                 color="#3f7fae"
                 icon={<WallIcon />}
-                label={state.wallsOpen ? 'Sides: Open' : 'Sides: Closed'}
+                label={state.wallsOpen ? 'ผนัง: เปิด|Sides: Open' : 'ผนัง: ปิด|Sides: Closed'}
                 onClick={() => setState((s) => ({ ...s, wallsOpen: !s.wallsOpen }))}
               />
             </div>
             <div className="mt-[7px] text-[11px] leading-[1.45] text-[#9aa499]">
-              Close the sides &amp; doors for rain &amp; security; open them for natural cross-ventilation.
+              ปิดผนังและประตูเมื่อฝนตกหรือเพื่อความปลอดภัย เปิดไว้ให้ลมผ่านตามธรรมชาติ · Close the sides &amp; doors for rain &amp; security; open them for cross-ventilation.
             </div>
           </section>
 
           {/* Scene */}
           <section>
-            <SectionTitle>Scene</SectionTitle>
+            <SectionTitle>ฉาก / Scene</SectionTitle>
             <div className="flex flex-col gap-2">
               <CloseBtn
                 on={state.weather === 'rainy'}
                 color="#5a6b7a"
                 full
                 icon={<CloudSun size={15} strokeWidth={1.8} />}
-                label={state.weather === 'rainy' ? 'Weather: Rainy' : 'Weather: Sunny'}
+                label={state.weather === 'rainy' ? 'อากาศ: ฝนตก · Rainy' : 'อากาศ: แดดออก · Sunny'}
                 onClick={() =>
                   setState((s) => ({ ...s, weather: s.weather === 'rainy' ? 'sunny' : 'rainy' }))
                 }
@@ -445,15 +462,15 @@ export default function Warehouse3D() {
                       key={t}
                       onClick={() => setState((s) => ({ ...s, time: t }))}
                       aria-pressed={on}
-                      title={state.weather === 'rainy' ? 'Switch weather to Sunny to see the light change' : undefined}
-                      className="rounded-[9px] border px-1 py-[9px] text-[12px] font-semibold capitalize"
+                      title={state.weather === 'rainy' ? 'เปลี่ยนอากาศเป็นแดดออกเพื่อดูแสงตามช่วงเวลา / Switch to Sunny to see the light change' : undefined}
+                      className="rounded-[9px] border px-1 py-[9px] text-[12px] font-semibold"
                       style={{
                         borderColor: on ? '#c8902f' : '#e1ddd0',
                         background: on ? '#fbf2e0' : '#fff',
                         color: on ? '#a9772a' : '#33403a',
                       }}
                     >
-                      {t}
+                      <TwoLine text={TIME_LABELS[t]} />
                     </button>
                   )
                 })}
@@ -463,7 +480,7 @@ export default function Warehouse3D() {
                 color="#c8902f"
                 full
                 icon={<TruckIcon size={15} strokeWidth={1.8} />}
-                label={state.activity ? 'Activity: On' : 'Activity: Off'}
+                label={state.activity ? 'กิจกรรม: เปิด · On' : 'กิจกรรม: ปิด · Off'}
                 onClick={() => setState((s) => ({ ...s, activity: !s.activity }))}
               />
               <CloseBtn
@@ -471,7 +488,7 @@ export default function Warehouse3D() {
                 color="#33403a"
                 full
                 icon={<Ruler size={15} strokeWidth={1.8} />}
-                label={state.dims ? 'Dimensions: On' : 'Dimensions: Off'}
+                label={state.dims ? 'ขนาด: แสดง · On' : 'ขนาด: ซ่อน · Off'}
                 onClick={() => setState((s) => ({ ...s, dims: !s.dims }))}
               />
             </div>
@@ -479,7 +496,7 @@ export default function Warehouse3D() {
 
           {/* Storage fill — same STORAGE numbers the ROI page uses for its capacity check */}
           <section>
-            <SectionTitle>Storage Fill</SectionTitle>
+            <SectionTitle>ระดับการเก็บฟาง / Storage Fill</SectionTitle>
             {(() => {
               const perLayer = STORAGE.cols * STORAGE.rows
               const bales = perLayer * state.layers
@@ -499,14 +516,14 @@ export default function Warehouse3D() {
                   />
                   <div className="mt-1 flex items-baseline justify-between text-[12px]">
                     <span className="font-bold text-ink">
-                      {bales.toLocaleString('en-US')} bales · {t.toFixed(1)} t
+                      {bales.toLocaleString('en-US')} ก้อน (bales) · {t.toFixed(1)} ตัน (t)
                     </span>
                     <span className="font-bold text-straw">{pct}%</span>
                   </div>
                   <div className="mt-1 text-[11px] leading-[1.45] text-[#9aa499]">
-                    {state.layers} of {STORAGE.maxLayers} layers ({(state.layers * STORAGE.layerM).toFixed(1)} m high) ·
-                    full = {storageBales().toLocaleString('en-US')} bales ≈ {Math.round(storageCapacityT(DEFAULT_INPUTS))} t at{' '}
-                    {DEFAULT_INPUTS.baleKg} kg/bale
+                    {state.layers}/{STORAGE.maxLayers} ชั้น (layers) · สูง {(state.layers * STORAGE.layerM).toFixed(1)} ม. (m) ·
+                    เต็ม / full = {storageBales().toLocaleString('en-US')} ก้อน ≈ {Math.round(storageCapacityT(DEFAULT_INPUTS))} ตัน ที่ / at{' '}
+                    {DEFAULT_INPUTS.baleKg} กก./ก้อน (kg/bale)
                   </div>
                 </>
               )
@@ -515,7 +532,7 @@ export default function Warehouse3D() {
 
           {/* Key Zones */}
           <section>
-            <SectionTitle>Key Zones</SectionTitle>
+            <SectionTitle>โซนสำคัญ / Key Zones</SectionTitle>
             <div className="flex flex-col gap-1.5">
               {zones.map((z, index) => {
                 const active = state.selected === z.key
@@ -533,7 +550,7 @@ export default function Warehouse3D() {
                       className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-[10px] font-bold text-white"
                       style={{ background: z.color }}
                     >{String(index + 1).padStart(2, '0')}</span>
-                    <span className="text-[13px] font-semibold">{z.label}</span>
+                    <span className="leading-tight"><span className="block text-[13px] font-semibold">{z.th}</span><span className="block text-[11px] text-[#9aa499]">{z.label}</span></span>
                   </button>
                 )
               })}
@@ -547,20 +564,24 @@ export default function Warehouse3D() {
                 {cardKicker}
               </div>
               <div className="mt-0.5 text-base font-extrabold tracking-[-0.01em]">{cardTitle}</div>
+              <div className="text-[12px] font-semibold opacity-85">{cardTitleEn}</div>
             </div>
-            <div className="px-3.5 py-3.5 text-[13px] leading-[1.55] text-[#54625a]">{cardDesc}</div>
+            <div className="px-3.5 py-3.5 text-[13px] leading-[1.55] text-[#54625a]">
+              {cardDesc}
+              <div className="mt-1.5 text-[12px] leading-[1.5] text-[#9aa499]">{cardDescEn}</div>
+            </div>
           </section>
 
           {/* Project Benefits */}
           <section>
-            <SectionTitle>Project Benefits</SectionTitle>
+            <SectionTitle>ประโยชน์ของโครงการ / Project Benefits</SectionTitle>
             <div className="flex flex-col gap-[9px]">
-              {BENEFITS.map((b) => (
-                <div key={b} className="flex items-start gap-2.5">
+              {BENEFITS.map(([th, en]) => (
+                <div key={en} className="flex items-start gap-2.5">
                   <span className="mt-px flex h-[18px] w-[18px] flex-none items-center justify-center rounded-md bg-[#e7f1e8]">
                     <Check size={11} color="#2f6b3f" strokeWidth={3} />
                   </span>
-                  <span className="text-[13px] leading-[1.4] text-[#3a473f]">{b}</span>
+                  <span className="text-[13px] leading-[1.4] text-[#3a473f]">{th}<span className="block text-[11.5px] text-[#9aa499]">{en}</span></span>
                 </div>
               ))}
             </div>
@@ -600,7 +621,7 @@ function CloseBtn({
       }}
     >
       {icon}
-      <span>{label}</span>
+      <TwoLine text={label} />
     </button>
   )
 }

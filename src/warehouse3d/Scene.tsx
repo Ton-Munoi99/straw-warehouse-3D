@@ -1024,9 +1024,9 @@ function ZoneLabels({ onSelect, selected }: { onSelect: (key: string) => void; s
         <Html key={z.key} position={z.pos} center zIndexRange={[2, 1]} style={{ pointerEvents: 'none' }}>
           <button
             className={`zone-marker${selected === z.key ? ' is-selected' : ''}`}
-            aria-label={z.label}
+            aria-label={`${z.th} / ${z.label}`}
             aria-pressed={selected === z.key}
-            title={z.label}
+            title={`${z.th} / ${z.label}`}
             onClick={() => onSelect(z.key)}
             style={{ '--zone-color': z.color } as React.CSSProperties}
           >

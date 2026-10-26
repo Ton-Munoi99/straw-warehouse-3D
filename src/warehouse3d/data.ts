@@ -1,17 +1,20 @@
-
 export type Vec3 = [number, number, number]
 
 export interface Zone {
   key: string
   label: string
+  th: string
   color: string
   pos: Vec3
   desc: string
+  descTh: string
 }
 
 export const zones: Zone[] = [
   {
     key: 'storage',
+    th: 'โซนกองเก็บฟางอัดก้อน',
+    descTh: 'ฟางอัดก้อนสี่เหลี่ยมเรียงเป็นแถวบนพื้นคอนกรีตยกระดับ พ้นความชื้นจากพื้นดิน และจัดเรียงให้หยิบออกแบบเข้าก่อน-ออกก่อน',
     label: 'Straw Bale Storage Zone',
     color: '#c8902f',
     pos: [-4, 4.7, 2.5],
@@ -19,6 +22,8 @@ export const zones: Zone[] = [
   },
   {
     key: 'loading',
+    th: 'จุดขนขึ้น-ลงรถบรรทุก',
+    descTh: 'ลานหน้าโกดังกว้างให้รถบรรทุกและรถไถจอดขนฟางขึ้น-ลง มีทางลาดขึ้นพื้นโกดังสำหรับรถเข็นและโฟล์คลิฟต์',
     label: 'Truck Loading / Unloading',
     color: '#2f6b3f',
     pos: [17.8, 3.4, 4.3],
@@ -26,6 +31,8 @@ export const zones: Zone[] = [
   },
   {
     key: 'lane',
+    th: 'ทางวิ่งภายในโกดัง',
+    descTh: 'ทางโล่งกลางโกดังให้โฟล์คลิฟต์และรถไถเล็กขนฟางเข้า-ออกได้ โดยไม่กระทบกองฟาง',
     label: 'Internal Access Lane',
     color: '#3f7fae',
     pos: [4, 1.2, -1.2],
@@ -33,6 +40,8 @@ export const zones: Zone[] = [
   },
   {
     key: 'vent',
+    th: 'การระบายอากาศ (ผนังเปิดโล่ง)',
+    descTh: 'ผนังด้านข้างเปิดโล่งให้ลมพัดผ่านกองฟาง ไล่ความชื้น ป้องกันเชื้อรา ความร้อนสะสม และฟางเสีย',
     label: 'Ventilation (Open Sides)',
     color: '#5aa17a',
     pos: [-4, 5.6, 5.6],
@@ -40,6 +49,8 @@ export const zones: Zone[] = [
   },
   {
     key: 'drain',
+    th: 'ระบบระบายน้ำ',
+    descTh: 'รางรอบอาคารรับน้ำฝนจากหลังคา แล้วระบายออกจากพื้นโกดังไปลงคลองชลประทานใกล้เคียง',
     label: 'Drainage System',
     color: '#7a6cc4',
     pos: [8, 0.6, 6.4],
@@ -47,6 +58,8 @@ export const zones: Zone[] = [
   },
   {
     key: 'roof',
+    th: 'หลังคาและการกันฝน',
+    descTh: 'หลังคาจั่วเมทัลชีททรงสูง ชายคากว้าง พร้อมรางน้ำ กันฝนมรสุมหนัก และบังแดดไม่ให้ส่องฟางโดยตรง',
     label: 'Roof & Rain Protection',
     color: '#c25b46',
     pos: [0, 10.2, 0],
@@ -54,6 +67,8 @@ export const zones: Zone[] = [
   },
   {
     key: 'road',
+    th: 'ถนนดินเข้าโกดัง',
+    descTh: 'ถนนดินบดอัดเชื่อมโกดังกับทุ่งนาโดยรอบ และเส้นทางหลักของรถรับฟาง',
     label: 'Dirt Access Road',
     color: '#9a7b4f',
     pos: [22, 0.5, 9],
